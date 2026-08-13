@@ -167,12 +167,12 @@ export const consultaRepository = new LocalStorageRepository<Consulta>(
     raw => {
         const consultaRaw = raw as ConsultaRaw;
 
-        const responsavel = medicoRepository.getById(consultaRaw.responsavelId);
+        const responsavel = medicoRepository.findByIdSync(consultaRaw.responsavelId);
         if (!responsavel) {
             throw new Error(`Medico ${consultaRaw.responsavelId} nao encontrado para a consulta ${consultaRaw.id}`);
         }
 
-        const pet = petRepository.getById(consultaRaw.petId);
+        const pet = petRepository.findByIdSync(consultaRaw.petId);
         if (!pet) {
             throw new Error(`Pet ${consultaRaw.petId} nao encontrado para a consulta ${consultaRaw.id}`);
         }
@@ -193,7 +193,7 @@ export const consultaRepository = new LocalStorageRepository<Consulta>(
         pet.adicionarConsulta(consulta);
 
         for (const alunoId of consultaRaw.alunoIds) {
-            const aluno = alunoRepository.getById(alunoId);
+            const aluno = alunoRepository.findByIdSync(alunoId);
             if (aluno) {
                 consulta.adicionarAluno(aluno);
             }
@@ -204,40 +204,40 @@ export const consultaRepository = new LocalStorageRepository<Consulta>(
 );
 
 export class ConsultaService {
-    listarConsultas(): Consulta[] {
+    async listarConsultas(): Promise<Consulta[]> {
         return consultaRepository.getAll();
     }
 
-    adicionarConsulta(consulta: Consulta): void {
-        validarIdUnico(consulta.id, consultaRepository.getAll(), "consulta");
+    async adicionarConsulta(consulta: Consulta): Promise<void> {
+        validarIdUnico(consulta.id, await consultaRepository.getAll(), "consulta");
         validarDataFutura(consulta.dataConsulta, "dataConsulta");
         validarObrigatorio(consulta.horario, "horario");
         consulta.pet.adicionarConsulta(consulta);
-        consultaRepository.add(consulta);
+        await consultaRepository.add(consulta);
     }
 
-    buscarPorId(id: number): Consulta | undefined {
+    async buscarPorId(id: number): Promise<Consulta | undefined> {
         return consultaRepository.getById(id);
     }
 
-    listarPorPet(petId: number): Consulta[] {
-        return consultaRepository.getAll().filter(c => c.pet.id === petId);
+    async listarPorPet(petId: number): Promise<Consulta[]> {
+        const todas = await consultaRepository.getAll();
+        return todas.filter(c => c.pet.id === petId);
     }
 
-    listarPorMedico(medicoId: number): Consulta[] {
-        return consultaRepository.getAll().filter(c => c.responsavel.id === medicoId);
+    async listarPorMedico(medicoId: number): Promise<Consulta[]> {
+        const todas = await consultaRepository.getAll();
+        return todas.filter(c => c.responsavel.id === medicoId);
     }
 
-    listarPorData(data: Date): Consulta[] {
+    async listarPorData(data: Date): Promise<Consulta[]> {
         const dataStr = data.toISOString().split("T")[0];
-        return consultaRepository.getAll().filter(c =>
-            c.dataConsulta.toISOString().split("T")[0] === dataStr
-        );
+        const todas = await consultaRepository.getAll();
+        return todas.filter(c => c.dataConsulta.toISOString().split("T")[0] === dataStr);
     }
 
-    listarPorAluno(alunoId: number): Consulta[] {
-        return consultaRepository.getAll().filter(c =>
-            c.alunos.some(a => a.id === alunoId)
-        );
+    async listarPorAluno(alunoId: number): Promise<Consulta[]> {
+        const todas = await consultaRepository.getAll();
+        return todas.filter(c => c.alunos.some(a => a.id === alunoId));
     }
 }

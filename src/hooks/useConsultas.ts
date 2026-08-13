@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Consulta } from '../models/Consulta'
 import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
 import { ConsultaService } from '../services/ConsultaService'
@@ -12,8 +12,8 @@ const medicoService = new MedicoService()
 const petService = new PetService()
 const tutorService = new TutorService()
 
-function proximoId(): number {
-    const consultas = consultaService.listarConsultas()
+async function proximoId(): Promise<number> {
+    const consultas = await consultaService.listarConsultas()
     return consultas.length > 0 ? Math.max(...consultas.map(c => c.id)) + 1 : 1
 }
 
@@ -23,22 +23,20 @@ function dataConsultaParaHoje(): Date {
     return hoje
 }
 
-function resolverMedico(nomeVeterinario: string) {
-    const medicos = medicoService.listarMedicos()
+async function resolverMedico(nomeVeterinario: string) {
+    const medicos = await medicoService.listarMedicos()
     return medicos.find(m => m.nome.toLowerCase().includes(nomeVeterinario.toLowerCase()))
         ?? medicos[0]
         ?? null
 }
 
-function resolverPet(nomeCao: string, nomeTutor: string) {
-    const pets = petService.listarPets()
+async function resolverPet(nomeCao: string, nomeTutor: string) {
+    const pets = await petService.listarPets()
 
-    const porNome = pets.find(p =>
-        p.nome.toLowerCase().includes(nomeCao.toLowerCase())
-    )
+    const porNome = pets.find(p => p.nome.toLowerCase().includes(nomeCao.toLowerCase()))
     if (porNome) return porNome
 
-    const tutores = tutorService.buscarPorNome(nomeTutor)
+    const tutores = await tutorService.buscarPorNome(nomeTutor)
     if (tutores.length > 0) {
         const petDoTutor = pets.find(p => p.tutor.id === tutores[0].id)
         if (petDoTutor) return petDoTutor
@@ -48,22 +46,25 @@ function resolverPet(nomeCao: string, nomeTutor: string) {
 }
 
 export function useConsultas() {
-    const [consultas, setConsultas] = useState(() => consultaService.listarConsultas())
+    const [consultas, setConsultas] = useState<Consulta[]>([])
 
-    function salvarConsulta(data: ConsultationData): { sucesso: boolean; erro?: string } {
-        const medico = resolverMedico(data.veterinarian)
-        if (!medico) {
-            return { sucesso: false, erro: 'Nenhum médico cadastrado. Cadastre um médico antes de salvar a consulta.' }
-        }
+    const refresh = useCallback(async () => {
+        const lista = await consultaService.listarConsultas()
+        setConsultas(lista)
+    }, [])
 
-        const pet = resolverPet(data.dogName, data.tutorName)
-        if (!pet) {
-            return { sucesso: false, erro: 'Nenhum paciente encontrado. Cadastre o pet antes de salvar a consulta.' }
-        }
+    useEffect(() => { refresh() }, [refresh])
+
+    async function salvarConsulta(data: ConsultationData): Promise<{ sucesso: boolean; erro?: string }> {
+        const medico = await resolverMedico(data.veterinarian)
+        if (!medico) return { sucesso: false, erro: 'Nenhum médico cadastrado.' }
+
+        const pet = await resolverPet(data.dogName, data.tutorName)
+        if (!pet) return { sucesso: false, erro: 'Nenhum paciente encontrado.' }
 
         try {
             const consulta = new Consulta(
-                proximoId(),
+                await proximoId(),
                 dataConsultaParaHoje(),
                 new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 data.conduct,
@@ -76,20 +77,19 @@ export function useConsultas() {
                     new Date()
                 )
             )
-
-            consultaService.adicionarConsulta(consulta)
-            setConsultas(consultaService.listarConsultas())
+            await consultaService.adicionarConsulta(consulta)
+            await refresh()
             return { sucesso: true }
         } catch (e) {
             return { sucesso: false, erro: (e as Error).message }
         }
     }
 
-    function listarPorPet(petId: number) {
+    async function listarPorPet(petId: number) {
         return consultaService.listarPorPet(petId)
     }
 
-    function listarPorMedico(medicoId: number) {
+    async function listarPorMedico(medicoId: number) {
         return consultaService.listarPorMedico(medicoId)
     }
 

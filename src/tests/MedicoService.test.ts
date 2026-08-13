@@ -15,76 +15,76 @@ beforeEach(() => {
 })
 
 describe('MedicoService.adicionarMedico', () => {
-    it('adiciona médico válido com sucesso', () => {
-        service.adicionarMedico(novoMedico())
-        expect(service.listarMedicos()).toHaveLength(1)
+    it('adiciona médico válido com sucesso', async () => {
+        await service.adicionarMedico(novoMedico())
+        expect(await service.listarMedicos()).toHaveLength(1)
     })
 
-    it('lança erro para id duplicado', () => {
-        service.adicionarMedico(novoMedico(1))
-        expect(() => service.adicionarMedico(novoMedico(1))).toThrow(ValidacaoError)
+    it('lança erro para id duplicado', async () => {
+        await service.adicionarMedico(novoMedico(1))
+        await expect(service.adicionarMedico(novoMedico(1))).rejects.toThrow(ValidacaoError)
     })
 
-    it('lança erro para nome vazio', () => {
+    it('lança erro para nome vazio', async () => {
         const medico = new Medico(1, '', '27933001234', 'silva@vet.com', 'Clínica Geral', '12345-ES')
-        expect(() => service.adicionarMedico(medico)).toThrow(ValidacaoError)
+        await expect(service.adicionarMedico(medico)).rejects.toThrow(ValidacaoError)
     })
 
-    it('lança erro para e-mail inválido', () => {
+    it('lança erro para e-mail inválido', async () => {
         const medico = new Medico(1, 'Dr. Silva', '27933001234', 'email-invalido', 'Clínica Geral', '12345-ES')
-        expect(() => service.adicionarMedico(medico)).toThrow(ValidacaoError)
+        await expect(service.adicionarMedico(medico)).rejects.toThrow(ValidacaoError)
     })
 
-    it('lança erro para telefone inválido', () => {
+    it('lança erro para telefone inválido', async () => {
         const medico = new Medico(1, 'Dr. Silva', '123', 'silva@vet.com', 'Clínica Geral', '12345-ES')
-        expect(() => service.adicionarMedico(medico)).toThrow(ValidacaoError)
+        await expect(service.adicionarMedico(medico)).rejects.toThrow(ValidacaoError)
     })
 
-    it('lança erro para especialidade vazia', () => {
+    it('lança erro para especialidade vazia', async () => {
         const medico = new Medico(1, 'Dr. Silva', '27933001234', 'silva@vet.com', '', '12345-ES')
-        expect(() => service.adicionarMedico(medico)).toThrow(ValidacaoError)
+        await expect(service.adicionarMedico(medico)).rejects.toThrow(ValidacaoError)
     })
 
-    it('lança erro para CRMV inválido', () => {
+    it('lança erro para CRMV inválido', async () => {
         const medico = new Medico(1, 'Dr. Silva', '27933001234', 'silva@vet.com', 'Clínica Geral', 'CRMV-INVALIDO')
-        expect(() => service.adicionarMedico(medico)).toThrow(ValidacaoError)
+        await expect(service.adicionarMedico(medico)).rejects.toThrow(ValidacaoError)
     })
 })
 
 describe('MedicoService.buscarPorId', () => {
-    it('retorna médico existente', () => {
-        service.adicionarMedico(novoMedico(1))
-        expect(service.buscarPorId(1)?.nome).toBe('Dr. Silva')
+    it('retorna médico existente', async () => {
+        await service.adicionarMedico(novoMedico(1))
+        expect((await service.buscarPorId(1))?.nome).toBe('Dr. Silva')
     })
 
-    it('retorna undefined para id inexistente', () => {
-        expect(service.buscarPorId(99)).toBeUndefined()
+    it('retorna undefined para id inexistente', async () => {
+        expect(await service.buscarPorId(99)).toBeUndefined()
     })
 })
 
 describe('MedicoService.listarPorEspecialidade', () => {
-    it('filtra médicos pela especialidade', () => {
-        service.adicionarMedico(novoMedico(1))
-        service.adicionarMedico(new Medico(2, 'Dra. Lima', '27933005678', 'lima@vet.com', 'Cirurgia', '67890-ES'))
-        expect(service.listarPorEspecialidade('clínica')).toHaveLength(1)
+    it('filtra médicos pela especialidade', async () => {
+        await service.adicionarMedico(novoMedico(1))
+        await service.adicionarMedico(new Medico(2, 'Dra. Lima', '27933005678', 'lima@vet.com', 'Cirurgia', '67890-ES'))
+        expect(await service.listarPorEspecialidade('clínica')).toHaveLength(1)
     })
 })
 
 describe('MedicoService.buscarPorCrmv', () => {
-    it('encontra médico pelo CRMV exato', () => {
-        service.adicionarMedico(novoMedico())
-        expect(service.buscarPorCrmv('12345-ES')?.nome).toBe('Dr. Silva')
+    it('encontra médico pelo CRMV exato', async () => {
+        await service.adicionarMedico(novoMedico())
+        expect((await service.buscarPorCrmv('12345-ES'))?.nome).toBe('Dr. Silva')
     })
 
-    it('retorna undefined para CRMV inexistente', () => {
-        expect(service.buscarPorCrmv('99999-ES')).toBeUndefined()
+    it('retorna undefined para CRMV inexistente', async () => {
+        expect(await service.buscarPorCrmv('99999-ES')).toBeUndefined()
     })
 })
 
 describe('MedicoService.removerMedico', () => {
-    it('remove médico existente', () => {
-        service.adicionarMedico(novoMedico())
-        service.removerMedico(1)
-        expect(service.listarMedicos()).toHaveLength(0)
+    it('remove médico existente', async () => {
+        await service.adicionarMedico(novoMedico())
+        await service.removerMedico(1)
+        expect(await service.listarMedicos()).toHaveLength(0)
     })
 })

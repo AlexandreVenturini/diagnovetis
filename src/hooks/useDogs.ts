@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { Dog, DogFormData } from '../features/dogs/dogTypes'
 import { Pet } from '../models/Pet'
 import { Tutor } from '../models/Tutor'
 import { Endereco } from '../models/Endereco'
-import { PetService, petRepository } from '../services/PetService'
+import { PetService } from '../services/PetService'
 import { TutorService } from '../services/TutorService'
-import type { Dog, DogFormData } from '../features/dogs/dogTypes'
+import { petRepository } from '../services/PetService'
 
 const petService = new PetService()
 const tutorService = new TutorService()
@@ -23,74 +24,51 @@ function petToDog(pet: Pet): Dog {
     }
 }
 
-function getOrCreateTutor(nome: string, contact: string): Tutor {
-    const existing = tutorService.buscarPorNome(nome)[0]
-    if (existing) return existing
+async function getOrCreateTutor(nome: string, contact: string): Promise<Tutor> {
+    const encontrados = await tutorService.buscarPorNome(nome)
+    if (encontrados.length > 0) return encontrados[0]
 
+    const tutores = await tutorService.listarTutores()
+    const novoId = tutores.length > 0 ? Math.max(...tutores.map(t => t.id)) + 1 : 1
     const tutor = new Tutor(
-        Date.now(),
-        nome,
-        contact,
-        '',
-        new Date(),
-        new Endereco('', 0, '', '', '', '')
+        novoId, nome, contact, '', new Date(),
+        new Endereco('', 0, '', '', '', '00000000')
     )
-    tutorService.adicionarTutor(tutor)
+    await tutorService.adicionarTutor(tutor)
     return tutor
 }
 
 export function useDogs() {
-    const [dogs, setDogs] = useState<Dog[]>(() =>
-        petService.listarPets().map(petToDog)
-    )
+    const [dogs, setDogs] = useState<Dog[]>([])
 
-    const refresh = useCallback(() => {
-        setDogs(petService.listarPets().map(petToDog))
+    const refresh = useCallback(async () => {
+        const pets = await petService.listarPets()
+        setDogs(pets.map(petToDog))
     }, [])
 
-    const createDog = useCallback((data: DogFormData) => {
-        const tutor = getOrCreateTutor(data.tutor, data.contact)
-        const pet = new Pet(
-            Date.now(),
-            data.name,
-            'Cachorro',
-            data.breed,
-            tutor,
-            [],
-            data.age,
-            data.weight,
-            data.sex,
-            data.history
-        )
-        petService.adicionarPet(pet)
-        refresh()
-    }, [refresh])
+    useEffect(() => { refresh() }, [refresh])
 
-    const updateDog = useCallback((id: number, data: DogFormData) => {
-        const existing = petRepository.getById(id)
-        if (!existing) return
+    async function createDog(form: DogFormData) {
+        const tutor = await getOrCreateTutor(form.tutor, form.contact)
+        const pets = await petService.listarPets()
+        const novoId = pets.length > 0 ? Math.max(...pets.map(p => p.id)) + 1 : 1
+        const pet = new Pet(novoId, form.name, 'Cão', form.breed, tutor, [], form.age, form.weight, form.sex, form.history)
+        await petService.adicionarPet(pet)
+        await refresh()
+    }
 
-        const tutor = getOrCreateTutor(data.tutor, data.contact)
-        const updated = new Pet(
-            id,
-            data.name,
-            existing.especie,
-            data.breed,
-            tutor,
-            existing.historicoConsulta,
-            data.age,
-            data.weight,
-            data.sex,
-            data.history
-        )
-        petRepository.update(updated)
-        refresh()
-    }, [refresh])
+    async function updateDog(id: number, form: DogFormData) {
+        const pet = await petRepository.getById(id)
+        if (!pet) return
+        const atualizado = new Pet(id, form.name, 'Cão', form.breed, pet.tutor, [], form.age, form.weight, form.sex, form.history)
+        await petRepository.update(atualizado)
+        await refresh()
+    }
 
-    const removeDog = useCallback((id: number) => {
-        petService.removerPet(id)
-        refresh()
-    }, [refresh])
+    async function removeDog(id: number) {
+        await petService.removerPet(id)
+        await refresh()
+    }
 
     return { dogs, createDog, updateDog, removeDog }
 }

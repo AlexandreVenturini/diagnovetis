@@ -18,15 +18,9 @@ export class LocalStorageRepository<T extends { id: number }> implements Reposit
     }
 
     private load(): T[] {
-        if (typeof localStorage === "undefined") {
-            return [];
-        }
-
+        if (typeof localStorage === "undefined") return [];
         const raw = localStorage.getItem(this.storageKey);
-        if (!raw) {
-            return [];
-        }
-
+        if (!raw) return [];
         try {
             const parsed = JSON.parse(raw) as unknown[];
             return parsed.map(item => this.deserialize(item));
@@ -36,37 +30,39 @@ export class LocalStorageRepository<T extends { id: number }> implements Reposit
     }
 
     private persist(): void {
-        if (typeof localStorage === "undefined") {
-            return;
-        }
-
+        if (typeof localStorage === "undefined") return;
         localStorage.setItem(
             this.storageKey,
             JSON.stringify(this.items.map(item => this.serialize(item)))
         );
     }
 
-    getAll(): T[] {
+    async getAll(): Promise<T[]> {
         return [...this.items];
     }
 
-    getById(id: number): T | undefined {
+    async getById(id: number): Promise<T | undefined> {
         return this.items.find(item => item.id === id);
     }
 
-    add(item: T): void {
+    async add(item: T): Promise<void> {
         this.items.push(item);
         this.persist();
     }
 
-    update(item: T): void {
+    async update(item: T): Promise<void> {
         this.items = this.items.map(existing => existing.id === item.id ? item : existing);
         this.persist();
     }
 
-    remove(id: number): void {
+    async remove(id: number): Promise<void> {
         this.items = this.items.filter(item => item.id !== id);
         this.persist();
+    }
+
+    /** Busca síncrona — use apenas em deserializers onde async não é possível */
+    findByIdSync(id: number): T | undefined {
+        return this.items.find(item => item.id === id);
     }
 
     clear(): void {

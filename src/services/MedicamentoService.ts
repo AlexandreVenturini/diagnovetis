@@ -34,41 +34,39 @@ export const medicamentoRepository = new LocalStorageRepository<Medicamento>(
 );
 
 export class MedicamentoService {
-    listarMedicamentos(): Medicamento[] {
+    async listarMedicamentos(): Promise<Medicamento[]> {
         return medicamentoRepository.getAll();
     }
 
-    adicionarMedicamento(medicamento: Medicamento): void {
-        validarIdUnico(medicamento.id, medicamentoRepository.getAll(), "medicamento");
+    async adicionarMedicamento(medicamento: Medicamento): Promise<void> {
+        validarIdUnico(medicamento.id, await medicamentoRepository.getAll(), "medicamento");
         validarObrigatorio(medicamento.nome, "nomeComercial");
         validarObrigatorio(medicamento.principioAtivo, "principioAtivo");
         validarObrigatorio(medicamento.formaFarmaceutica, "formaFarmaceutica");
         validarObrigatorio(medicamento.viaAdministracao, "viaAdministracao");
         validarPositivo(medicamento.concentracao, "concentracao");
-        medicamentoRepository.add(medicamento);
+        await medicamentoRepository.add(medicamento);
     }
 
-    buscarPorId(id: number): Medicamento | undefined {
+    async buscarPorId(id: number): Promise<Medicamento | undefined> {
         return medicamentoRepository.getById(id);
     }
 
-    buscarPorNome(nome: string): Medicamento[] {
-        return medicamentoRepository.getAll().filter(m =>
-            m.nome.toLowerCase().includes(nome.toLowerCase())
-        );
+    async buscarPorNome(nome: string): Promise<Medicamento[]> {
+        const todos = await medicamentoRepository.getAll();
+        return todos.filter(m => m.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
-    buscarPorPrincipioAtivo(principioAtivo: string): Medicamento[] {
-        return medicamentoRepository.getAll().filter(m =>
-            m.principioAtivo.toLowerCase().includes(principioAtivo.toLowerCase())
-        );
+    async buscarPorPrincipioAtivo(principioAtivo: string): Promise<Medicamento[]> {
+        const todos = await medicamentoRepository.getAll();
+        return todos.filter(m => m.principioAtivo.toLowerCase().includes(principioAtivo.toLowerCase()));
     }
 
-    removerMedicamento(id: number): void {
-        medicamentoRepository.remove(id);
+    async removerMedicamento(id: number): Promise<void> {
+        await medicamentoRepository.remove(id);
     }
 
-    atualizarMedicamento(medicamento: Medicamento): void {
-        medicamentoRepository.update(medicamento);
+    async atualizarMedicamento(medicamento: Medicamento): Promise<void> {
+        await medicamentoRepository.update(medicamento);
     }
 }

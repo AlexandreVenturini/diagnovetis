@@ -1,66 +1,66 @@
 import { Zoonose } from "../models/Zoonose";
-import { LocalStorageRepository } from "./storage/LocalStorageRepository";
+import { SupabaseRepository } from "./storage/SupabaseRepository";
 import { validarObrigatorio, validarGrauRisco, validarIdUnico } from "./validation/validadores";
 
-interface ZoonoseRaw {
+interface ZoonoseRow {
     id: number;
     nome: string;
-    agenteEtiologico: string;
+    agente_etiologico: string;
     sintomas: string;
-    medidasPreventivas: string;
-    grauRisco: string;
+    medidas_preventivas: string;
+    grau_risco: string;
 }
 
-export const zoonoseRepository = new LocalStorageRepository<Zoonose>(
-    "diagnovetis:zoonoses",
+export const zoonoseRepository = new SupabaseRepository<Zoonose>(
+    "zoonoses",
     zoonose => ({
         id: zoonose.id,
         nome: zoonose.nome,
-        agenteEtiologico: zoonose.agenteEtiologico,
+        agente_etiologico: zoonose.agenteEtiologico,
         sintomas: zoonose.sintomas,
-        medidasPreventivas: zoonose.medidasPreventivas,
-        grauRisco: zoonose.grauRisco
+        medidas_preventivas: zoonose.medidasPreventivas,
+        grau_risco: zoonose.grauRisco
     }),
     raw => {
-        const r = raw as ZoonoseRaw;
-        return new Zoonose(r.id, r.nome, r.agenteEtiologico, r.sintomas, r.medidasPreventivas, r.grauRisco);
+        const r = raw as ZoonoseRow;
+        return new Zoonose(r.id, r.nome, r.agente_etiologico, r.sintomas, r.medidas_preventivas, r.grau_risco);
     }
 );
 
 export class ZoonoseService {
-    listarZoonoses(): Zoonose[] {
+    async listarZoonoses(): Promise<Zoonose[]> {
         return zoonoseRepository.getAll();
     }
 
-    adicionarZoonose(zoonose: Zoonose): void {
-        validarIdUnico(zoonose.id, zoonoseRepository.getAll(), "zoonose");
+    async adicionarZoonose(zoonose: Zoonose): Promise<void> {
+        validarIdUnico(zoonose.id, await zoonoseRepository.getAll(), "zoonose");
         validarObrigatorio(zoonose.nome, "nome");
         validarObrigatorio(zoonose.agenteEtiologico, "agenteEtiologico");
         validarObrigatorio(zoonose.sintomas, "sintomas");
         validarObrigatorio(zoonose.medidasPreventivas, "medidasPreventivas");
         validarGrauRisco(zoonose.grauRisco, "grauRisco");
-        zoonoseRepository.add(zoonose);
+        await zoonoseRepository.add(zoonose);
     }
 
-    buscarPorId(id: number): Zoonose | undefined {
+    async buscarPorId(id: number): Promise<Zoonose | undefined> {
         return zoonoseRepository.getById(id);
     }
 
-    buscarPorNome(nome: string): Zoonose[] {
-        return zoonoseRepository.getAll().filter(z =>
-            z.nome.toLowerCase().includes(nome.toLowerCase())
-        );
+    async buscarPorNome(nome: string): Promise<Zoonose[]> {
+        const todos = await zoonoseRepository.getAll();
+        return todos.filter(z => z.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
-    listarAltoRisco(): Zoonose[] {
-        return zoonoseRepository.getAll().filter(z => z.isAltoRisco());
+    async listarAltoRisco(): Promise<Zoonose[]> {
+        const todos = await zoonoseRepository.getAll();
+        return todos.filter(z => z.isAltoRisco());
     }
 
-    removerZoonose(id: number): void {
-        zoonoseRepository.remove(id);
+    async removerZoonose(id: number): Promise<void> {
+        await zoonoseRepository.remove(id);
     }
 
-    atualizarZoonose(zoonose: Zoonose): void {
-        zoonoseRepository.update(zoonose);
+    async atualizarZoonose(zoonose: Zoonose): Promise<void> {
+        await zoonoseRepository.update(zoonose);
     }
 }

@@ -20,14 +20,14 @@ export function ClinicalCareModule() {
     setMessage('')
   }
 
-  function saveRecord() {
+  async function saveRecord() {
     if (!data.dogName || !data.tutorName || !data.veterinarian) {
       setMessage('Preencha a identificação do paciente antes de salvar.')
       setStep(1)
       return
     }
 
-    const resultado = salvarConsulta(data)
+    const resultado = await salvarConsulta(data)
     if (resultado.sucesso) {
       setMessage('Atendimento salvo no prontuário com sucesso!')
       setData(EMPTY_CONSULTATION)

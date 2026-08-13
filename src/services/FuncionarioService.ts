@@ -18,7 +18,7 @@ export const funcionarioRepository = new LocalStorageRepository<Funcionario>(
     }),
     raw => {
         const r = raw as FuncionarioRaw;
-        const medico = medicoRepository.getById(r.medicoId);
+        const medico = medicoRepository.findByIdSync(r.medicoId);
         if (!medico) {
             throw new Error(`Medico ${r.medicoId} nao encontrado para o funcionario ${r.id}`);
         }
@@ -27,25 +27,25 @@ export const funcionarioRepository = new LocalStorageRepository<Funcionario>(
 );
 
 export class FuncionarioService {
-    listarFuncionarios(): Funcionario[] {
+    async listarFuncionarios(): Promise<Funcionario[]> {
         return funcionarioRepository.getAll();
     }
 
-    adicionarFuncionario(funcionario: Funcionario): void {
-        validarIdUnico(funcionario.id, funcionarioRepository.getAll(), "funcionário");
+    async adicionarFuncionario(funcionario: Funcionario): Promise<void> {
+        validarIdUnico(funcionario.id, await funcionarioRepository.getAll(), "funcionário");
         validarData(funcionario.dataAdmissao, "dataAdmissao");
-        funcionarioRepository.add(funcionario);
+        await funcionarioRepository.add(funcionario);
     }
 
-    buscarPorId(id: number): Funcionario | undefined {
+    async buscarPorId(id: number): Promise<Funcionario | undefined> {
         return funcionarioRepository.getById(id);
     }
 
-    removerFuncionario(id: number): void {
-        funcionarioRepository.remove(id);
+    async removerFuncionario(id: number): Promise<void> {
+        await funcionarioRepository.remove(id);
     }
 
-    atualizarFuncionario(funcionario: Funcionario): void {
-        funcionarioRepository.update(funcionario);
+    async atualizarFuncionario(funcionario: Funcionario): Promise<void> {
+        await funcionarioRepository.update(funcionario);
     }
 }

@@ -62,7 +62,7 @@ let medico: Medico
 let tutor: Tutor
 let pet: Pet
 
-beforeEach(() => {
+beforeEach(async () => {
     exameService = new ExameService()
     receitaService = new ReceitaService()
     consultaService = new ConsultaService()
@@ -74,103 +74,103 @@ beforeEach(() => {
     tutor = criarTutor()
     pet = criarPet(tutor)
 
-    medicoService.adicionarMedico(medico)
-    tutorService.adicionarTutor(tutor)
-    petService.adicionarPet(pet)
+    await medicoService.adicionarMedico(medico)
+    await tutorService.adicionarTutor(tutor)
+    await petService.adicionarPet(pet)
 })
 
 describe('ExameService', () => {
-    it('listarPorConsulta retorna exames da consulta', () => {
+    it('listarPorConsulta retorna exames da consulta', async () => {
         const consulta = criarConsulta(medico, pet, 1, [criarExame(1), criarExame(2)])
-        consultaService.adicionarConsulta(consulta)
-        expect(exameService.listarPorConsulta(1)).toHaveLength(2)
+        await consultaService.adicionarConsulta(consulta)
+        expect(await exameService.listarPorConsulta(1)).toHaveLength(2)
     })
 
-    it('listarPorConsulta retorna lista vazia para consulta sem exames', () => {
+    it('listarPorConsulta retorna lista vazia para consulta sem exames', async () => {
         const consulta = criarConsulta(medico, pet, 1, [])
-        consultaService.adicionarConsulta(consulta)
-        expect(exameService.listarPorConsulta(1)).toHaveLength(0)
+        await consultaService.adicionarConsulta(consulta)
+        expect(await exameService.listarPorConsulta(1)).toHaveLength(0)
     })
 
-    it('listarPorConsulta retorna lista vazia para consulta inexistente', () => {
-        expect(exameService.listarPorConsulta(99)).toHaveLength(0)
+    it('listarPorConsulta retorna lista vazia para consulta inexistente', async () => {
+        expect(await exameService.listarPorConsulta(99)).toHaveLength(0)
     })
 
-    it('listarTodos retorna exames de todas as consultas', () => {
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(1)]))
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 2, [criarExame(2), criarExame(3)]))
-        expect(exameService.listarTodos()).toHaveLength(3)
+    it('listarTodos retorna exames de todas as consultas', async () => {
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(1)]))
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 2, [criarExame(2), criarExame(3)]))
+        expect(await exameService.listarTodos()).toHaveLength(3)
     })
 
-    it('buscarPorId encontra exame pelo id', () => {
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(42)]))
-        expect(exameService.buscarPorId(42)?.nomeExame).toBe('Hemograma')
+    it('buscarPorId encontra exame pelo id', async () => {
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(42)]))
+        expect((await exameService.buscarPorId(42))?.nomeExame).toBe('Hemograma')
     })
 
-    it('buscarPorId retorna undefined para id inexistente', () => {
-        expect(exameService.buscarPorId(99)).toBeUndefined()
+    it('buscarPorId retorna undefined para id inexistente', async () => {
+        expect(await exameService.buscarPorId(99)).toBeUndefined()
     })
 
-    it('listarPorPet retorna exames do pet correto', () => {
+    it('listarPorPet retorna exames do pet correto', async () => {
         const tutor2 = criarTutor(2)
         const pet2 = criarPet(tutor2, 2)
         const tutorService = new TutorService()
         const petService = new PetService()
-        tutorService.adicionarTutor(tutor2)
-        petService.adicionarPet(pet2)
+        await tutorService.adicionarTutor(tutor2)
+        await petService.adicionarPet(pet2)
 
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(1)]))
-        consultaService.adicionarConsulta(criarConsulta(medico, pet2, 2, [criarExame(2)]))
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(1)]))
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet2, 2, [criarExame(2)]))
 
-        expect(exameService.listarPorPet(1)).toHaveLength(1)
-        expect(exameService.listarPorPet(2)).toHaveLength(1)
+        expect(await exameService.listarPorPet(1)).toHaveLength(1)
+        expect(await exameService.listarPorPet(2)).toHaveLength(1)
     })
 })
 
 describe('ReceitaService', () => {
-    it('listarPorConsulta retorna receitas da consulta', () => {
+    it('listarPorConsulta retorna receitas da consulta', async () => {
         const consulta = criarConsulta(medico, pet, 1, [], [criarReceita(1)])
-        consultaService.adicionarConsulta(consulta)
-        expect(receitaService.listarPorConsulta(1)).toHaveLength(1)
+        await consultaService.adicionarConsulta(consulta)
+        expect(await receitaService.listarPorConsulta(1)).toHaveLength(1)
     })
 
-    it('listarPorConsulta retorna lista vazia para consulta sem receitas', () => {
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], []))
-        expect(receitaService.listarPorConsulta(1)).toHaveLength(0)
+    it('listarPorConsulta retorna lista vazia para consulta sem receitas', async () => {
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], []))
+        expect(await receitaService.listarPorConsulta(1)).toHaveLength(0)
     })
 
-    it('listarPorConsulta retorna lista vazia para consulta inexistente', () => {
-        expect(receitaService.listarPorConsulta(99)).toHaveLength(0)
+    it('listarPorConsulta retorna lista vazia para consulta inexistente', async () => {
+        expect(await receitaService.listarPorConsulta(99)).toHaveLength(0)
     })
 
-    it('listarTodas retorna receitas de todas as consultas', () => {
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], [criarReceita(1)]))
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 2, [], [criarReceita(2), criarReceita(3)]))
-        expect(receitaService.listarTodas()).toHaveLength(3)
+    it('listarTodas retorna receitas de todas as consultas', async () => {
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], [criarReceita(1)]))
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 2, [], [criarReceita(2), criarReceita(3)]))
+        expect(await receitaService.listarTodas()).toHaveLength(3)
     })
 
-    it('buscarPorId encontra receita pelo id', () => {
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], [criarReceita(99)]))
-        expect(receitaService.buscarPorId(99)?.id).toBe(99)
+    it('buscarPorId encontra receita pelo id', async () => {
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], [criarReceita(99)]))
+        expect((await receitaService.buscarPorId(99))?.id).toBe(99)
     })
 
-    it('buscarPorId retorna undefined para id inexistente', () => {
-        expect(receitaService.buscarPorId(99)).toBeUndefined()
+    it('buscarPorId retorna undefined para id inexistente', async () => {
+        expect(await receitaService.buscarPorId(99)).toBeUndefined()
     })
 
-    it('listarPorPet retorna receitas do pet correto', () => {
+    it('listarPorPet retorna receitas do pet correto', async () => {
         const tutor2 = criarTutor(2)
         const pet2 = criarPet(tutor2, 2)
         const tutorService = new TutorService()
         const petService = new PetService()
-        tutorService.adicionarTutor(tutor2)
-        petService.adicionarPet(pet2)
+        await tutorService.adicionarTutor(tutor2)
+        await petService.adicionarPet(pet2)
 
-        consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], [criarReceita(1)]))
-        consultaService.adicionarConsulta(criarConsulta(medico, pet2, 2, [], [criarReceita(2)]))
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [], [criarReceita(1)]))
+        await consultaService.adicionarConsulta(criarConsulta(medico, pet2, 2, [], [criarReceita(2)]))
 
-        expect(receitaService.listarPorPet(1)).toHaveLength(1)
-        expect(receitaService.listarPorPet(2)).toHaveLength(1)
+        expect(await receitaService.listarPorPet(1)).toHaveLength(1)
+        expect(await receitaService.listarPorPet(2)).toHaveLength(1)
     })
 })
 

@@ -2,21 +2,24 @@ import { Exame } from "../models/Exame";
 import { consultaRepository } from "./ConsultaService";
 
 export class ExameService {
-    listarPorConsulta(consultaId: number): Exame[] {
-        return consultaRepository.getById(consultaId)?.exames ?? [];
+    async listarPorConsulta(consultaId: number): Promise<Exame[]> {
+        const consulta = await consultaRepository.getById(consultaId);
+        return consulta?.exames ?? [];
     }
 
-    listarTodos(): Exame[] {
-        return consultaRepository.getAll().flatMap(consulta => consulta.exames);
+    async listarTodos(): Promise<Exame[]> {
+        const consultas = await consultaRepository.getAll();
+        return consultas.flatMap(consulta => consulta.exames);
     }
 
-    buscarPorId(exameId: number): Exame | undefined {
-        return this.listarTodos().find(e => e.id === exameId);
+    async buscarPorId(exameId: number): Promise<Exame | undefined> {
+        const todos = await this.listarTodos();
+        return todos.find(e => e.id === exameId);
     }
 
-    listarPorPet(petId: number): Exame[] {
-        return consultaRepository
-            .getAll()
+    async listarPorPet(petId: number): Promise<Exame[]> {
+        const consultas = await consultaRepository.getAll();
+        return consultas
             .filter(consulta => consulta.pet.id === petId)
             .flatMap(consulta => consulta.exames);
     }

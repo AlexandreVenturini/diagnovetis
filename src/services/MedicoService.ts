@@ -1,8 +1,8 @@
 import { Medico } from "../models/Medico";
-import { LocalStorageRepository } from "./storage/LocalStorageRepository";
+import { SupabaseRepository } from "./storage/SupabaseRepository";
 import { validarObrigatorio, validarEmail, validarTelefone, validarCrmv, validarIdUnico } from "./validation/validadores";
 
-interface MedicoRaw {
+interface MedicoRow {
     id: number;
     nome: string;
     telefone: string;
@@ -11,8 +11,8 @@ interface MedicoRaw {
     crmv: string;
 }
 
-export const medicoRepository = new LocalStorageRepository<Medico>(
-    "diagnovetis:medicos",
+export const medicoRepository = new SupabaseRepository<Medico>(
+    "medicos",
     medico => ({
         id: medico.id,
         nome: medico.nome,
@@ -22,41 +22,41 @@ export const medicoRepository = new LocalStorageRepository<Medico>(
         crmv: medico.crmv
     }),
     raw => {
-        const medicoRaw = raw as MedicoRaw;
-        return new Medico(medicoRaw.id, medicoRaw.nome, medicoRaw.telefone, medicoRaw.email, medicoRaw.especialidade, medicoRaw.crmv);
+        const r = raw as MedicoRow;
+        return new Medico(r.id, r.nome, r.telefone, r.email, r.especialidade, r.crmv);
     }
 );
 
 export class MedicoService {
-    listarMedicos(): Medico[] {
+    async listarMedicos(): Promise<Medico[]> {
         return medicoRepository.getAll();
     }
 
-    adicionarMedico(medico: Medico): void {
-        validarIdUnico(medico.id, medicoRepository.getAll(), "médico");
+    async adicionarMedico(medico: Medico): Promise<void> {
+        validarIdUnico(medico.id, await medicoRepository.getAll(), "médico");
         validarObrigatorio(medico.nome, "nome");
         validarEmail(medico.email, "email");
         validarTelefone(medico.telefone, "telefone");
         validarObrigatorio(medico.especialidade, "especialidade");
         validarCrmv(medico.crmv, "crmv");
-        medicoRepository.add(medico);
+        await medicoRepository.add(medico);
     }
 
-    buscarPorId(id: number): Medico | undefined {
+    async buscarPorId(id: number): Promise<Medico | undefined> {
         return medicoRepository.getById(id);
     }
 
-    listarPorEspecialidade(especialidade: string): Medico[] {
-        return medicoRepository.getAll().filter(m =>
-            m.especialidade.toLowerCase().includes(especialidade.toLowerCase())
-        );
+    async listarPorEspecialidade(especialidade: string): Promise<Medico[]> {
+        const todos = await medicoRepository.getAll();
+        return todos.filter(m => m.especialidade.toLowerCase().includes(especialidade.toLowerCase()));
     }
 
-    buscarPorCrmv(crmv: string): Medico | undefined {
-        return medicoRepository.getAll().find(m => m.crmv === crmv);
+    async buscarPorCrmv(crmv: string): Promise<Medico | undefined> {
+        const todos = await medicoRepository.getAll();
+        return todos.find(m => m.crmv === crmv);
     }
 
-    removerMedico(id: number): void {
-        medicoRepository.remove(id);
+    async removerMedico(id: number): Promise<void> {
+        await medicoRepository.remove(id);
     }
 }

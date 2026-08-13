@@ -1,9 +1,11 @@
 import { Tutor } from "../models/Tutor";
 import { Endereco } from "../models/Endereco";
-import { LocalStorageRepository } from "./storage/LocalStorageRepository";
+import { SupabaseRepository } from "./storage/SupabaseRepository";
+import { supabase } from "./storage/supabaseClient";
 import { validarObrigatorio, validarEmail, validarTelefone, validarCep, validarData, validarIdUnico } from "./validation/validadores";
 
-interface EnderecoRaw {
+interface EnderecoRow {
+    id: number;
     rua: string;
     numero: number;
     bairro: string;
@@ -12,59 +14,52 @@ interface EnderecoRaw {
     cep: string;
 }
 
-interface TutorRaw {
+interface TutorRow {
     id: number;
     nome: string;
     telefone: string;
     email: string;
-    dataCadastro: string;
-    endereco: EnderecoRaw;
+    data_cadastro: string;
+    endereco_id: number;
+    enderecos: EnderecoRow;
 }
 
-export const tutorRepository = new LocalStorageRepository<Tutor>(
-    "diagnovetis:tutores",
+export const tutorRepository = new SupabaseRepository<Tutor>(
+    "tutores",
     tutor => ({
         id: tutor.id,
         nome: tutor.nome,
         telefone: tutor.telefone,
         email: tutor.email,
-        dataCadastro: tutor.dataCadastro.toISOString(),
-        endereco: {
-            rua: tutor.endereco.rua,
-            numero: tutor.endereco.numero,
-            bairro: tutor.endereco.bairro,
-            cidade: tutor.endereco.cidade,
-            uf: tutor.endereco.uf,
-            cep: tutor.endereco.cep
-        }
+        data_cadastro: tutor.dataCadastro.toISOString(),
+        endereco_id: (tutor as unknown as { _enderecoId?: number })._enderecoId
     }),
     raw => {
-        const tutorRaw = raw as TutorRaw;
+        const r = raw as TutorRow;
+        const e = r.enderecos;
         return new Tutor(
-            tutorRaw.id,
-            tutorRaw.nome,
-            tutorRaw.telefone,
-            tutorRaw.email,
-            new Date(tutorRaw.dataCadastro),
-            new Endereco(
-                tutorRaw.endereco.rua,
-                tutorRaw.endereco.numero,
-                tutorRaw.endereco.bairro,
-                tutorRaw.endereco.cidade,
-                tutorRaw.endereco.uf,
-                tutorRaw.endereco.cep
-            )
+            r.id, r.nome, r.telefone, r.email,
+            new Date(r.data_cadastro),
+            new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep)
         );
     }
 );
 
 export class TutorService {
-    listarTutores(): Tutor[] {
-        return tutorRepository.getAll();
+    async listarTutores(): Promise<Tutor[]> {
+        const { data, error } = await supabase
+            .from("tutores")
+            .select("*, enderecos(*)")
+        if (error) throw new Error(error.message);
+        return (data ?? []).map(r => {
+            const e = r.enderecos as EnderecoRow;
+            return new Tutor(r.id, r.nome, r.telefone, r.email, new Date(r.data_cadastro), new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep));
+        });
     }
 
-    adicionarTutor(tutor: Tutor): void {
-        validarIdUnico(tutor.id, tutorRepository.getAll(), "tutor");
+    async adicionarTutor(tutor: Tutor): Promise<void> {
+        const todos = await this.listarTutores();
+        validarIdUnico(tutor.id, todos, "tutor");
         validarObrigatorio(tutor.nome, "nome");
         validarEmail(tutor.email, "email");
         validarTelefone(tutor.telefone, "telefone");
@@ -73,30 +68,63 @@ export class TutorService {
         validarObrigatorio(tutor.endereco.cidade, "cidade");
         validarObrigatorio(tutor.endereco.uf, "uf");
         validarCep(tutor.endereco.cep, "cep");
-        tutorRepository.add(tutor);
+
+        const { data: endData, error: endError } = await supabase
+            .from("enderecos")
+            .insert({
+                rua: tutor.endereco.rua,
+                numero: tutor.endereco.numero,
+                bairro: tutor.endereco.bairro,
+                cidade: tutor.endereco.cidade,
+                uf: tutor.endereco.uf,
+                cep: tutor.endereco.cep
+            })
+            .select()
+            .single();
+        if (endError) throw new Error(endError.message);
+
+        const { error } = await supabase.from("tutores").insert({
+            id: tutor.id,
+            nome: tutor.nome,
+            telefone: tutor.telefone,
+            email: tutor.email,
+            data_cadastro: tutor.dataCadastro.toISOString(),
+            endereco_id: endData.id
+        });
+        if (error) throw new Error(error.message);
     }
 
-    buscarPorId(id: number): Tutor | undefined {
-        return tutorRepository.getById(id);
+    async buscarPorId(id: number): Promise<Tutor | undefined> {
+        const { data, error } = await supabase
+            .from("tutores")
+            .select("*, enderecos(*)")
+            .eq("id", id)
+            .single();
+        if (error || !data) return undefined;
+        const e = data.enderecos as EnderecoRow;
+        return new Tutor(data.id, data.nome, data.telefone, data.email, new Date(data.data_cadastro), new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep));
     }
 
-    buscarPorNome(nome: string): Tutor[] {
-        return tutorRepository.getAll().filter(t =>
-            t.nome.toLowerCase().includes(nome.toLowerCase())
-        );
+    async buscarPorNome(nome: string): Promise<Tutor[]> {
+        const todos = await this.listarTutores();
+        return todos.filter(t => t.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
-    buscarPorEmail(email: string): Tutor | undefined {
-        return tutorRepository.getAll().find(t =>
-            t.email.toLowerCase() === email.toLowerCase()
-        );
+    async buscarPorEmail(email: string): Promise<Tutor | undefined> {
+        const todos = await this.listarTutores();
+        return todos.find(t => t.email.toLowerCase() === email.toLowerCase());
     }
 
-    removerTutor(id: number): void {
-        tutorRepository.remove(id);
+    async removerTutor(id: number): Promise<void> {
+        await supabase.from("tutores").delete().eq("id", id);
     }
 
-    atualizarTutor(tutor: Tutor): void {
-        tutorRepository.update(tutor);
+    async atualizarTutor(tutor: Tutor): Promise<void> {
+        await supabase.from("tutores").update({
+            nome: tutor.nome,
+            telefone: tutor.telefone,
+            email: tutor.email,
+            data_cadastro: tutor.dataCadastro.toISOString()
+        }).eq("id", tutor.id);
     }
 }

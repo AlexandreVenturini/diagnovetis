@@ -1,81 +1,102 @@
 import { Pet } from "../models/Pet";
-import { tutorRepository } from "./TutorService";
-import { LocalStorageRepository } from "./storage/LocalStorageRepository";
+import { SupabaseRepository } from "./storage/SupabaseRepository";
+import { supabase } from "./storage/supabaseClient";
+import { TutorService } from "./TutorService";
 import { validarObrigatorio, validarIdUnico } from "./validation/validadores";
 
-interface PetRaw {
+const tutorService = new TutorService();
+
+interface PetRow {
     id: number;
     nome: string;
     especie: string;
     raca: string;
-    tutorId: number;
+    tutor_id: number;
     idade: string;
     peso: string;
     sexo: string;
     historico: string;
 }
 
-export const petRepository = new LocalStorageRepository<Pet>(
-    "diagnovetis:pets",
+export const petRepository = new SupabaseRepository<Pet>(
+    "pets",
     pet => ({
         id: pet.id,
         nome: pet.nome,
         especie: pet.especie,
         raca: pet.raca,
-        tutorId: pet.tutor.id,
+        tutor_id: pet.tutor.id,
         idade: pet.idade,
         peso: pet.peso,
         sexo: pet.sexo,
         historico: pet.historico
     }),
     raw => {
-        const petRaw = raw as PetRaw;
-        const tutor = tutorRepository.getById(petRaw.tutorId);
-        if (!tutor) {
-            throw new Error(`Tutor ${petRaw.tutorId} nao encontrado para o pet ${petRaw.id}`);
-        }
-
-        const pet = new Pet(petRaw.id, petRaw.nome, petRaw.especie, petRaw.raca, tutor, [], petRaw.idade ?? '', petRaw.peso ?? '', petRaw.sexo ?? '', petRaw.historico ?? '');
-        tutor.adicionarPet(pet);
-        return pet;
+        const r = raw as PetRow;
+        return new Pet(r.id, r.nome, r.especie, r.raca, null as never, [], r.idade ?? '', r.peso ?? '', r.sexo ?? '', r.historico ?? '');
     }
 );
 
 export class PetService {
-    listarPets(): Pet[] {
-        return petRepository.getAll();
+    async listarPets(): Promise<Pet[]> {
+        const { data, error } = await supabase.from("pets").select("*");
+        if (error) throw new Error(error.message);
+        const pets: Pet[] = [];
+        for (const r of data ?? []) {
+            const tutor = await tutorService.buscarPorId(r.tutor_id);
+            if (!tutor) continue;
+            const pet = new Pet(r.id, r.nome, r.especie, r.raca, tutor, [], r.idade ?? '', r.peso ?? '', r.sexo ?? '', r.historico ?? '');
+            tutor.adicionarPet(pet);
+            pets.push(pet);
+        }
+        return pets;
     }
 
-    adicionarPet(pet: Pet): void {
-        validarIdUnico(pet.id, petRepository.getAll(), "pet");
+    async adicionarPet(pet: Pet): Promise<void> {
+        const todos = await this.listarPets();
+        validarIdUnico(pet.id, todos, "pet");
         validarObrigatorio(pet.nome, "nome");
         validarObrigatorio(pet.especie, "especie");
         validarObrigatorio(pet.raca, "raca");
+        const { error } = await supabase.from("pets").insert({
+            id: pet.id,
+            nome: pet.nome,
+            especie: pet.especie,
+            raca: pet.raca,
+            tutor_id: pet.tutor.id,
+            idade: pet.idade,
+            peso: pet.peso,
+            sexo: pet.sexo,
+            historico: pet.historico
+        });
+        if (error) throw new Error(error.message);
         pet.tutor.adicionarPet(pet);
-        petRepository.add(pet);
     }
 
-    buscarPorId(id: number): Pet | undefined {
-        return petRepository.getById(id);
+    async buscarPorId(id: number): Promise<Pet | undefined> {
+        const { data, error } = await supabase.from("pets").select("*").eq("id", id).single();
+        if (error || !data) return undefined;
+        const tutor = await tutorService.buscarPorId(data.tutor_id);
+        if (!tutor) return undefined;
+        return new Pet(data.id, data.nome, data.especie, data.raca, tutor, [], data.idade ?? '', data.peso ?? '', data.sexo ?? '', data.historico ?? '');
     }
 
-    listarPorTutor(tutorId: number): Pet[] {
-        return petRepository.getAll().filter(p => p.tutor.id === tutorId);
+    async listarPorTutor(tutorId: number): Promise<Pet[]> {
+        const todos = await this.listarPets();
+        return todos.filter(p => p.tutor.id === tutorId);
     }
 
-    listarPorEspecie(especie: string): Pet[] {
-        return petRepository.getAll().filter(p =>
-            p.especie.toLowerCase() === especie.toLowerCase()
-        );
+    async listarPorEspecie(especie: string): Promise<Pet[]> {
+        const todos = await this.listarPets();
+        return todos.filter(p => p.especie.toLowerCase() === especie.toLowerCase());
     }
 
-    buscarPorNome(nome: string): Pet[] {
-        return petRepository.getAll().filter(p =>
-            p.nome.toLowerCase().includes(nome.toLowerCase())
-        );
+    async buscarPorNome(nome: string): Promise<Pet[]> {
+        const todos = await this.listarPets();
+        return todos.filter(p => p.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
-    removerPet(id: number): void {
-        petRepository.remove(id);
+    async removerPet(id: number): Promise<void> {
+        await supabase.from("pets").delete().eq("id", id);
     }
 }
