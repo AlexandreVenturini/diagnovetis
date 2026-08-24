@@ -4,7 +4,7 @@ import { BrandMark } from '../../components/common/BrandMark'
 import { Icon } from '../../components/common/Icon'
 
 type LoginPageProps = {
-  onLogin: () => void
+  onLogin: (role: 'veterinarian' | 'attendant') => void
   onCreateAccount: () => void
 }
 
@@ -17,11 +17,16 @@ export function LoginPage({ onLogin, onCreateAccount }: LoginPageProps) {
     event.preventDefault()
 
     if (email.trim().toLowerCase() === 'veterinario@ifes.edu.br' && password === 'vet123') {
-      onLogin()
+      onLogin('veterinarian')
       return
     }
 
-    setMessage('Use as credenciais do veterinário para acessar este módulo.')
+    if (email.trim().toLowerCase() === 'atendente@ifes.edu.br' && password === 'atd123') {
+      onLogin('attendant')
+      return
+    }
+
+    setMessage('E-mail ou senha inválidos. Confira as credenciais de teste.')
   }
 
   return (
