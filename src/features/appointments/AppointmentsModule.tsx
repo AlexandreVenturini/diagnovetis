@@ -4,8 +4,10 @@ import { AppointmentList } from './AppointmentList'
 import { useAppointments } from '../../hooks/useAppointments'
 import type { AppointmentFormData, AppointmentScreen } from './appointmentTypes'
 
-export function AppointmentsModule() {
-  const [screen, setScreen] = useState<AppointmentScreen>('list')
+type AppointmentsModuleProps = { initialScreen?: AppointmentScreen }
+
+export function AppointmentsModule({ initialScreen = 'list' }: AppointmentsModuleProps) {
+  const [screen, setScreen] = useState<AppointmentScreen>(initialScreen)
   const [formError, setFormError] = useState('')
   const { appointments, createAppointment, updateAppointment } = useAppointments()
 

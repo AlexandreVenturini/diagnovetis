@@ -2,13 +2,13 @@ import type { ReactNode } from 'react'
 import { Icon } from '../common/Icon'
 
 const menuItems = [
+  { label: 'Dashboard', icon: 'chart', module: 'dashboard' },
   { label: 'Cadastro', icon: 'paw', module: 'dogs' },
   { label: 'Agendamento', icon: 'calendar', module: 'appointments' },
   { label: 'Atendimento', icon: 'stethoscope', module: 'consultations' },
   { label: 'Prontuários', icon: 'file', module: 'records' },
   { label: 'Zoonoses', icon: 'database', module: 'zoonoses' },
   { label: 'Medicamentos', icon: 'pill', module: 'medications' },
-  { label: 'Dashboard', icon: 'chart' },
 ]
 
 function MenuIcon({ name }: { name: string }) {

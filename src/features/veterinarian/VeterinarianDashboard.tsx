@@ -6,6 +6,7 @@ import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
 import { RecordsModule } from '../records/RecordsModule'
 import { ZoonosesModule } from '../zoonoses/ZoonosesModule'
 import { MedicationsModule } from '../medications/MedicationsModule'
+import { DashboardHome } from '../dashboard/DashboardHome'
 import { DogDetails } from '../dogs/DogDetails'
 import { DogForm } from '../dogs/DogForm'
 import { DogList } from '../dogs/DogList'
@@ -17,8 +18,9 @@ type VeterinarianDashboardProps = {
 }
 
 export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) {
-  const [activeModule, setActiveModule] = useState('dogs')
+  const [activeModule, setActiveModule] = useState('dashboard')
   const [screen, setScreen] = useState<DogScreen>('list')
+  const [appointmentEntry, setAppointmentEntry] = useState<{ screen: 'list' | 'create'; key: number }>({ screen: 'list', key: 0 })
   const [selected, setSelected] = useState<Dog | null>(null)
 
   const { dogs, createDog, updateDog, removeDog } = useDogs()
@@ -49,6 +51,15 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
     setScreen('list')
   }
 
+  function openModule(module: string) {
+    setActiveModule(module)
+    if (module === 'dogs') setScreen('list')
+    if (module === 'appointments') setAppointmentEntry((current) => ({ screen: 'list', key: current.key + 1 }))
+  }
+
+  function openNewDog() { setScreen('create'); setActiveModule('dogs') }
+  function openNewAppointment() { setAppointmentEntry((current) => ({ screen: 'create', key: current.key + 1 })); setActiveModule('appointments') }
+
   return (
     <div className="app-shell">
       <AppHeader />
@@ -59,7 +70,9 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
           <button className="logout-button" onClick={onLogout}><span>↪</span> Sair</button>
         </section>
 
-        <MainNavigation activeModule={activeModule} onSelect={setActiveModule} />
+        <MainNavigation activeModule={activeModule} onSelect={openModule} />
+
+        {activeModule === 'dashboard' && <DashboardHome dogs={dogs} onOpenModule={openModule} onNewDog={openNewDog} onNewAppointment={openNewAppointment} />}
 
         {activeModule === 'dogs' && <aside className="profile-notice">
           <span>♧</span>
@@ -72,7 +85,7 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
           {screen === 'edit' && selected && <DogForm dog={selected} editing onSave={handleEdit} onCancel={() => setScreen('list')} />}
           {screen === 'details' && selected && <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />}
         </>}
-        {activeModule === 'appointments' && <AppointmentsModule />}
+        {activeModule === 'appointments' && <AppointmentsModule key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
         {activeModule === 'consultations' && <ClinicalCareModule />}
         {activeModule === 'records' && <RecordsModule />}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
