@@ -5,6 +5,7 @@ import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
 import { RecordsModule } from '../records/RecordsModule'
 import { ZoonosesModule } from '../zoonoses/ZoonosesModule'
+import { MedicationsModule } from '../medications/MedicationsModule'
 import { DogDetails } from '../dogs/DogDetails'
 import { DogForm } from '../dogs/DogForm'
 import { DogList } from '../dogs/DogList'
@@ -75,6 +76,7 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
         {activeModule === 'consultations' && <ClinicalCareModule />}
         {activeModule === 'records' && <RecordsModule />}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
+        {activeModule === 'medications' && <MedicationsModule />}
       </main>
     </div>
   )
