@@ -12,7 +12,8 @@ button { cursor:pointer; }
 .dot { position:absolute; display:block; border-radius:50%; background:#fff; }
 .dot-top { width:12px; height:12px; top:18px; left:32px; }.dot-left { width:22px; height:17px; top:35px; left:18px; transform:rotate(18deg); }.dot-center { width:19px; height:24px; top:40px; left:29px; transform:rotate(-23deg); }.dot-right { width:13px; height:13px; top:41px; right:17px; }
 .login-brand h1 { margin:0; color:var(--green-dark); font-size:24px; line-height:1.25; font-weight:600; }.login-brand p { margin:11px 0 0; font-size:14px; }.login-brand .brand-subtitle { margin-top:7px; font-size:13px; }
-.demo-box { margin:33px 0 26px; padding:13px 12px 12px; border:1px solid #79bec6; border-radius:11px; background:#e5f2f4; color:#006979; font-size:12px; line-height:1.35; }.demo-box p { margin:0; }.demo-box p + p { margin-top:7px; }.demo-box p + p + p { margin-top:0; }
+.login-form { margin-top:34px; }
+.login-role-tabs { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin:30px 0 25px; padding:5px; border-radius:11px; background:#eef2ef; }.login-role-tabs button { height:40px; border:0; border-radius:8px; background:transparent; color:#5f6861; font-size:13px; font-weight:700; }.login-role-tabs button.active { background:#fff; color:var(--green-dark); box-shadow:0 2px 8px rgb(12 67 36 / 12%); }.login-role-tabs button:focus-visible { outline:2px solid var(--green); outline-offset:1px; }
 .login-card form > label { display:block; margin-bottom:8px; font-size:13px; font-weight:600; }.input-wrap + label { margin-top:25px; }
 .input-wrap { height:50px; display:flex; align-items:center; gap:11px; padding:0 13px; border:1px solid var(--line); border-radius:11px; transition:.2s; }.input-wrap:focus-within { border-color:var(--green); box-shadow:0 0 0 3px rgb(40 118 66 / 12%); }.input-wrap .ui-icon { flex:0 0 auto; color:#555; }.input-wrap input { width:100%; height:100%; border:0; outline:0; background:transparent; color:var(--text); font-size:14px; }.input-wrap input::placeholder { color:#99949f; }
 .submit-button { width:100%; height:48px; margin-top:24px; border:0; border-radius:10px; background:var(--green); color:#fff; font-size:14px; font-weight:700; }.submit-button:hover,.primary-button:hover { background:#216337; }.form-message { margin:10px 0 -12px; font-size:12px; }.form-message.error { color:#a42b2b; }
@@ -27,6 +28,7 @@ button { cursor:pointer; }
 .register-brand h1 { margin:0; color:var(--green-dark); font-size:23px; line-height:1.2; font-weight:600; }
 .register-brand p { margin:11px 0 0; font-size:14px; }.register-brand .brand-subtitle { margin-top:3px; }
 .register-form { margin-top:33px; }
+.register-role-tabs { margin:0 0 22px; }
 .register-form > label { display:block; margin-bottom:8px; font-size:13px; font-weight:600; }
 .register-form .input-wrap { height:47px; border-radius:9px; }
 .register-form .input-wrap + label { margin-top:17px; }

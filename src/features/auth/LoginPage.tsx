@@ -26,7 +26,7 @@ export function LoginPage({ onLogin, onCreateAccount }: LoginPageProps) {
       return
     }
 
-    setMessage('E-mail ou senha inválidos. Confira as credenciais de teste.')
+    setMessage('E-mail ou senha inválidos.')
   }
 
   return (
@@ -39,13 +39,7 @@ export function LoginPage({ onLogin, onCreateAccount }: LoginPageProps) {
           <p className="brand-subtitle">Sistema de Gestão Veterinária</p>
         </header>
 
-        <aside className="demo-box" aria-label="Credenciais de teste">
-          <p>Credenciais de teste:</p>
-          <p><strong>Veterinário:</strong> veterinario@ifes.edu.br / vet123</p>
-          <p><strong>Atendente:</strong> atendente@ifes.edu.br / atd123</p>
-        </aside>
-
-        <form onSubmit={submit}>
+        <form className="login-form" onSubmit={submit}>
           <label htmlFor="email">E-mail</label>
           <div className="input-wrap">
             <Icon><circle cx="12" cy="8" r="3.25" /><path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20" /></Icon>
