@@ -85,8 +85,8 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
           {screen === 'edit' && selected && <DogForm dog={selected} editing onSave={handleEdit} onCancel={() => setScreen('list')} />}
           {screen === 'details' && selected && <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />}
         </>}
-        {activeModule === 'appointments' && <AppointmentsModule key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
-        {activeModule === 'consultations' && <ClinicalCareModule />}
+        {activeModule === 'appointments' && <AppointmentsModule dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
+        {activeModule === 'consultations' && <ClinicalCareModule dogs={dogs} />}
         {activeModule === 'records' && <RecordsModule />}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
         {activeModule === 'medications' && <MedicationsModule />}

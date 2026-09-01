@@ -31,6 +31,6 @@ export function AttendantDashboard({ onLogout }: AttendantDashboardProps) {
     {activeModule !== 'dashboard' && <aside className="attendant-notice"><span>▣</span><p><strong>Perfil Atendente:</strong> Você tem acesso ao cadastro de pets e agendamento de consultas</p></aside>}
     {activeModule === 'dashboard' && <AttendantHome dogs={dogs} onOpenDogs={() => selectModule('dogs')} onOpenAppointments={() => selectModule('appointments')} onNewDog={openNewDog} onNewAppointment={openNewAppointment} />}
     {activeModule === 'dogs' && <>{screen === 'list' && <DogList dogs={dogs} onCreate={() => setScreen('create')} onEdit={(dog) => { setSelected(dog); setScreen('edit') }} onDetails={(dog) => { setSelected(dog); setScreen('details') }} />}{screen === 'create' && <DogForm onSave={handleCreate} onCancel={() => setScreen('list')} />}{screen === 'edit' && selected && <DogForm dog={selected} editing onSave={handleEdit} onCancel={() => setScreen('list')} />}{screen === 'details' && selected && <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={async () => { await removeDog(selected.id); setScreen('list') }} />}</>}
-    {activeModule === 'appointments' && <AppointmentsModule key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
+    {activeModule === 'appointments' && <AppointmentsModule dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
   </main></div>
 }

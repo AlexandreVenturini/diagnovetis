@@ -23,7 +23,7 @@ function toDateInput(date: Date) {
 }
 
 function formatDate(date: string, options?: Intl.DateTimeFormatOptions) {
-  if (!date) return 'Fila de chegada'
+  if (!date) return 'Data não informada'
   return new Intl.DateTimeFormat('pt-BR', options ?? { day: '2-digit', month: '2-digit', year: 'numeric' }).format(parseDate(date))
 }
 
@@ -153,11 +153,11 @@ export function AppointmentList({ appointments, onCreate, onUpdate }: Appointmen
               const isExpanded = expandedId === appointment.id
               return <article className={`appointment-card status-${appointment.status}${isExpanded ? ' expanded' : ''}`} key={appointment.id}>
                 <button className="appointment-card-summary" type="button" aria-expanded={isExpanded} onClick={() => setExpandedId(isExpanded ? null : appointment.id)}>
-                  <div><div className="appointment-name-row"><strong>{appointment.dogName}</strong><span className={`status-badge status-${appointment.status}`}>{STATUS_LABELS[appointment.status]}</span></div><p>Tutor: {appointment.tutorName}</p><div className="appointment-meta"><span>▣ {formatDate(appointment.date)}</span><span>◷ {appointment.time || 'Ordem de chegada'}</span></div></div>
+                  <div><div className="appointment-name-row"><strong>{appointment.dogName}</strong><span className={`status-badge status-${appointment.status}`}>{STATUS_LABELS[appointment.status]}</span></div><p>Tutor: {appointment.tutorName}</p><div className="appointment-meta"><span>▣ {formatDate(appointment.date)}</span><span>◷ {appointment.time || 'Horário não informado'}</span></div></div>
                   <div className="appointment-card-side"><span className="service-label">{appointment.serviceType}</span><span className="appointment-chevron"><Icon><path d="m7 10 5 5 5-5" /></Icon></span></div>
                 </button>
                 {isExpanded && <div className="appointment-details">
-                  <div><span>Veterinário</span><strong>{appointment.veterinarian || 'Não informado'}</strong></div><div><span>Tipo</span><strong>{appointment.kind === 'scheduled' ? 'Horário marcado' : 'Fila de chegada'}</strong></div><div><span>Observações</span><strong>{appointment.notes || 'Nenhuma observação'}</strong></div>
+                  <div><span>Veterinário</span><strong>{appointment.veterinarian || 'Não informado'}</strong></div><div><span>Tipo</span><strong>Horário marcado</strong></div><div><span>Observações</span><strong>{appointment.notes || 'Nenhuma observação'}</strong></div>
                   {appointment.cancellationReason && <div className="appointment-notes"><span>Motivo do cancelamento</span><strong>{appointment.cancellationReason}</strong></div>}
                   <div className="appointment-actions appointment-notes">
                     <select aria-label="Alterar situação" value={appointment.status} onChange={(event) => onUpdate(appointment.id, { status: event.target.value as AppointmentStatus })}>{Object.entries(STATUS_LABELS).filter(([value]) => value !== 'cancelled').map(([value, label]) => <option value={value} key={value}>{label}</option>)}{appointment.status === 'cancelled' && <option value="cancelled">Cancelado</option>}</select>

@@ -12,6 +12,9 @@ export type AppointmentReminder = {
 
 export type Appointment = {
   id: number
+  dogId?: number
+  dogAge?: string
+  dogBreed?: string
   kind: AppointmentKind
   dogName: string
   tutorName: string

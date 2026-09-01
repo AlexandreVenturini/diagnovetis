@@ -3,10 +3,11 @@ import { AppointmentForm } from './AppointmentForm'
 import { AppointmentList } from './AppointmentList'
 import { useAppointments } from '../../hooks/useAppointments'
 import type { AppointmentFormData, AppointmentScreen } from './appointmentTypes'
+import type { Dog } from '../dogs/dogTypes'
 
-type AppointmentsModuleProps = { initialScreen?: AppointmentScreen }
+type AppointmentsModuleProps = { initialScreen?: AppointmentScreen; dogs: Dog[] }
 
-export function AppointmentsModule({ initialScreen = 'list' }: AppointmentsModuleProps) {
+export function AppointmentsModule({ initialScreen = 'list', dogs }: AppointmentsModuleProps) {
   const [screen, setScreen] = useState<AppointmentScreen>(initialScreen)
   const [formError, setFormError] = useState('')
   const { appointments, createAppointment, updateAppointment } = useAppointments()
@@ -23,7 +24,7 @@ export function AppointmentsModule({ initialScreen = 'list' }: AppointmentsModul
   }
 
   if (screen === 'create') {
-    return <AppointmentForm onSave={handleCreate} onCancel={() => { setFormError(''); setScreen('list') }} error={formError} />
+    return <AppointmentForm dogs={dogs} onSave={handleCreate} onCancel={() => { setFormError(''); setScreen('list') }} error={formError} />
   }
 
   return <AppointmentList appointments={appointments} onCreate={() => setScreen('create')} onUpdate={updateAppointment} />

@@ -8,12 +8,42 @@ import { ClinicalHistoryStep } from './steps/ClinicalHistoryStep'
 import { DiagnosisStep } from './steps/DiagnosisStep'
 import { IdentificationStep } from './steps/IdentificationStep'
 import { PhysicalExamStep } from './steps/PhysicalExamStep'
+import { useAppointments } from '../../hooks/useAppointments'
+import type { Dog } from '../dogs/dogTypes'
 
-export function ClinicalCareModule() {
+type ClinicalCareModuleProps = { dogs: Dog[] }
+
+export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
   const [step, setStep] = useState<ConsultationStep>(1)
   const [data, setData] = useState<ConsultationData>(EMPTY_CONSULTATION)
   const [message, setMessage] = useState('')
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null)
   const { salvarConsulta } = useConsultas()
+  const { appointments, updateAppointment } = useAppointments()
+
+  const availableAppointments = appointments
+    .filter((item) => !['completed', 'cancelled', 'no-show'].includes(item.status))
+    .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
+
+  function selectAppointment(id: number | null) {
+    setSelectedAppointmentId(id)
+    if (id === null) return
+    const appointment = appointments.find((item) => item.id === id)
+    if (!appointment) return
+    const dog = dogs.find((item) => item.id === appointment.dogId)
+      ?? dogs.find((item) => item.name.trim().toLocaleLowerCase('pt-BR') === appointment.dogName.trim().toLocaleLowerCase('pt-BR'))
+    setData((current) => ({
+      ...current,
+      dogName: appointment.dogName,
+      tutorName: appointment.tutorName,
+      veterinarian: appointment.veterinarian,
+      age: dog?.age || appointment.dogAge || current.age,
+      breed: dog?.breed || appointment.dogBreed || current.breed,
+      mainComplaint: current.mainComplaint || appointment.serviceType,
+      history: current.history || [dog?.history, appointment.notes].filter(Boolean).join('\n'),
+    }))
+    setMessage('Dados do agendamento carregados com sucesso.')
+  }
 
   function update(key: keyof ConsultationData, value: string) {
     setData((current) => ({ ...current, [key]: value }))
@@ -29,8 +59,10 @@ export function ClinicalCareModule() {
 
     const resultado = await salvarConsulta(data)
     if (resultado.sucesso) {
+      if (selectedAppointmentId !== null) updateAppointment(selectedAppointmentId, { status: 'completed' })
       setMessage('Atendimento salvo no prontuário com sucesso!')
       setData(EMPTY_CONSULTATION)
+      setSelectedAppointmentId(null)
       setStep(1)
     } else {
       setMessage(resultado.erro ?? 'Erro ao salvar o atendimento.')
@@ -53,7 +85,7 @@ export function ClinicalCareModule() {
   return (
     <section className="clinical-care-module">
       <ConsultationHeader currentStep={step} onStepChange={setStep} />
-      {step === 1 && <IdentificationStep data={data} update={update} onNext={() => setStep(2)} />}
+      {step === 1 && <IdentificationStep data={data} appointments={availableAppointments} selectedAppointmentId={selectedAppointmentId} onSelectAppointment={selectAppointment} update={update} onNext={() => setStep(2)} />}
       {step === 2 && <ClinicalHistoryStep data={data} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
       {step === 3 && <PhysicalExamStep data={data} update={update} onBack={() => setStep(2)} onNext={() => setStep(4)} />}
       {step === 4 && <DiagnosisStep data={data} update={update} onBack={() => setStep(3)} />}
