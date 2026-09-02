@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Dog, DogFormData } from '../features/dogs/dogTypes'
 import { Pet } from '../models/Pet'
 import { Tutor } from '../models/Tutor'
-import { Endereco } from '../models/Endereco'
 import { PetService } from '../services/PetService'
 import { TutorService } from '../services/TutorService'
 import { petRepository } from '../services/PetService'
@@ -35,18 +34,10 @@ function petToDog(pet: Pet): Dog {
     }
 }
 
-async function getOrCreateTutor(nome: string, contact: string): Promise<Tutor> {
+async function getOrCreateTutor(nome: string, _contact: string): Promise<Tutor> {
     const encontrados = await tutorService.buscarPorNome(nome)
     if (encontrados.length > 0) return encontrados[0]
-
-    const tutores = await tutorService.listarTutores()
-    const novoId = tutores.length > 0 ? Math.max(...tutores.map(t => t.id)) + 1 : 1
-    const tutor = new Tutor(
-        novoId, nome, contact, '', new Date(),
-        new Endereco('', 0, '', '', '', '00000000')
-    )
-    await tutorService.adicionarTutor(tutor)
-    return tutor
+    throw new Error(`Tutor "${nome}" não encontrado. Cadastre o tutor completo antes de registrar o cão.`)
 }
 
 export function useDogs() {
