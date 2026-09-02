@@ -12,8 +12,8 @@ export function AppointmentsModule({ initialScreen = 'list', dogs }: Appointment
   const [formError, setFormError] = useState('')
   const { appointments, createAppointment, updateAppointment } = useAppointments()
 
-  function handleCreate(data: AppointmentFormData) {
-    const ok = createAppointment(data)
+  async function handleCreate(data: AppointmentFormData) {
+    const ok = await createAppointment(data)
     if (!ok) {
       setFormError('Este veterinário já possui uma consulta agendada nesse horário.')
       return false

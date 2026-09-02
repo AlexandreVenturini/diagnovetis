@@ -43,10 +43,6 @@ export class SupabaseRepository<T extends { id: number }> implements Repository<
         if (error) throw new Error(error.message)
     }
 
-    /**
-     * Busca síncrona — não disponível para Supabase (requer rede async).
-     * Existe apenas para compatibilidade com deserializers de LocalStorageRepository.
-     */
     findByIdSync(_id: number): T | undefined {
         return undefined
     }

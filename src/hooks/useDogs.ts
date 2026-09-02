@@ -5,20 +5,9 @@ import { Tutor } from '../models/Tutor'
 import { PetService } from '../services/PetService'
 import { TutorService } from '../services/TutorService'
 import { petRepository } from '../services/PetService'
-import { isSupabaseConfigured } from '../services/storage/supabaseClient'
 
 const petService = new PetService()
 const tutorService = new TutorService()
-const LOCAL_STORAGE_KEY = 'diagnovetis:dogs'
-
-function loadLocalDogs(): Dog[] {
-    if (typeof localStorage === 'undefined') return []
-    try { return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) ?? '[]') as Dog[] } catch { return [] }
-}
-
-function saveLocalDogs(dogs: Dog[]) {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dogs))
-}
 
 function petToDog(pet: Pet): Dog {
     return {
@@ -44,23 +33,17 @@ export function useDogs() {
     const [dogs, setDogs] = useState<Dog[]>([])
 
     const refresh = useCallback(async () => {
-        if (!isSupabaseConfigured) { setDogs(loadLocalDogs()); return }
         try {
             const pets = await petService.listarPets()
             setDogs(pets.map(petToDog))
         } catch {
-            setDogs(loadLocalDogs())
+            setDogs([])
         }
     }, [])
 
     useEffect(() => { refresh() }, [refresh])
 
     async function createDog(form: DogFormData) {
-        if (!isSupabaseConfigured) {
-            const current = loadLocalDogs()
-            const dog: Dog = { ...form, id: Math.max(0, ...current.map(item => item.id)) + 1 }
-            saveLocalDogs([...current, dog]); setDogs([...current, dog]); return
-        }
         const tutor = await getOrCreateTutor(form.tutor, form.contact)
         const pets = await petService.listarPets()
         const novoId = pets.length > 0 ? Math.max(...pets.map(p => p.id)) + 1 : 1
@@ -70,10 +53,6 @@ export function useDogs() {
     }
 
     async function updateDog(id: number, form: DogFormData) {
-        if (!isSupabaseConfigured) {
-            const updated = loadLocalDogs().map(item => item.id === id ? { ...form, id } : item)
-            saveLocalDogs(updated); setDogs(updated); return
-        }
         const pet = await petRepository.getById(id)
         if (!pet) return
         const atualizado = new Pet(id, form.name, 'Cão', form.breed, pet.tutor, [], form.age, form.weight, form.sex, form.history)
@@ -82,10 +61,6 @@ export function useDogs() {
     }
 
     async function removeDog(id: number) {
-        if (!isSupabaseConfigured) {
-            const updated = loadLocalDogs().filter(item => item.id !== id)
-            saveLocalDogs(updated); setDogs(updated); return
-        }
         await petService.removerPet(id)
         await refresh()
     }
