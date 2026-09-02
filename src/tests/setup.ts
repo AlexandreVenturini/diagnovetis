@@ -30,17 +30,23 @@ function clearAllTables() {
 
 type Row = Record<string, unknown>
 
-/** Resolve joins inline — ex: "*, enderecos(*)" mescla enderecos pelo endereco_id */
+/** Resolve joins — suporta "tabela(*)" e "tabela!fk_col(*)" */
 function resolveJoins(_table: string, cols: string, rows: Row[]): Row[] {
-    const joinMatch = cols.match(/(\w+)\(\*\)/)
-    if (!joinMatch) return rows
-    const joinTable = joinMatch[1]
-    return rows.map(row => {
-        const fkKey = `${joinTable.replace(/s$/, '')}_id` // "enderecos" → "endereco_id"
-        const fkVal = row[fkKey]
-        const related = getTable(joinTable).find(r => r.id === fkVal) ?? null
-        return { ...row, [joinTable]: related }
-    })
+    // match all join specs: "word!word(*)" ou "word(*)"
+    const pattern = /(\w+)(?:!(\w+))?\(\*\)/g
+    let match: RegExpExecArray | null
+    let result = rows
+    while ((match = pattern.exec(cols)) !== null) {
+        const joinTable = match[1]
+        const explicitFk = match[2] // pode ser undefined
+        result = result.map(row => {
+            const fkKey = explicitFk ?? `${joinTable.replace(/s$/, '')}_id`
+            const fkVal = row[fkKey]
+            const related = getTable(joinTable).find(r => r.id === fkVal) ?? null
+            return { ...row, [joinTable]: related }
+        })
+    }
+    return result
 }
 
 function buildSelectChain(table: string, cols = '*') {
@@ -133,14 +139,4 @@ beforeEach(async () => {
     // Limpa o banco em memória do Supabase
     clearAllTables()
 
-    // Limpa os repos LocalStorageRepository (cache em memória)
-    const { alunoRepository } = await import('../services/AlunoService')
-    const { medicamentoRepository } = await import('../services/MedicamentoService')
-    const { consultaRepository } = await import('../services/ConsultaService')
-    const { funcionarioRepository } = await import('../services/FuncionarioService')
-
-    alunoRepository.clear()
-    medicamentoRepository.clear()
-    consultaRepository.clear()
-    funcionarioRepository.clear()
 })

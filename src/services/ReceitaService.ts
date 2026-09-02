@@ -1,14 +1,16 @@
 import { Receita } from "../models/Receita";
-import { consultaRepository } from "./ConsultaService";
+import { ConsultaService } from "./ConsultaService";
+
+const consultaService = new ConsultaService();
 
 export class ReceitaService {
     async listarPorConsulta(consultaId: number): Promise<Receita[]> {
-        const consulta = await consultaRepository.getById(consultaId);
+        const consulta = await consultaService.buscarPorId(consultaId);
         return consulta?.receitas ?? [];
     }
 
     async listarTodas(): Promise<Receita[]> {
-        const consultas = await consultaRepository.getAll();
+        const consultas = await consultaService.listarConsultas();
         return consultas.flatMap(consulta => consulta.receitas);
     }
 
@@ -18,9 +20,7 @@ export class ReceitaService {
     }
 
     async listarPorPet(petId: number): Promise<Receita[]> {
-        const consultas = await consultaRepository.getAll();
-        return consultas
-            .filter(consulta => consulta.pet.id === petId)
-            .flatMap(consulta => consulta.receitas);
+        const consultas = await consultaService.listarPorPet(petId);
+        return consultas.flatMap(consulta => consulta.receitas);
     }
 }

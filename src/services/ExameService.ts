@@ -1,14 +1,16 @@
 import { Exame } from "../models/Exame";
-import { consultaRepository } from "./ConsultaService";
+import { ConsultaService } from "./ConsultaService";
+
+const consultaService = new ConsultaService();
 
 export class ExameService {
     async listarPorConsulta(consultaId: number): Promise<Exame[]> {
-        const consulta = await consultaRepository.getById(consultaId);
+        const consulta = await consultaService.buscarPorId(consultaId);
         return consulta?.exames ?? [];
     }
 
     async listarTodos(): Promise<Exame[]> {
-        const consultas = await consultaRepository.getAll();
+        const consultas = await consultaService.listarConsultas();
         return consultas.flatMap(consulta => consulta.exames);
     }
 
@@ -18,9 +20,7 @@ export class ExameService {
     }
 
     async listarPorPet(petId: number): Promise<Exame[]> {
-        const consultas = await consultaRepository.getAll();
-        return consultas
-            .filter(consulta => consulta.pet.id === petId)
-            .flatMap(consulta => consulta.exames);
+        const consultas = await consultaService.listarPorPet(petId);
+        return consultas.flatMap(consulta => consulta.exames);
     }
 }

@@ -1,72 +1,82 @@
 import { Medicamento } from "../models/Medicamento";
-import { LocalStorageRepository } from "./storage/LocalStorageRepository";
+import { supabase } from "./storage/supabaseClient";
 import { validarObrigatorio, validarPositivo, validarIdUnico } from "./validation/validadores";
 
-interface MedicamentoRaw {
+interface MedicamentoRow {
     id: number;
-    nomeComercial: string;
-    principioAtivo: string;
+    nome_comercial: string;
+    principio_ativo: string;
     descricao: string;
     concentracao: number;
-    unidadeConcentracao: string;
-    formaFarmaceutica: string;
-    viaAdministracao: string;
-    tipoUso: string;
+    unidade_concentracao: string;
+    forma_farmaceutica: string;
+    via_administracao: string;
+    tipo_uso: string;
 }
 
-export const medicamentoRepository = new LocalStorageRepository<Medicamento>(
-    "diagnovetis:medicamentos",
-    medicamento => ({
-        id: medicamento.id,
-        nomeComercial: medicamento.nome,
-        principioAtivo: medicamento.principioAtivo,
-        descricao: medicamento.descricao,
-        concentracao: medicamento.concentracao,
-        unidadeConcentracao: medicamento.unidadeConcentracao,
-        formaFarmaceutica: medicamento.formaFarmaceutica,
-        viaAdministracao: medicamento.viaAdministracao,
-        tipoUso: medicamento.tipo
-    }),
-    raw => {
-        const r = raw as MedicamentoRaw;
-        return new Medicamento(r.id, r.nomeComercial, r.principioAtivo, r.descricao, r.concentracao, r.unidadeConcentracao, r.formaFarmaceutica, r.viaAdministracao, r.tipoUso);
-    }
-);
+function rowToMedicamento(r: MedicamentoRow): Medicamento {
+    return new Medicamento(r.id, r.nome_comercial, r.principio_ativo, r.descricao, r.concentracao, r.unidade_concentracao, r.forma_farmaceutica, r.via_administracao, r.tipo_uso);
+}
 
 export class MedicamentoService {
     async listarMedicamentos(): Promise<Medicamento[]> {
-        return medicamentoRepository.getAll();
+        const { data, error } = await supabase.from("medicamentos").select("*");
+        if (error) throw new Error(error.message);
+        return (data ?? []).map(r => rowToMedicamento(r as MedicamentoRow));
     }
 
     async adicionarMedicamento(medicamento: Medicamento): Promise<void> {
-        validarIdUnico(medicamento.id, await medicamentoRepository.getAll(), "medicamento");
+        const todos = await this.listarMedicamentos();
+        validarIdUnico(medicamento.id, todos, "medicamento");
         validarObrigatorio(medicamento.nome, "nomeComercial");
         validarObrigatorio(medicamento.principioAtivo, "principioAtivo");
         validarObrigatorio(medicamento.formaFarmaceutica, "formaFarmaceutica");
         validarObrigatorio(medicamento.viaAdministracao, "viaAdministracao");
         validarPositivo(medicamento.concentracao, "concentracao");
-        await medicamentoRepository.add(medicamento);
+        const { error } = await supabase.from("medicamentos").insert({
+            id: medicamento.id,
+            nome_comercial: medicamento.nome,
+            principio_ativo: medicamento.principioAtivo,
+            descricao: medicamento.descricao,
+            concentracao: medicamento.concentracao,
+            unidade_concentracao: medicamento.unidadeConcentracao,
+            forma_farmaceutica: medicamento.formaFarmaceutica,
+            via_administracao: medicamento.viaAdministracao,
+            tipo_uso: medicamento.tipo
+        });
+        if (error) throw new Error(error.message);
     }
 
     async buscarPorId(id: number): Promise<Medicamento | undefined> {
-        return medicamentoRepository.getById(id);
+        const { data, error } = await supabase.from("medicamentos").select("*").eq("id", id).single();
+        if (error || !data) return undefined;
+        return rowToMedicamento(data as MedicamentoRow);
     }
 
     async buscarPorNome(nome: string): Promise<Medicamento[]> {
-        const todos = await medicamentoRepository.getAll();
+        const todos = await this.listarMedicamentos();
         return todos.filter(m => m.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
     async buscarPorPrincipioAtivo(principioAtivo: string): Promise<Medicamento[]> {
-        const todos = await medicamentoRepository.getAll();
+        const todos = await this.listarMedicamentos();
         return todos.filter(m => m.principioAtivo.toLowerCase().includes(principioAtivo.toLowerCase()));
     }
 
     async removerMedicamento(id: number): Promise<void> {
-        await medicamentoRepository.remove(id);
+        await supabase.from("medicamentos").delete().eq("id", id);
     }
 
     async atualizarMedicamento(medicamento: Medicamento): Promise<void> {
-        await medicamentoRepository.update(medicamento);
+        await supabase.from("medicamentos").update({
+            nome_comercial: medicamento.nome,
+            principio_ativo: medicamento.principioAtivo,
+            descricao: medicamento.descricao,
+            concentracao: medicamento.concentracao,
+            unidade_concentracao: medicamento.unidadeConcentracao,
+            forma_farmaceutica: medicamento.formaFarmaceutica,
+            via_administracao: medicamento.viaAdministracao,
+            tipo_uso: medicamento.tipo
+        }).eq("id", medicamento.id);
     }
 }

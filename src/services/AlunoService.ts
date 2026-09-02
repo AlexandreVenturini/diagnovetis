@@ -1,62 +1,53 @@
 import { Aluno } from "../models/Aluno";
-import { medicoRepository } from "./MedicoService";
-import { LocalStorageRepository } from "./storage/LocalStorageRepository";
+import { Medico } from "../models/Medico";
+import { supabase } from "./storage/supabaseClient";
 import { validarObrigatorio, validarEmailIfes, validarTelefone, validarPeriodo, validarIdUnico } from "./validation/validadores";
 
-interface AlunoRaw {
-    id: number;
-    nome: string;
-    telefone: string;
-    email: string;
-    matricula: string;
-    periodo: number;
-    curso: string;
-    medicoOrientadorId: number;
-}
+interface MedicoRow { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
+interface AlunoRow { id: number; nome: string; telefone: string; email: string; matricula: string; periodo: number; curso: string; medico_orientador_id: number; medicos: MedicoRow; }
 
-export const alunoRepository = new LocalStorageRepository<Aluno>(
-    "diagnovetis:alunos",
-    aluno => ({
-        id: aluno.id,
-        nome: aluno.nome,
-        telefone: aluno.telefone,
-        email: aluno.email,
-        matricula: aluno.matricula,
-        periodo: aluno.periodo,
-        curso: aluno.curso,
-        medicoOrientadorId: aluno.medicoOrientador.id
-    }),
-    raw => {
-        const alunoRaw = raw as AlunoRaw;
-        const medicoOrientador = medicoRepository.findByIdSync(alunoRaw.medicoOrientadorId);
-        if (!medicoOrientador) {
-            throw new Error(`Medico orientador ${alunoRaw.medicoOrientadorId} nao encontrado para o aluno ${alunoRaw.id}`);
-        }
-        return new Aluno(alunoRaw.id, alunoRaw.nome, alunoRaw.telefone, alunoRaw.email, alunoRaw.matricula, alunoRaw.periodo, alunoRaw.curso, medicoOrientador);
-    }
-);
+function rowToAluno(r: AlunoRow): Aluno {
+    const m = r.medicos;
+    return new Aluno(r.id, r.nome, r.telefone, r.email, r.matricula, r.periodo, r.curso,
+        new Medico(m.id, m.nome, m.telefone, m.email, m.especialidade, m.crmv));
+}
 
 export class AlunoService {
     async listarAlunos(): Promise<Aluno[]> {
-        return alunoRepository.getAll();
+        const { data, error } = await supabase.from("alunos").select("*, medicos!medico_orientador_id(*)");
+        if (error) throw new Error(error.message);
+        return (data ?? []).map(r => rowToAluno(r as AlunoRow));
     }
 
     async adicionarAluno(aluno: Aluno): Promise<void> {
-        validarIdUnico(aluno.id, await alunoRepository.getAll(), "aluno");
+        const todos = await this.listarAlunos();
+        validarIdUnico(aluno.id, todos, "aluno");
         validarObrigatorio(aluno.nome, "nome");
         validarEmailIfes(aluno.email, "email");
         validarTelefone(aluno.telefone, "telefone");
         validarObrigatorio(aluno.matricula, "matricula");
         validarPeriodo(aluno.periodo, "periodo");
         validarObrigatorio(aluno.curso, "curso");
-        await alunoRepository.add(aluno);
+        const { error } = await supabase.from("alunos").insert({
+            id: aluno.id,
+            nome: aluno.nome,
+            telefone: aluno.telefone,
+            email: aluno.email,
+            matricula: aluno.matricula,
+            periodo: aluno.periodo,
+            curso: aluno.curso,
+            medico_orientador_id: aluno.medicoOrientador.id
+        });
+        if (error) throw new Error(error.message);
     }
 
     async buscarPorId(id: number): Promise<Aluno | undefined> {
-        return alunoRepository.getById(id);
+        const { data, error } = await supabase.from("alunos").select("*, medicos!medico_orientador_id(*)").eq("id", id).single();
+        if (error || !data) return undefined;
+        return rowToAluno(data as AlunoRow);
     }
 
     async removerAluno(id: number): Promise<void> {
-        await alunoRepository.remove(id);
+        await supabase.from("alunos").delete().eq("id", id);
     }
 }

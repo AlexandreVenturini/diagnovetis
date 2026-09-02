@@ -1,51 +1,50 @@
 import { Funcionario } from "../models/Funcionario";
-import { medicoRepository } from "./MedicoService";
-import { LocalStorageRepository } from "./storage/LocalStorageRepository";
+import { Medico } from "../models/Medico";
+import { supabase } from "./storage/supabaseClient";
 import { validarData, validarIdUnico } from "./validation/validadores";
 
-interface FuncionarioRaw {
-    id: number;
-    dataAdmissao: string;
-    medicoId: number;
-}
+interface MedicoRow { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
+interface FuncionarioRow { id: number; data_admissao: string; medico_id: number; medicos: MedicoRow; }
 
-export const funcionarioRepository = new LocalStorageRepository<Funcionario>(
-    "diagnovetis:funcionarios",
-    funcionario => ({
-        id: funcionario.id,
-        dataAdmissao: funcionario.dataAdmissao.toISOString(),
-        medicoId: funcionario.medico.id
-    }),
-    raw => {
-        const r = raw as FuncionarioRaw;
-        const medico = medicoRepository.findByIdSync(r.medicoId);
-        if (!medico) {
-            throw new Error(`Medico ${r.medicoId} nao encontrado para o funcionario ${r.id}`);
-        }
-        return new Funcionario(r.id, new Date(r.dataAdmissao), medico);
-    }
-);
+function rowToFuncionario(r: FuncionarioRow): Funcionario {
+    const m = r.medicos;
+    return new Funcionario(r.id, new Date(r.data_admissao),
+        new Medico(m.id, m.nome, m.telefone, m.email, m.especialidade, m.crmv));
+}
 
 export class FuncionarioService {
     async listarFuncionarios(): Promise<Funcionario[]> {
-        return funcionarioRepository.getAll();
+        const { data, error } = await supabase.from("funcionarios").select("*, medicos(*)");
+        if (error) throw new Error(error.message);
+        return (data ?? []).map(r => rowToFuncionario(r as FuncionarioRow));
     }
 
     async adicionarFuncionario(funcionario: Funcionario): Promise<void> {
-        validarIdUnico(funcionario.id, await funcionarioRepository.getAll(), "funcionário");
+        const todos = await this.listarFuncionarios();
+        validarIdUnico(funcionario.id, todos, "funcionário");
         validarData(funcionario.dataAdmissao, "dataAdmissao");
-        await funcionarioRepository.add(funcionario);
+        const { error } = await supabase.from("funcionarios").insert({
+            id: funcionario.id,
+            data_admissao: funcionario.dataAdmissao.toISOString(),
+            medico_id: funcionario.medico.id
+        });
+        if (error) throw new Error(error.message);
     }
 
     async buscarPorId(id: number): Promise<Funcionario | undefined> {
-        return funcionarioRepository.getById(id);
+        const { data, error } = await supabase.from("funcionarios").select("*, medicos(*)").eq("id", id).single();
+        if (error || !data) return undefined;
+        return rowToFuncionario(data as FuncionarioRow);
     }
 
     async removerFuncionario(id: number): Promise<void> {
-        await funcionarioRepository.remove(id);
+        await supabase.from("funcionarios").delete().eq("id", id);
     }
 
     async atualizarFuncionario(funcionario: Funcionario): Promise<void> {
-        await funcionarioRepository.update(funcionario);
+        await supabase.from("funcionarios").update({
+            data_admissao: funcionario.dataAdmissao.toISOString(),
+            medico_id: funcionario.medico.id
+        }).eq("id", funcionario.id);
     }
 }
