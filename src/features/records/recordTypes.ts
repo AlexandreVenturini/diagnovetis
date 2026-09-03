@@ -24,6 +24,11 @@ export type PatientRecord = {
   id: number
   dogName: string
   tutorName: string
+  tutorCpf: string
+  tutorPhone: string
+  tutorEmail: string
+  tutorAddress: string
+  tutorCity: string
   breed: string
   age: string
   sex: string

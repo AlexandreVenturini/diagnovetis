@@ -19,6 +19,7 @@ interface TutorRow {
     nome: string;
     telefone: string;
     email: string;
+    cpf: string;
     data_cadastro: string;
     endereco_id: number;
     enderecos: EnderecoRow;
@@ -53,7 +54,7 @@ export class TutorService {
         if (error) throw new Error(error.message);
         return (data ?? []).map(r => {
             const e = r.enderecos as EnderecoRow;
-            return new Tutor(r.id, r.nome, r.telefone, r.email, new Date(r.data_cadastro), new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep));
+            return new Tutor(r.id, r.nome, r.telefone, r.email, new Date(r.data_cadastro), new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep), [], r.cpf ?? '');
         });
     }
 
@@ -88,6 +89,7 @@ export class TutorService {
             nome: tutor.nome,
             telefone: tutor.telefone,
             email: tutor.email,
+            cpf: tutor.cpf ?? '',
             data_cadastro: tutor.dataCadastro.toISOString(),
             endereco_id: endData.id
         });
@@ -102,7 +104,7 @@ export class TutorService {
             .single();
         if (error || !data) return undefined;
         const e = data.enderecos as EnderecoRow;
-        return new Tutor(data.id, data.nome, data.telefone, data.email, new Date(data.data_cadastro), new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep));
+        return new Tutor(data.id, data.nome, data.telefone, data.email, new Date(data.data_cadastro), new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep), [], data.cpf ?? '');
     }
 
     async buscarPorNome(nome: string): Promise<Tutor[]> {

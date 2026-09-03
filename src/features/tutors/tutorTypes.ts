@@ -1,5 +1,6 @@
 export type TutorFormData = {
   name: string
+  cpf: string
   phone: string
   email: string
   registrationDate: string

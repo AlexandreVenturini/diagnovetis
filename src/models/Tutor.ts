@@ -6,6 +6,7 @@ export class Tutor extends Pessoa {
     private _dataCadastro: Date;
     private _endereco: Endereco;
     private _pets: Pet[];
+    cpf: string;
 
     constructor(
         id: number,
@@ -14,9 +15,11 @@ export class Tutor extends Pessoa {
         email: string,
         dataCadastro: Date,
         endereco: Endereco,
-        pets: Pet[] = []
+        pets: Pet[] = [],
+        cpf: string = ''
     ) {
         super(id, nome, telefone, email);
+        this.cpf = cpf;
 
         this._dataCadastro = dataCadastro;
         this._endereco = endereco;

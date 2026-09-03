@@ -79,6 +79,8 @@ export function useDogs() {
                 form.state.trim().toUpperCase(),
                 form.zipCode.trim(),
             ),
+            [],
+            form.cpf?.trim() ?? '',
         )
         await tutorService.adicionarTutor(tutor)
     }
