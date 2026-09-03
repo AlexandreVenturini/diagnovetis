@@ -2,31 +2,45 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { BrandMark } from '../../components/common/BrandMark'
 import { Icon } from '../../components/common/Icon'
+import { supabase } from '../../services/storage/supabaseClient'
+
+export type UserRole = 'veterinarian' | 'attendant'
 
 type LoginPageProps = {
-  onLogin: (role: 'veterinarian' | 'attendant') => void
-  onCreateAccount: () => void
+  onLogin: (role: UserRole) => void
 }
 
-export function LoginPage({ onLogin, onCreateAccount }: LoginPageProps) {
+export function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setMessage('')
+    setLoading(true)
 
-    if (email.trim().toLowerCase() === 'veterinario@ifes.edu.br' && password === 'vet123') {
-      onLogin('veterinarian')
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    })
+
+    if (error) {
+      setMessage(error.message)
+      setLoading(false)
       return
     }
 
-    if (email.trim().toLowerCase() === 'atendente@ifes.edu.br' && password === 'atd123') {
-      onLogin('attendant')
+    const role = data.user.user_metadata.role
+    if (role !== 'veterinarian' && role !== 'attendant') {
+      await supabase.auth.signOut()
+      setMessage('O usuário não possui um perfil de acesso válido.')
+      setLoading(false)
       return
     }
 
-    setMessage('E-mail ou senha inválidos.')
+    onLogin(role)
   }
 
   return (
@@ -53,12 +67,7 @@ export function LoginPage({ onLogin, onCreateAccount }: LoginPageProps) {
           </div>
 
           {message && <p className="form-message error" role="status">{message}</p>}
-          <button className="submit-button" type="submit">Entrar</button>
-
-          <nav className="login-links" aria-label="Opções de acesso">
-            <button type="button">Esqueceu a senha?</button>
-            <button type="button" onClick={onCreateAccount}>Criar conta</button>
-          </nav>
+          <button className="submit-button" type="submit" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
         </form>
 
         <footer>

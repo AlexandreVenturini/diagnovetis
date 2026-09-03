@@ -23,16 +23,16 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
   const [appointmentEntry, setAppointmentEntry] = useState<{ screen: 'list' | 'create'; key: number }>({ screen: 'list', key: 0 })
   const [selected, setSelected] = useState<Dog | null>(null)
 
-  const { dogs, createDog, updateDog, removeDog } = useDogs()
+  const { dogs, createDog, createTutor, updateDog, removeDog } = useDogs()
 
-  function handleCreate(data: DogFormData) {
-    createDog(data)
+  async function handleCreate(data: DogFormData) {
+    await createDog(data)
     setScreen('list')
   }
 
-  function handleEdit(data: DogFormData) {
+  async function handleEdit(data: DogFormData) {
     if (!selected) return
-    updateDog(selected.id, data)
+    await updateDog(selected.id, data)
     setScreen('list')
   }
 
@@ -81,8 +81,8 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
 
         {activeModule === 'dogs' && <>
           {screen === 'list' && <DogList dogs={dogs} onCreate={() => setScreen('create')} onEdit={openEdit} onDetails={openDetails} />}
-          {screen === 'create' && <DogForm onSave={handleCreate} onCancel={() => setScreen('list')} />}
-          {screen === 'edit' && selected && <DogForm dog={selected} editing onSave={handleEdit} onCancel={() => setScreen('list')} />}
+          {screen === 'create' && <DogForm onSave={handleCreate} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />}
+          {screen === 'edit' && selected && <DogForm dog={selected} editing onSave={handleEdit} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />}
           {screen === 'details' && selected && <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />}
         </>}
         {activeModule === 'appointments' && <AppointmentsModule dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
