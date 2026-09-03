@@ -5,7 +5,7 @@ import type { AppointmentFormData } from './appointmentTypes'
 import type { Dog } from '../dogs/dogTypes'
 
 type AppointmentFormProps = {
-  onSave: (data: AppointmentFormData) => boolean
+  onSave: (data: AppointmentFormData) => Promise<boolean>
   onCancel: () => void
   error?: string
   dogs: Dog[]
@@ -23,10 +23,10 @@ export function AppointmentForm({ onSave, onCancel, error, dogs }: AppointmentFo
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!form.dogId) { setSearchError('Selecione um cão cadastrado na lista de resultados.'); setDogSearchOpen(true); return }
-    onSave(form)
+    await onSave(form)
   }
 
   const normalizedDogQuery = dogQuery.trim().toLocaleLowerCase('pt-BR')

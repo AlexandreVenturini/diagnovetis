@@ -1,33 +1,57 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LoginPage } from './features/auth/LoginPage'
-import { RegisterPage } from './features/auth/RegisterPage'
+import type { UserRole } from './features/auth/LoginPage'
 import { VeterinarianDashboard } from './features/veterinarian/VeterinarianDashboard'
 import { AttendantDashboard } from './features/attendant/AttendantDashboard'
+import { supabase } from './services/storage/supabaseClient'
 import './App.css'
 
-type AppScreen = 'login' | 'register' | 'veterinarian' | 'attendant'
+function readRole(role: unknown): UserRole | null {
+  return role === 'veterinarian' || role === 'attendant' ? role : null
+}
 
 function App() {
-  const [screen, setScreen] = useState<AppScreen>('login')
+  const [role, setRole] = useState<UserRole | null>(null)
+  const [checkingSession, setCheckingSession] = useState(true)
 
-  if (screen === 'veterinarian') {
-    return <VeterinarianDashboard onLogout={() => setScreen('login')} />
+  useEffect(() => {
+    let active = true
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      setRole(readRole(data.session?.user.user_metadata.role))
+      setCheckingSession(false)
+    })
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return
+      setRole(readRole(session?.user.user_metadata.role))
+      setCheckingSession(false)
+    })
+
+    return () => {
+      active = false
+      listener.subscription.unsubscribe()
+    }
+  }, [])
+
+  async function logout() {
+    await supabase.auth.signOut()
   }
 
-  if (screen === 'attendant') {
-    return <AttendantDashboard onLogout={() => setScreen('login')} />
+  if (checkingSession) {
+    return <main className="auth-loading" role="status">Verificando sessão...</main>
   }
 
-  if (screen === 'register') {
-    return <RegisterPage onBack={() => setScreen('login')} />
+  if (role === 'veterinarian') {
+    return <VeterinarianDashboard onLogout={logout} />
   }
 
-  return (
-    <LoginPage
-      onLogin={(role) => setScreen(role)}
-      onCreateAccount={() => setScreen('register')}
-    />
-  )
+  if (role === 'attendant') {
+    return <AttendantDashboard onLogout={logout} />
+  }
+
+  return <LoginPage onLogin={setRole} />
 }
 
 export default App

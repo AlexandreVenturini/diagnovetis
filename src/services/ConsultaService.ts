@@ -14,7 +14,7 @@ const petService = new PetService();
 
 interface MedicoRow { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
 interface MedRowInAluno { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
-interface AlunoRowJoined { id: number; nome: string; telefone: string; email: string; matricula: string; periodo: number; curso: string; medico_orientador_id: number; medicos: MedRowInAluno; }
+interface AlunoRowJoined { id: number; nome: string; telefone: string; email: string; matricula: string; periodo: number; curso: string; medico_orientador_id: number; medicos?: MedRowInAluno | null; }
 interface MedicamentoRow { id: number; nome_comercial: string; principio_ativo: string; descricao: string; concentracao: number; unidade_concentracao: string; forma_farmaceutica: string; via_administracao: string; tipo_uso: string; }
 interface MedicamentoReceitadoRow { quantidade: number; dose: string; vezes_ao_dia: number; duracao_dias: number; observacao: string; medicamentos: MedicamentoRow; }
 interface ReceitaRow { id: number; medicamentos_receitados: MedicamentoReceitadoRow[]; }
@@ -50,14 +50,20 @@ async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
         .from("consulta_alunos")
         .select("alunos(*, medicos!medico_orientador_id(*))")
         .eq("consulta_id", row.id);
-    const alunos: Aluno[] = (alunosData ?? [])
-        .filter((ca: { alunos: AlunoRowJoined | null }) => ca.alunos)
-        .map((ca: { alunos: AlunoRowJoined }) => {
+    const alunoRows = (alunosData ?? []) as unknown as Array<{ alunos: AlunoRowJoined | null }>;
+    const alunos: Aluno[] = await Promise.all(alunoRows
+        .filter((ca): ca is { alunos: AlunoRowJoined } => ca.alunos != null)
+        .map(async (ca) => {
             const a = ca.alunos;
-            const am = a.medicos;
+            let am = a.medicos;
+            if (!am) {
+                const { data: medicoData } = await supabase.from("medicos").select("*").eq("id", a.medico_orientador_id).single();
+                am = medicoData as MedRowInAluno | null;
+            }
+            if (!am) throw new Error(`Médico orientador do aluno ${a.id} não encontrado.`);
             return new Aluno(a.id, a.nome, a.telefone, a.email, a.matricula, a.periodo, a.curso,
                 new Medico(am.id, am.nome, am.telefone, am.email, am.especialidade, am.crmv));
-        });
+        }));
 
     const diagnosticoZoonose = new DiagnosticoZoonose(
         row.diagnostico_zoonose_status,
