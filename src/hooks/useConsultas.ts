@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Consulta } from '../models/Consulta'
+import { Consulta, type ExameFisico, type Alta } from '../models/Consulta'
 import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
 import { ConsultaService } from '../services/ConsultaService'
 import { MedicoService } from '../services/MedicoService'
@@ -63,6 +63,16 @@ export function useConsultas() {
         if (!pet) return { sucesso: false, erro: 'Nenhum paciente encontrado.' }
 
         try {
+            const exameFisico: ExameFisico = {
+                temperatura: data.temperature ? parseFloat(data.temperature) : undefined,
+                frequenciaCardiaca: data.heartRate ? parseFloat(data.heartRate) : undefined,
+                frequenciaRespiratoria: data.respiratoryRate ? parseFloat(data.respiratoryRate) : undefined,
+                tpc: data.capillaryRefill || undefined,
+                mucosas: data.mucosa || undefined,
+                hidratacao: data.hydration || undefined,
+                nivelConsciencia: data.consciousness || undefined,
+            }
+            const alta: Alta = {}
             const consulta = new Consulta(
                 await proximoId(),
                 dataConsultaParaHoje(),
@@ -75,7 +85,12 @@ export function useConsultas() {
                     data.zoonosisSearch ? 'suspeito' : 'negativo',
                     data.zoonosisSearch || 'Sem suspeita de zoonose',
                     new Date()
-                )
+                ),
+                [],
+                [],
+                [],
+                exameFisico,
+                alta
             )
             await consultaService.adicionarConsulta(consulta)
             await refresh()

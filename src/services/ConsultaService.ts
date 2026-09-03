@@ -1,5 +1,5 @@
 import { Aluno } from "../models/Aluno";
-import { Consulta } from "../models/Consulta";
+import { Consulta, type ExameFisico, type Alta } from "../models/Consulta";
 import { DiagnosticoZoonose } from "../models/DiagnosticoZoonose";
 import { Exame } from "../models/Exame";
 import { Medico } from "../models/Medico";
@@ -19,7 +19,7 @@ interface MedicamentoRow { id: number; nome_comercial: string; principio_ativo: 
 interface MedicamentoReceitadoRow { quantidade: number; dose: string; vezes_ao_dia: number; duracao_dias: number; observacao: string; medicamentos: MedicamentoRow; }
 interface ReceitaRow { id: number; medicamentos_receitados: MedicamentoReceitadoRow[]; }
 interface ExameRow { id: number; nome_exame: string; data_exame: string; resultado: string; }
-interface ConsultaRow { id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; }
+interface ConsultaRow { id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
 
 async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
     const pet = await petService.buscarPorId(row.pet_id);
@@ -71,7 +71,34 @@ async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
         new Date(row.diagnostico_zoonose_data_confirmacao)
     );
 
-    return new Consulta(row.id, new Date(row.data_consulta), row.horario, row.diagnostico, row.observacoes, responsavel, pet, diagnosticoZoonose, exames, receitas, alunos);
+    const exameFisico: ExameFisico = {
+        temperatura: row.temperatura ?? undefined,
+        frequenciaCardiaca: row.frequencia_cardiaca ?? undefined,
+        frequenciaRespiratoria: row.frequencia_respiratoria ?? undefined,
+        tpc: row.tpc ?? undefined,
+        mucosas: row.mucosas ?? undefined,
+        hidratacao: row.hidratacao ?? undefined,
+        nivelConsciencia: row.nivel_consciencia ?? undefined,
+        pelePelagem: row.pele_pelagem ?? undefined,
+        olhos: row.olhos ?? undefined,
+        ouvidos: row.ouvidos ?? undefined,
+        bocaDentes: row.boca_dentes ?? undefined,
+        sistemaRespiratorio: row.sistema_respiratorio ?? undefined,
+        sistemaCardiovascular: row.sistema_cardiovascular ?? undefined,
+        sistemaGastrointestinal: row.sistema_gastrointestinal ?? undefined,
+        sistemaUrinario: row.sistema_urinario ?? undefined,
+        sistemaReprodutivo: row.sistema_reprodutivo ?? undefined,
+        sistemaNeurologico: row.sistema_neurologico ?? undefined,
+        dor: row.dor ?? undefined,
+    };
+    const alta: Alta = {
+        data: row.alta_data ?? undefined,
+        condicao: row.alta_condicao ?? undefined,
+        orientacoes: row.alta_orientacoes ?? undefined,
+        prognostico: row.alta_prognostico ?? undefined,
+    };
+
+    return new Consulta(row.id, new Date(row.data_consulta), row.horario, row.diagnostico, row.observacoes, responsavel, pet, diagnosticoZoonose, exames, receitas, alunos, exameFisico, alta);
 }
 
 export class ConsultaService {
@@ -98,7 +125,29 @@ export class ConsultaService {
             pet_id: consulta.pet.id,
             diagnostico_zoonose_status: consulta.diagnosticoZoonose.status,
             diagnostico_zoonose_observacoes: consulta.diagnosticoZoonose.observacoes,
-            diagnostico_zoonose_data_confirmacao: consulta.diagnosticoZoonose.dataConfirmacao.toISOString()
+            diagnostico_zoonose_data_confirmacao: consulta.diagnosticoZoonose.dataConfirmacao.toISOString(),
+            temperatura: consulta.exameFisico.temperatura ?? null,
+            frequencia_cardiaca: consulta.exameFisico.frequenciaCardiaca ?? null,
+            frequencia_respiratoria: consulta.exameFisico.frequenciaRespiratoria ?? null,
+            tpc: consulta.exameFisico.tpc ?? null,
+            mucosas: consulta.exameFisico.mucosas ?? null,
+            hidratacao: consulta.exameFisico.hidratacao ?? null,
+            nivel_consciencia: consulta.exameFisico.nivelConsciencia ?? null,
+            pele_pelagem: consulta.exameFisico.pelePelagem ?? null,
+            olhos: consulta.exameFisico.olhos ?? null,
+            ouvidos: consulta.exameFisico.ouvidos ?? null,
+            boca_dentes: consulta.exameFisico.bocaDentes ?? null,
+            sistema_respiratorio: consulta.exameFisico.sistemaRespiratorio ?? null,
+            sistema_cardiovascular: consulta.exameFisico.sistemaCardiovascular ?? null,
+            sistema_gastrointestinal: consulta.exameFisico.sistemaGastrointestinal ?? null,
+            sistema_urinario: consulta.exameFisico.sistemaUrinario ?? null,
+            sistema_reprodutivo: consulta.exameFisico.sistemaReprodutivo ?? null,
+            sistema_neurologico: consulta.exameFisico.sistemaNeurologico ?? null,
+            dor: consulta.exameFisico.dor ?? null,
+            alta_data: consulta.alta.data ?? null,
+            alta_condicao: consulta.alta.condicao ?? null,
+            alta_orientacoes: consulta.alta.orientacoes ?? null,
+            alta_prognostico: consulta.alta.prognostico ?? null,
         });
         if (error) throw new Error(error.message);
 

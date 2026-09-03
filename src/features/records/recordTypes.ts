@@ -3,6 +3,34 @@ export type RecordValidation = 'draft' | 'pending' | 'validated'
 
 export type WeightEntry = { date: string; weight: number }
 
+export type ExameFisicoRecord = {
+  temperatura?: number
+  frequenciaCardiaca?: number
+  frequenciaRespiratoria?: number
+  tpc?: string
+  mucosas?: string
+  hidratacao?: string
+  nivelConsciencia?: string
+  pelePelagem?: string
+  olhos?: string
+  ouvidos?: string
+  bocaDentes?: string
+  sistemaRespiratorio?: string
+  sistemaCardiovascular?: string
+  sistemaGastrointestinal?: string
+  sistemaUrinario?: string
+  sistemaReprodutivo?: string
+  sistemaNeurologico?: string
+  dor?: string
+}
+
+export type AltaRecord = {
+  data?: string
+  condicao?: string
+  orientacoes?: string
+  prognostico?: string
+}
+
 export type ClinicalRecord = {
   id: number
   kind: RecordKind
@@ -18,6 +46,8 @@ export type ClinicalRecord = {
   prescriptions: string[]
   validation: RecordValidation
   validatedBy: string
+  exameFisico?: ExameFisicoRecord
+  alta?: AltaRecord
 }
 
 export type PatientRecord = {

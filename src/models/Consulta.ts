@@ -6,6 +6,34 @@ import type { Pessoa } from "./Pessoa";
 import type { Pet } from "./Pet";
 import type { Receita } from "./Receita";
 
+export type ExameFisico = {
+    temperatura?: number
+    frequenciaCardiaca?: number
+    frequenciaRespiratoria?: number
+    tpc?: string
+    mucosas?: string
+    hidratacao?: string
+    nivelConsciencia?: string
+    pelePelagem?: string
+    olhos?: string
+    ouvidos?: string
+    bocaDentes?: string
+    sistemaRespiratorio?: string
+    sistemaCardiovascular?: string
+    sistemaGastrointestinal?: string
+    sistemaUrinario?: string
+    sistemaReprodutivo?: string
+    sistemaNeurologico?: string
+    dor?: string
+}
+
+export type Alta = {
+    data?: string
+    condicao?: string
+    orientacoes?: string
+    prognostico?: string
+}
+
 export class Consulta {
     private _id: number;
     private _dataConsulta: Date;
@@ -18,6 +46,8 @@ export class Consulta {
     private _receitas: Receita[];
     private _alunos: Aluno[];
     private _diagnosticoZoonose: DiagnosticoZoonose;
+    exameFisico: ExameFisico;
+    alta: Alta;
 
     constructor(
         id: number,
@@ -30,7 +60,9 @@ export class Consulta {
         diagnosticoZoonose: DiagnosticoZoonose,
         exames: Exame[] = [],
         receitas: Receita[] = [],
-        alunos: Aluno[] = []
+        alunos: Aluno[] = [],
+        exameFisico: ExameFisico = {},
+        alta: Alta = {}
     ) {
         this._id = id;
         this._dataConsulta = dataConsulta;
@@ -43,6 +75,8 @@ export class Consulta {
         this._receitas = receitas;
         this._alunos = alunos;
         this._diagnosticoZoonose = diagnosticoZoonose;
+        this.exameFisico = exameFisico;
+        this.alta = alta;
     }
 
     get id(): number {
