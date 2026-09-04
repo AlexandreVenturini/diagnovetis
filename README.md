@@ -1,73 +1,146 @@
-# React + TypeScript + Vite
+# Diagnovetis
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicação web para gestão de clínicas veterinárias, desenvolvida como projeto acadêmico com React, TypeScript, Vite e Supabase.
 
-Currently, two official plugins are available:
+O sistema reúne funcionalidades administrativas e clínicas, permitindo acompanhar usuários, animais, consultas, atendimentos, prontuários, medicamentos e informações relacionadas a zoonoses.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Demonstração
 
-## React Compiler
+[Conheça a aplicação publicada](https://diagnovetis.vercel.app/)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+> A aplicação é um projeto acadêmico e utiliza dados exclusivamente demonstrativos.
 
-## Expanding the ESLint configuration
+## Funcionalidades
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- autenticação e criação de contas;
+- controle de acesso por perfil;
+- cadastro de tutores e animais;
+- agenda e gerenciamento de consultas;
+- registro de atendimentos clínicos;
+- prontuários veterinários;
+- registro de exame físico e alta;
+- módulo de medicamentos;
+- acompanhamento de zoonoses;
+- dashboards personalizados;
+- geração de relatórios clínicos em PDF;
+- persistência de dados e autenticação com Supabase.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tecnologias
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- React
+- TypeScript
+- Vite
+- Supabase
+- HTML e CSS
+- ESLint
+- Vitest
+- Git e GitHub
+- Vercel
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Organização do projeto
+
+```text
+diagnovetis/
+├── public/
+├── src/
+├── supabase/
+├── package.json
+├── eslint.config.js
+├── tsconfig.json
+└── vite.config.ts
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+O código-fonte da interface e das regras da aplicação está organizado em `src`. Os arquivos relacionados à configuração e estrutura do banco estão em `supabase`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Executando localmente
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Pré-requisitos
+
+- Node.js instalado;
+- npm;
+- projeto configurado no Supabase.
+
+### Instalação
+
+Clone o repositório:
+
+```bash
+git clone https://github.com/AlexandreVenturini/diagnovetis.git
 ```
+
+Entre na pasta:
+
+```bash
+cd diagnovetis
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Inicie o ambiente de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+O endereço local será informado pelo Vite no terminal.
+
+## Comandos disponíveis
+
+```bash
+npm run dev
+```
+
+Inicia o ambiente de desenvolvimento.
+
+```bash
+npm run build
+```
+
+Gera uma versão de produção e verifica o código TypeScript.
+
+```bash
+npm run lint
+```
+
+Executa a análise estática do código.
+
+```bash
+npm run test
+```
+
+Executa os testes com Vitest.
+
+```bash
+npm run test:coverage
+```
+
+Executa os testes e gera o relatório de cobertura.
+
+## Contribuições de Julia de Souza Sacht
+
+Entre as funcionalidades desenvolvidas por [Julia de Souza Sacht](https://github.com/Juliasacht) estão:
+
+- autenticação e criação de contas;
+- cadastro de tutores e animais;
+- agenda de consultas;
+- atendimentos e prontuários clínicos;
+- módulos de zoonoses e medicamentos;
+- dashboards e áreas de acesso restrito;
+- geração de relatórios clínicos em PDF;
+- integração de autenticação, prontuários e medicamentos com Supabase;
+- organização e manutenção de componentes do front-end.
+
+[Consulte o histórico público das contribuições](https://github.com/AlexandreVenturini/diagnovetis/commits?author=Juliasacht).
+
+## Colaboradores
+
+- [Alexandre Venturini](https://github.com/AlexandreVenturini)
+- [Julia de Souza Sacht](https://github.com/Juliasacht)
+
+## Situação do projeto
+
+O projeto continua em evolução, com melhorias na integração com o Supabase, nos fluxos clínicos, na qualidade do código e na cobertura de testes.
