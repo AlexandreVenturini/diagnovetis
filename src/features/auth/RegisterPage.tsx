@@ -22,10 +22,6 @@ export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
   const [loading, setLoading] = useState(false)
 
   function formatCrmv(value: string) {
-    // Formato: UF-NNNNN/YYYY  ex: ES-12345/2024
-    const digits = value.replace(/\D/g, '')
-    const letters = value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2)
-    // Mantém o texto bruto mas formata progressivamente
     return value.toUpperCase().replace(/[^A-Z0-9/-]/g, '').slice(0, 14)
   }
 
