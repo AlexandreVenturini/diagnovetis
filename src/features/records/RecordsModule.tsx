@@ -152,7 +152,7 @@ export function RecordsModule() {
   </section>
 
   const latestWeight = selected.weights.at(-1)?.weight
-  const latestRecord = [...selected.records].sort((a, b) => b.date.localeCompare(a.date))[0]
+  const latestRecord = [...selected.records].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)[0]
   const emptyRecord: ClinicalRecord = { id: 0, kind: 'Consulta', date: '', veterinarian: '', crmv: '', students: [], description: '', diagnosis: '', conduct: '', exams: [], attachments: [], prescriptions: [], validation: 'pending', validatedBy: '' }
   const displayRecord = latestRecord ?? emptyRecord
 
