@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { LoginPage } from './features/auth/LoginPage'
 import type { UserRole } from './features/auth/LoginPage'
+import { RegisterPage } from './features/auth/RegisterPage'
 import { VeterinarianDashboard } from './features/veterinarian/VeterinarianDashboard'
 import { AttendantDashboard } from './features/attendant/AttendantDashboard'
 import { supabase } from './services/storage/supabaseClient'
@@ -13,6 +14,7 @@ function readRole(role: unknown): UserRole | null {
 function App() {
   const [role, setRole] = useState<UserRole | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
+  const [registering, setRegistering] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -51,7 +53,16 @@ function App() {
     return <AttendantDashboard onLogout={logout} />
   }
 
-  return <LoginPage onLogin={setRole} />
+  if (registering) {
+    return (
+      <RegisterPage
+        onBack={() => setRegistering(false)}
+        onRegistered={(r) => { setRegistering(false); setRole(r) }}
+      />
+    )
+  }
+
+  return <LoginPage onLogin={setRole} onRegister={() => setRegistering(true)} />
 }
 
 export default App

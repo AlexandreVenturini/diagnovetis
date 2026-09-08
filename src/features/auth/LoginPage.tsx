@@ -8,9 +8,10 @@ export type UserRole = 'veterinarian' | 'attendant'
 
 type LoginPageProps = {
   onLogin: (role: UserRole) => void
+  onRegister: () => void
 }
 
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -73,6 +74,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <footer>
           <p>Sistema de Gerenciamento de Atendimento Veterinário</p>
           <p>IFES - Instituto Federal do Espírito Santo</p>
+          <button
+            type="button"
+            onClick={onRegister}
+            style={{ marginTop: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '0.875rem' }}
+          >
+            Criar nova conta
+          </button>
         </footer>
       </section>
     </main>
