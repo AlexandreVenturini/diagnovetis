@@ -1,5 +1,6 @@
 import { Icon } from '../../components/common/Icon'
 import type { Dog } from './dogTypes'
+import { formatDogAge } from './dogAge'
 
 type DogListProps = {
   dogs: Dog[]
@@ -31,7 +32,7 @@ export function DogList({ dogs, onCreate, onEdit, onDetails }: DogListProps) {
               </div>
             </div>
             <p className="breed">{dog.breed}</p>
-            <p>Idade: {dog.age} anos</p>
+            <p>Idade: {formatDogAge(dog.age)}</p>
             <p>Peso: {dog.weight} kg</p>
             <p>Tutor: {dog.tutor}</p>
           </article>
