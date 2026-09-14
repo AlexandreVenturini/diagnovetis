@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { EMPTY_DOG } from './dogData'
+import { parseDogAge, serializeDogAge } from './dogAge'
 import type { Dog, DogFormData } from './dogTypes'
 import { TutorNotFoundError } from '../../hooks/useDogs'
 import { TutorForm } from '../tutors/TutorForm'
@@ -16,6 +17,7 @@ type DogFormProps = {
 
 export function DogForm({ dog, editing = false, onSave, onCreateTutor, onCancel }: DogFormProps) {
   const [form, setForm] = useState<DogFormData>(dog ? { ...dog } : EMPTY_DOG)
+  const [age, setAge] = useState(() => parseDogAge(dog?.age ?? ''))
   const [needsTutor, setNeedsTutor] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -29,7 +31,7 @@ export function DogForm({ dog, editing = false, onSave, onCreateTutor, onCancel 
     setError('')
     setSaving(true)
     try {
-      await onSave(form)
+      await onSave({ ...form, age: serializeDogAge(age.years, age.months) })
     } catch (cause) {
       if (cause instanceof TutorNotFoundError || (cause instanceof Error && cause.message.includes('Cadastre o tutor completo antes de registrar o cão.'))) {
         setNeedsTutor(true)
@@ -43,7 +45,7 @@ export function DogForm({ dog, editing = false, onSave, onCreateTutor, onCancel 
 
   async function createTutorAndResume(tutor: TutorFormData) {
     await onCreateTutor(tutor)
-    const dogWithRegisteredTutor = { ...form, tutor: tutor.name.trim(), contact: tutor.phone.trim() }
+    const dogWithRegisteredTutor = { ...form, age: serializeDogAge(age.years, age.months), tutor: tutor.name.trim(), contact: tutor.phone.trim() }
     setForm(dogWithRegisteredTutor)
     await onSave(dogWithRegisteredTutor)
   }
@@ -55,7 +57,10 @@ export function DogForm({ dog, editing = false, onSave, onCreateTutor, onCancel 
       <form className="dog-form" onSubmit={submit}>
         <label>Nome do Cão<input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder="Ex: Bob" required /></label>
         <label>Raça<select value={form.breed} onChange={(event) => update('breed', event.target.value)} required><option value="">Selecione a raça</option><option>Labrador</option><option>Pastor Alemão</option><option>Golden Retriever</option><option>Poodle</option><option>Vira-lata</option></select></label>
-        <label>Idade (anos)<input type="number" min="0" value={form.age} onChange={(event) => update('age', event.target.value)} placeholder="Ex: 3" required /></label>
+        <div className="dog-age-fields">
+          <label>Idade (anos)<input type="number" min="0" step="1" value={age.years} onChange={(event) => setAge((current) => ({ ...current, years: event.target.value }))} placeholder="Ex: 2" required={!age.months} /></label>
+          <label>Idade (meses)<input type="number" min="0" max="11" step="1" value={age.months} onChange={(event) => setAge((current) => ({ ...current, months: event.target.value }))} placeholder="Ex: 6" required={!age.years} /></label>
+        </div>
         <label>Peso (kg)<input type="number" min="0" step="0.1" value={form.weight} onChange={(event) => update('weight', event.target.value)} placeholder="Ex: 28" required /></label>
         <label>Sexo<select value={form.sex} onChange={(event) => update('sex', event.target.value)} required><option value="">Selecione</option><option>Macho</option><option>Fêmea</option></select></label>
         <label>Nome do Tutor<input value={form.tutor} onChange={(event) => update('tutor', event.target.value)} placeholder="Ex: João Silva" required /></label>
