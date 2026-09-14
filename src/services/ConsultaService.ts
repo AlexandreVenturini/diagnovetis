@@ -19,7 +19,7 @@ interface MedicamentoRow { id: number; nome_comercial: string; principio_ativo: 
 interface MedicamentoReceitadoRow { quantidade: number; dose: string; vezes_ao_dia: number; duracao_dias: number; observacao: string; medicamentos: MedicamentoRow; }
 interface ReceitaRow { id: number; medicamentos_receitados: MedicamentoReceitadoRow[]; }
 interface ExameRow { id: number; nome_exame: string; data_exame: string; resultado: string; }
-interface ConsultaRow { id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
+interface ConsultaRow { prescricao?: Consulta["prescricao"]; id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
 
 async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
     const pet = await petService.buscarPorId(row.pet_id);
@@ -98,7 +98,9 @@ async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
         prognostico: row.alta_prognostico ?? undefined,
     };
 
-    return new Consulta(row.id, new Date(row.data_consulta), row.horario, row.diagnostico, row.observacoes, responsavel, pet, diagnosticoZoonose, exames, receitas, alunos, exameFisico, alta);
+    const consulta = new Consulta(row.id, new Date(row.data_consulta), row.horario, row.diagnostico, row.observacoes, responsavel, pet, diagnosticoZoonose, exames, receitas, alunos, exameFisico, alta);
+    consulta.prescricao = row.prescricao ?? null;
+    return consulta;
 }
 
 export class ConsultaService {
@@ -117,6 +119,7 @@ export class ConsultaService {
 
         const { error } = await supabase.from("consultas").insert({
             id: consulta.id,
+            ...(consulta.prescricao ? { prescricao: consulta.prescricao } : {}),
             data_consulta: consulta.dataConsulta.toISOString(),
             horario: consulta.horario,
             diagnostico: consulta.diagnostico,
@@ -149,7 +152,12 @@ export class ConsultaService {
             alta_orientacoes: consulta.alta.orientacoes ?? null,
             alta_prognostico: consulta.alta.prognostico ?? null,
         });
-        if (error) throw new Error(error.message);
+        if (error) {
+            if (consulta.prescricao && error.message.includes('prescricao')) {
+                throw new Error('Não foi possível salvar a receita. Verifique se a atualização do banco para receitas foi aplicada. Os dados do atendimento foram mantidos.');
+            }
+            throw new Error(error.message);
+        }
 
         for (const exame of consulta.exames) {
             await supabase.from("exames").insert({

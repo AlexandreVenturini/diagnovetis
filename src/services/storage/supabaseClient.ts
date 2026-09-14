@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 const configuredUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const configuredKey = import.meta.env.VITE_SUPABASE_KEY as string | undefined
+const configuredKey = (import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined
 export const isSupabaseConfigured = Boolean(configuredUrl && configuredKey)
 
 // Mantém a interface disponível no desenvolvimento local mesmo quando o

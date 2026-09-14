@@ -1,3 +1,5 @@
+import type { PrescricaoSalva } from '../../models/Prescricao'
+
 export type RecordKind = 'Consulta' | 'Vacina' | 'Exame' | 'Tratamento' | 'Retorno'
 export type RecordValidation = 'draft' | 'pending' | 'validated'
 
@@ -32,6 +34,7 @@ export type AltaRecord = {
 }
 
 export type ClinicalRecord = {
+  savedPrescription?: PrescricaoSalva | null
   id: number
   kind: RecordKind
   date: string
