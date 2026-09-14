@@ -268,3 +268,17 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @media print { .topbar,.user-row,.main-nav,.consultation-actions { display:none !important; }.dashboard-content,.shell-width { width:100%; padding:0; }.app-shell { background:#fff; }.consultation-header,.consultation-panel { box-shadow:none; border:1px solid #ddd; } }
 @media print { .record-detail-heading,.record-notice,.paper-section-actions { display:none !important; }.animal-record-form { margin:0; box-shadow:none; break-inside:auto; }.paper-section { break-inside:avoid; } }
 @media (max-width:390px) { .login-card { padding-inline:24px; }.section-heading { flex-direction:column; }.new-button { align-self:stretch; justify-content:center; }.form-actions { flex-direction:column; }.form-actions button { width:100%; } }
+
+.dog-age-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.prescription-editor { margin-top:20px; }
+.prescription-editor > p { color:var(--muted); font-size:13px; line-height:1.6; }
+.prescription-editor fieldset { min-width:0; margin:20px 0; padding:18px; border:1px solid #d4dfd7; border-radius:10px; }
+.prescription-editor legend { padding:0 8px; color:var(--green-dark); font-weight:700; }
+.prescription-editor fieldset > button { margin-top:14px; }
+.prescription-editor .consultation-textareas { margin:20px 0; }
+.consultation-edit-fields { margin:0; padding:0; min-width:0; border:0; }
+.consultation-edit-fields:disabled { opacity:.7; }
+.saved-prescriptions { margin:20px 0; padding:20px; }
+.saved-prescriptions h3 { color:var(--green-dark); }
+.saved-prescriptions article { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:12px 0; border-top:1px solid var(--line); }
+.saved-prescriptions p { color:var(--muted); font-size:13px; }

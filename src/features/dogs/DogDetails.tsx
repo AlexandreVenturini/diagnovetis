@@ -1,4 +1,5 @@
 import type { Dog } from './dogTypes'
+import { formatDogAge } from './dogAge'
 
 type DogDetailsProps = {
   dog: Dog
@@ -24,7 +25,7 @@ export function DogDetails({ dog, onBack, onRemove }: DogDetailsProps) {
         <DetailItem label="Nome" value={dog.name} />
         <DetailItem label="Espécie" value="Cão" />
         <DetailItem label="Raça" value={dog.breed} />
-        <DetailItem label="Idade" value={`${dog.age} anos`} />
+        <DetailItem label="Idade" value={formatDogAge(dog.age)} />
         <DetailItem label="Peso" value={`${dog.weight} kg`} />
         <DetailItem label="Sexo" value={dog.sex} />
         <DetailItem label="Tutor" value={dog.tutor} />

@@ -59,8 +59,10 @@ export function useAppointments() {
         if (changes.date !== undefined) mapped.date = changes.date
         if (changes.time !== undefined) mapped.time = changes.time
         if (changes.notes !== undefined) mapped.notes = changes.notes
-        await supabase.from('agendamentos').update(mapped as Record<string, unknown>).eq('id', id)
+        const { error } = await supabase.from('agendamentos').update(mapped as Record<string, unknown>).eq('id', id)
+        if (error) return false
         await refresh()
+        return true
     }, [refresh])
 
     return { appointments, createAppointment, updateAppointment }

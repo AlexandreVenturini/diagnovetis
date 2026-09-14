@@ -5,6 +5,7 @@ import { exportPatientRecord } from './recordReport'
 import type { ClinicalRecord, PatientRecord, RecordKind, RecordScreen } from './recordTypes'
 import { PetService } from '../../services/PetService'
 import { ConsultaService } from '../../services/ConsultaService'
+import { generatePrescription } from '../consultations/prescriptionReport'
 
 const petService = new PetService()
 const consultaService = new ConsultaService()
@@ -61,7 +62,10 @@ export function RecordsModule() {
           conduct: '',
           exams: c.exames.map((e) => e.nomeExame),
           attachments: [],
-          prescriptions: c.receitas.flatMap((r) => r.medicamentosReceitados.map((m) => `${m.medicamento.nome} — ${m.dose}`)),
+          savedPrescription: c.prescricao,
+          prescriptions: c.prescricao
+            ? c.prescricao.prescription.items.map((item) => `${item.medication} — ${item.dose}; ${item.route}; ${item.frequency}; ${item.duration}; quantidade: ${item.quantity}`)
+            : c.receitas.flatMap((r) => r.medicamentosReceitados.map((m) => `${m.medicamento.nome} — ${m.dose}`)),
           validation: 'validated' as const,
           validatedBy: c.responsavel.nome,
           exameFisico: c.exameFisico,
@@ -159,6 +163,19 @@ export function RecordsModule() {
   return <section className="record-details-module">
     <div className="records-heading record-detail-heading"><div><button className="text-back-button" onClick={() => setScreen('list')}>‹ Prontuários</button><h2>{selected.dogName}</h2><p>Tutor: {selected.tutorName} · {selected.breed} · {selected.age}</p></div><div className="record-header-actions"><button className="outline-button" onClick={() => { const opened = recordFormRef.current ? exportPatientRecord(recordFormRef.current, selected.dogName) : false; setNotice(opened ? 'Relatório aberto com os dados atuais para impressão ou salvamento em PDF.' : 'O navegador bloqueou a janela do relatório.') }}>⇩ Exportar PDF</button><button className="primary-button" onClick={() => setScreen('create')}>+ Adicionar registro</button></div></div>
     {notice && <p className="record-notice" role="status">{notice}</p>}
+    <section className="content-card saved-prescriptions" aria-labelledby="saved-prescriptions-title">
+      <h3 id="saved-prescriptions-title">Receitas dos atendimentos</h3>
+      {selected.records.some((record) => record.savedPrescription) ? selected.records.filter((record) => record.savedPrescription).map((record) => <article key={record.id}>
+        <div><strong>Atendimento nº {record.id} · {formatDate(record.date)}</strong><p>{record.savedPrescription!.patient.veterinarian}</p></div>
+        <button className="outline-button" type="button" onClick={() => {
+          const saved = record.savedPrescription!
+          try {
+            const opened = generatePrescription(saved.patient, saved.prescription, new Date(saved.issuedAt))
+            setNotice(opened ? 'Receita original aberta para impressão ou salvamento em PDF.' : 'O navegador bloqueou a receita. Permita novas janelas e tente novamente.')
+          } catch { setNotice('Não foi possível gerar esta receita. Confira os dados do atendimento.') }
+        }}>Reimprimir receita</button>
+      </article>) : <p>Nenhuma receita arquivada neste prontuário.</p>}
+    </section>
     <form className="animal-record-form" ref={recordFormRef}>
       <header className="animal-record-title"><div className="record-logo">✚</div><div><h3>Ficha de Prontuário Animal</h3><p>Registro Clínico Veterinário · IFES Campus Santa Teresa</p></div><label>Nº do prontuário<input defaultValue={String(selected.id).padStart(4, '0')} /></label></header>
       <div className="animal-record-grid">

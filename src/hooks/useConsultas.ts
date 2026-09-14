@@ -4,13 +4,13 @@ import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
 import { ConsultaService } from '../services/ConsultaService'
 import { MedicoService } from '../services/MedicoService'
 import { PetService } from '../services/PetService'
-import { TutorService } from '../services/TutorService'
 import type { ConsultationData } from '../features/consultations/consultationTypes'
+import type { PrescricaoSalva } from '../models/Prescricao'
+import { validatePrescription } from '../features/consultations/prescriptionReport'
 
 const consultaService = new ConsultaService()
 const medicoService = new MedicoService()
 const petService = new PetService()
-const tutorService = new TutorService()
 
 async function proximoId(): Promise<number> {
     const consultas = await consultaService.listarConsultas()
@@ -25,24 +25,16 @@ function dataConsultaParaHoje(): Date {
 
 async function resolverMedico(nomeVeterinario: string) {
     const medicos = await medicoService.listarMedicos()
-    return medicos.find(m => m.nome.toLowerCase().includes(nomeVeterinario.toLowerCase()))
-        ?? medicos[0]
-        ?? null
+    const encontrados = medicos.filter(m => m.nome.trim().toLocaleLowerCase('pt-BR') === nomeVeterinario.trim().toLocaleLowerCase('pt-BR'))
+    return encontrados.length === 1 ? encontrados[0] : null
 }
 
 async function resolverPet(nomeCao: string, nomeTutor: string) {
     const pets = await petService.listarPets()
 
-    const porNome = pets.find(p => p.nome.toLowerCase().includes(nomeCao.toLowerCase()))
-    if (porNome) return porNome
-
-    const tutores = await tutorService.buscarPorNome(nomeTutor)
-    if (tutores.length > 0) {
-        const petDoTutor = pets.find(p => p.tutor.id === tutores[0].id)
-        if (petDoTutor) return petDoTutor
-    }
-
-    return pets[0] ?? null
+    const normalize = (value: string) => value.trim().toLocaleLowerCase('pt-BR')
+    const encontrados = pets.filter(p => normalize(p.nome) === normalize(nomeCao) && normalize(p.tutor.nome) === normalize(nomeTutor))
+    return encontrados.length === 1 ? encontrados[0] : null
 }
 
 export function useConsultas() {
@@ -53,16 +45,20 @@ export function useConsultas() {
         setConsultas(lista)
     }, [])
 
-    useEffect(() => { refresh() }, [refresh])
+    useEffect(() => { void refresh().catch(() => {}) }, [refresh])
 
-    async function salvarConsulta(data: ConsultationData): Promise<{ sucesso: boolean; erro?: string }> {
+    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number }> {
+      try {
+        if (prescricao) {
+            const error = validatePrescription(data, prescricao.prescription)
+            if (error) return { sucesso: false, erro: error }
+        }
         const medico = await resolverMedico(data.veterinarian)
-        if (!medico) return { sucesso: false, erro: 'Nenhum médico cadastrado.' }
+        if (!medico) return { sucesso: false, erro: 'Não foi possível identificar um único veterinário. Informe o nome completo cadastrado.' }
 
         const pet = await resolverPet(data.dogName, data.tutorName)
-        if (!pet) return { sucesso: false, erro: 'Nenhum paciente encontrado.' }
+        if (!pet) return { sucesso: false, erro: 'Não foi possível identificar um único paciente. Confira o nome do animal e do tutor cadastrados.' }
 
-        try {
             const exameFisico: ExameFisico = {
                 temperatura: data.temperature ? parseFloat(data.temperature) : undefined,
                 frequenciaCardiaca: data.heartRate ? parseFloat(data.heartRate) : undefined,
@@ -92,9 +88,11 @@ export function useConsultas() {
                 exameFisico,
                 alta
             )
+            consulta.prescricao = prescricao
             await consultaService.adicionarConsulta(consulta)
-            await refresh()
-            return { sucesso: true }
+            // Uma falha ao recarregar a lista não desfaz a consulta já gravada.
+            void refresh().catch(() => {})
+            return { sucesso: true, id: consulta.id }
         } catch (e) {
             return { sucesso: false, erro: (e as Error).message }
         }

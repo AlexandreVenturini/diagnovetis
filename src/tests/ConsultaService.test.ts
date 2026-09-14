@@ -13,6 +13,8 @@ import { TutorService } from '../services/TutorService'
 import { PetService } from '../services/PetService'
 import { AlunoService } from '../services/AlunoService'
 import { ValidacaoError } from '../services/validation/ValidacaoError'
+import { EMPTY_CONSULTATION } from '../features/consultations/consultationTypes'
+import { prescriptionHtml } from '../features/consultations/prescriptionReport'
 
 function criarMedico(id = 1): Medico {
     return new Medico(id, 'Dr. Silva', '27933001234', 'silva@vet.com', 'Clínica Geral', '12345-ES')
@@ -70,6 +72,29 @@ beforeEach(async () => {
 })
 
 describe('ConsultaService.adicionarConsulta', () => {
+    it('salva a receita com a consulta e recupera os dados originais para reimpressão', async () => {
+        const consulta = novaConsulta(medico, pet)
+        consulta.prescricao = {
+            version: 1,
+            issuedAt: '2026-09-14T15:00:00.000Z',
+            patient: { ...EMPTY_CONSULTATION, dogName: pet.nome, tutorName: tutor.nome, veterinarian: medico.nome, age: '6 meses' },
+            prescription: { crmv: medico.crmv, instructions: 'Orientação original', items: [{ medication: 'Medicamento teste', dose: 'Dose informada', route: 'Via informada', frequency: 'Frequência informada', duration: 'Duração informada', quantity: 'Quantidade informada' }] },
+        }
+        await service.adicionarConsulta(consulta)
+        const carregada = await new ConsultaService().buscarPorId(consulta.id)
+        expect(carregada?.prescricao).toEqual(consulta.prescricao)
+        const saved = carregada!.prescricao!
+        const html = prescriptionHtml(saved.patient, saved.prescription, new Date(saved.issuedAt))
+        expect(html).toContain('14/09/2026')
+        expect(html).toContain('6 meses')
+        expect(html).toContain('Orientação original')
+        expect((await service.listarPorPet(pet.id))[0].prescricao).toEqual(consulta.prescricao)
+    })
+
+    it('mantém atendimentos sem receita compatíveis', async () => {
+        await service.adicionarConsulta(novaConsulta(medico, pet))
+        expect((await service.buscarPorId(1))?.prescricao).toBeNull()
+    })
     it('adiciona consulta válida com sucesso', async () => {
         await service.adicionarConsulta(novaConsulta(medico, pet))
         expect(await service.listarConsultas()).toHaveLength(1)

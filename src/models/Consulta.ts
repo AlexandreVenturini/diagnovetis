@@ -5,6 +5,7 @@ import type { Medico } from "./Medico";
 import type { Pessoa } from "./Pessoa";
 import type { Pet } from "./Pet";
 import type { Receita } from "./Receita";
+import type { PrescricaoSalva } from './Prescricao';
 
 export type ExameFisico = {
     temperatura?: number
@@ -48,6 +49,7 @@ export class Consulta {
     private _diagnosticoZoonose: DiagnosticoZoonose;
     exameFisico: ExameFisico;
     alta: Alta;
+    prescricao: PrescricaoSalva | null = null;
 
     constructor(
         id: number,

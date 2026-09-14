@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { BrandMark } from '../../components/common/BrandMark'
 import { Icon } from '../../components/common/Icon'
-import { supabase } from '../../services/storage/supabaseClient'
+import { isSupabaseConfigured, supabase } from '../../services/storage/supabaseClient'
 
 export type UserRole = 'veterinarian' | 'attendant'
 
@@ -20,28 +20,35 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('')
+    if (!isSupabaseConfigured) {
+      setMessage('Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ou VITE_SUPABASE_KEY) no arquivo .env.local e reinicie o servidor local.')
+      return
+    }
     setLoading(true)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    })
+      if (error) {
+        setMessage(error.message)
+        return
+      }
 
-    if (error) {
-      setMessage(error.message)
+      const role = data.user.user_metadata.role
+      if (role !== 'veterinarian' && role !== 'attendant') {
+        await supabase.auth.signOut()
+        setMessage('O usuário não possui um perfil de acesso válido.')
+        return
+      }
+
+      onLogin(role)
+    } catch {
+      setMessage('Não foi possível conectar ao serviço de login. Verifique sua conexão e tente novamente.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    const role = data.user.user_metadata.role
-    if (role !== 'veterinarian' && role !== 'attendant') {
-      await supabase.auth.signOut()
-      setMessage('O usuário não possui um perfil de acesso válido.')
-      setLoading(false)
-      return
-    }
-
-    onLogin(role)
   }
 
   return (
