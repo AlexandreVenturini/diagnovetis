@@ -14,7 +14,7 @@ const fields: { key: keyof PrescriptionItem; label: string; placeholder: string 
 export function PrescriptionEditor({ value, onChange }: Props) {
   return <section className="prescription-editor consultation-panel content-card" aria-labelledby="prescription-heading">
     <h2 id="prescription-heading">Receita do animal</h2>
-    <p>Preencha a prescrição durante a consulta. Ao finalizar o atendimento, ela será salva no prontuário e ficará disponível para impressão. Se não houver receita, deixe os campos em branco.</p>
+    <p>Revise a dose, a via, a frequência, a duração e a quantidade de cada medicamento antes de visualizar e emitir.</p>
     <div className="consultation-form-grid"><label>CRMV / UF do veterinário<input value={value.crmv} onChange={(event) => onChange({ ...value, crmv: event.target.value })} placeholder="Número e UF" /></label></div>
     {value.items.map((item, index) => <fieldset key={index}><legend>Medicamento {index + 1}</legend><div className="consultation-form-grid">
       {fields.map((field) => <label key={field.key}>{field.label}<input value={item[field.key]} placeholder={field.placeholder} onChange={(event) => onChange({ ...value, items: value.items.map((current, i) => i === index ? { ...current, [field.key]: event.target.value } : current) })} /></label>)}

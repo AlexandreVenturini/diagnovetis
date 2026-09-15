@@ -1,6 +1,8 @@
 export type ConsultationStep = 1 | 2 | 3 | 4
 
 export type ConsultationData = {
+  weight?: string
+  patientId?: string
   dogName: string
   age: string
   breed: string

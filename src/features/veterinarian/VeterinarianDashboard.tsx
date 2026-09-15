@@ -3,6 +3,7 @@ import { AppHeader } from '../../components/layout/AppHeader'
 import { MainNavigation } from '../../components/layout/MainNavigation'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
+import { PrescriptionsModule } from '../prescriptions/PrescriptionsModule'
 import { RecordsModule } from '../records/RecordsModule'
 import { ZoonosesModule } from '../zoonoses/ZoonosesModule'
 import { MedicationsModule } from '../medications/MedicationsModule'
@@ -19,6 +20,7 @@ type VeterinarianDashboardProps = {
 
 export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) {
   const [activeModule, setActiveModule] = useState('dashboard')
+  const [recordPetId, setRecordPetId] = useState<number | undefined>()
   const [screen, setScreen] = useState<DogScreen>('list')
   const [appointmentEntry, setAppointmentEntry] = useState<{ screen: 'list' | 'create'; key: number }>({ screen: 'list', key: 0 })
   const [selected, setSelected] = useState<Dog | null>(null)
@@ -53,6 +55,7 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
 
   function openModule(module: string) {
     setActiveModule(module)
+    if (module === 'records') setRecordPetId(undefined)
     if (module === 'dogs') setScreen('list')
     if (module === 'appointments') setAppointmentEntry((current) => ({ screen: 'list', key: current.key + 1 }))
   }
@@ -87,7 +90,8 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
         </>}
         {activeModule === 'appointments' && <AppointmentsModule dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
         {activeModule === 'consultations' && <ClinicalCareModule dogs={dogs} />}
-        {activeModule === 'records' && <RecordsModule />}
+        {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={(id) => { setRecordPetId(id); setActiveModule('records') }} />}
+        {activeModule === 'records' && <RecordsModule initialPetId={recordPetId} />}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
         {activeModule === 'medications' && <MedicationsModule />}
       </main>
