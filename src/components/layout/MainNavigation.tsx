@@ -8,7 +8,7 @@ const menuItems = [
   { label: 'Atendimento', icon: 'stethoscope', module: 'consultations' },
   { label: 'Receituário', icon: 'file', module: 'prescriptions' },
   { label: 'Prontuários', icon: 'file', module: 'records' },
-  { label: 'Zoonoses', icon: 'database', module: 'zoonoses' },
+  { label: 'Condições Clínicas', icon: 'database', module: 'zoonoses' },
   { label: 'Medicamentos', icon: 'pill', module: 'medications' },
 ]
 

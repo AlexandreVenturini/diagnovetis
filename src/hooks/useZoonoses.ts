@@ -1,55 +1,51 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { RiskLevel, Zoonosis, ZoonosisFormData } from '../features/zoonoses/zoonosisTypes'
+import { EMPTY_CLINICAL } from '../features/zoonoses/zoonosisTypes'
 import { Zoonose } from '../models/Zoonose'
 import { ZoonoseService } from '../services/ZoonoseService'
 
-const zoonoseService = new ZoonoseService()
+const service = new ZoonoseService()
+const risks: Record<RiskLevel, string> = { Alto: 'alto', Médio: 'medio', Baixo: 'baixo' }
+const riskLabels: Record<string, RiskLevel> = { alto: 'Alto', medio: 'Médio', baixo: 'Baixo' }
 
-const GRAU_MAP: Record<RiskLevel, string> = { Alto: 'alto', Médio: 'medio', Baixo: 'baixo' }
-const GRAU_MAP_REVERSE: Record<string, RiskLevel> = { alto: 'Alto', medio: 'Médio', baixo: 'Baixo' }
-
-function zoonoseToFrontend(z: Zoonose): Zoonosis {
-    return {
-        id: z.id,
-        name: z.nome,
-        agent: z.agenteEtiologico,
-        risk: GRAU_MAP_REVERSE[z.grauRisco] ?? 'Médio',
-        prevalence: 'Média',
-        hosts: [],
-        transmission: '',
-        symptoms: z.sintomas.split(',').map(s => s.trim()).filter(Boolean),
-        diagnostics: [],
-        prevention: z.medidasPreventivas.split(',').map(s => s.trim()).filter(Boolean),
-    }
+export function zoonoseToFrontend(z: Zoonose): Zoonosis {
+  const clinical = { ...EMPTY_CLINICAL, ...z.clinical }
+  return {
+    id: z.id, name: z.nome, agent: z.agenteEtiologico, risk: riskLabels[z.grauRisco] ?? 'Médio',
+    clinical, prevalence: clinical.prevalence, hosts: clinical.hosts, transmission: clinical.transmission,
+    symptoms: z.sintomas.split(',').map(s => s.trim()).filter(Boolean), diagnostics: clinical.diagnostics,
+    prevention: z.medidasPreventivas.split(',').map(s => s.trim()).filter(Boolean),
+  }
 }
 
 export function useZoonoses() {
-    const [zoonoses, setZoonoses] = useState<Zoonosis[]>([])
+  const [zoonoses, setZoonoses] = useState<Zoonosis[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
+  const request = useRef(0)
 
-    const refresh = useCallback(async () => {
-        const lista = await zoonoseService.listarZoonoses()
-        setZoonoses(lista.map(zoonoseToFrontend))
-    }, [])
+  const fetchItems = useCallback(() => {
+    const version = ++request.current
+    return service.listarZoonoses().then(list => {
+      if (version === request.current) { setZoonoses(list.map(zoonoseToFrontend)); setError(''); setUpdatedAt(new Date()) }
+    }).catch(() => {
+      if (version === request.current) setError('Não foi possível atualizar o catálogo. Confira sua conexão e tente novamente.')
+    }).finally(() => { if (version === request.current) setLoading(false) })
+  }, [])
 
-    useEffect(() => { refresh() }, [refresh])
+  useEffect(() => { const tracker = request; void fetchItems(); return () => { tracker.current++ } }, [fetchItems])
+  function refresh() { setLoading(true); return fetchItems() }
 
-    async function createZoonosis(form: ZoonosisFormData) {
-        const lista = await zoonoseService.listarZoonoses()
-        const novoId = lista.length > 0 ? Math.max(...lista.map(z => z.id)) + 1 : 1
-        const zoonose = new Zoonose(
-            novoId, form.name, form.agent,
-            form.symptoms.join(', '),
-            form.prevention.join(', '),
-            GRAU_MAP[form.risk] ?? 'medio'
-        )
-        await zoonoseService.adicionarZoonose(zoonose)
-        await refresh()
-    }
+  async function createZoonosis(form: ZoonosisFormData) {
+    const list = await service.listarZoonoses()
+    const id = Math.max(0, ...list.map(item => item.id)) + 1
+    const item = new Zoonose(id, form.name, form.agent, form.symptoms.join(', '), form.prevention.join(', '), risks[form.risk])
+    item.clinical = { ...form.clinical, hosts: form.hosts, transmission: form.transmission, diagnostics: form.diagnostics, prevalence: form.prevalence }
+    await service.adicionarZoonose(item)
+    setZoonoses(current => [...current, zoonoseToFrontend(item)])
+    setUpdatedAt(new Date())
+  }
 
-    async function removeZoonosis(id: number) {
-        await zoonoseService.removerZoonose(id)
-        await refresh()
-    }
-
-    return { zoonoses, createZoonosis, removeZoonosis }
+  return { zoonoses, loading, error, updatedAt, refresh, createZoonosis }
 }
