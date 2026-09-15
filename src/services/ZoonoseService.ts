@@ -3,6 +3,7 @@ import { SupabaseRepository } from "./storage/SupabaseRepository";
 import { validarObrigatorio, validarGrauRisco, validarIdUnico } from "./validation/validadores";
 
 interface ZoonoseRow {
+    clinical_data?: Zoonose['clinical'];
     id: number;
     nome: string;
     agente_etiologico: string;
@@ -19,11 +20,14 @@ export const zoonoseRepository = new SupabaseRepository<Zoonose>(
         agente_etiologico: zoonose.agenteEtiologico,
         sintomas: zoonose.sintomas,
         medidas_preventivas: zoonose.medidasPreventivas,
-        grau_risco: zoonose.grauRisco
+        grau_risco: zoonose.grauRisco,
+        ...(zoonose.clinical ? { clinical_data: zoonose.clinical } : {})
     }),
     raw => {
         const r = raw as ZoonoseRow;
-        return new Zoonose(r.id, r.nome, r.agente_etiologico, r.sintomas, r.medidas_preventivas, r.grau_risco);
+        const item = new Zoonose(r.id, r.nome, r.agente_etiologico, r.sintomas, r.medidas_preventivas, r.grau_risco);
+        item.clinical = r.clinical_data ?? null;
+        return item;
     }
 );
 

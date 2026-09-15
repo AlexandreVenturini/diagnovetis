@@ -1,4 +1,7 @@
+import type { ClinicalMetadata } from '../features/zoonoses/zoonosisTypes'
+
 export class Zoonose {
+    clinical: ClinicalMetadata | null = null;
     private _id: number;
     private _nome: string;
     private _agenteEtiologico: string;

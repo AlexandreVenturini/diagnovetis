@@ -1,57 +1,66 @@
 import { useMemo, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
 import { Icon } from '../../components/common/Icon'
 import { useZoonoses } from '../../hooks/useZoonoses'
-import type { PrevalenceLevel, RiskLevel, Zoonosis, ZoonosisFormData, ZoonosisScreen } from './zoonosisTypes'
+import { ConditionForm } from './ConditionForm'
+import { AGES, CATEGORIES, EMPTY_FILTERS, ETIOLOGIES, SYSTEMS, filterConditions, type ClinicalFilters } from './clinicalCatalog'
 
-const EMPTY_FORM: ZoonosisFormData = { name: '', agent: '', risk: 'Médio', prevalence: 'Média', hosts: [], transmission: '', symptoms: [], diagnostics: [], prevention: [] }
-
-function splitList(value: string) { return value.split(',').map((item) => item.trim()).filter(Boolean) }
+function DogSymbol() {
+  return <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m8 23-3-7 1 12 4 4v9h5l2-10h13l2 10h5V25l5-4-1-7-7-4-5 7-3 8H15l-7-2Z"/><path d="m34 10-1 12 5 1M17 31l-3-5m16 5 4-5"/><circle cx="38" cy="16" r=".8"/></svg>
+}
+const show = (value: string | string[]) => (Array.isArray(value) ? value.join(', ') : value) || 'Não informado'
 
 export function ZoonosesModule() {
-  const { zoonoses: items, createZoonosis } = useZoonoses()
-  const [screen, setScreen] = useState<ZoonosisScreen>('browse')
+  const { zoonoses: items, loading, error, updatedAt, refresh, createZoonosis } = useZoonoses()
+  const [filters, setFilters] = useState<ClinicalFilters>(EMPTY_FILTERS)
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  const [query, setQuery] = useState('')
-  const [riskFilter, setRiskFilter] = useState<RiskLevel | 'Todos'>('Todos')
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [hostsText, setHostsText] = useState('')
-  const [symptomsText, setSymptomsText] = useState('')
-  const [diagnosticsText, setDiagnosticsText] = useState('')
-  const [preventionText, setPreventionText] = useState('')
-
-  const filtered = useMemo(() => items.filter((item) => {
-    const search = query.trim().toLocaleLowerCase('pt-BR')
-    return (!search || `${item.name} ${item.agent} ${item.hosts.join(' ')}`.toLocaleLowerCase('pt-BR').includes(search)) && (riskFilter === 'Todos' || item.risk === riskFilter)
-  }), [items, query, riskFilter])
-  const selected = items.find((item) => item.id === selectedId) ?? null
-
-  function update<K extends keyof ZoonosisFormData>(key: K, value: ZoonosisFormData[K]) { setForm((current) => ({ ...current, [key]: value })) }
-  function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const newItem: ZoonosisFormData = { ...form, hosts: splitList(hostsText), symptoms: splitList(symptomsText), diagnostics: splitList(diagnosticsText), prevention: splitList(preventionText) }
-    createZoonosis(newItem)
-    setScreen('browse'); setForm(EMPTY_FORM); setHostsText(''); setSymptomsText(''); setDiagnosticsText(''); setPreventionText('')
-  }
-
-  return <section className="zoonoses-module">
-    <div className="zoonoses-header content-card"><div><h2>Banco de Dados de Zoonoses Caninas</h2><p>Referência clínica para pesquisa diagnóstica, prevenção e controle de zoonoses na Região Sudeste.</p></div><div><button className={screen === 'browse' ? 'primary-button' : 'outline-button'} onClick={() => setScreen('browse')}>▤ Consultar</button><button className={screen === 'create' ? 'primary-button' : 'outline-button'} onClick={() => setScreen('create')}>＋ Cadastrar zoonose</button></div></div>
-
-    {screen === 'create' ? <form className="zoonosis-form content-card" onSubmit={save}><div className="zoonosis-form-heading"><h3>Cadastrar nova zoonose</h3><p>Inclua as informações clínicas e epidemiológicas conhecidas.</p></div><div className="zoonosis-form-grid">
-      <label>Nome da zoonose<input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder="Ex.: Leishmaniose Visceral" required /></label><label>Agente etiológico<input value={form.agent} onChange={(event) => update('agent', event.target.value)} placeholder="Ex.: Leishmania infantum" required /></label>
-      <label>Nível de risco<select value={form.risk} onChange={(event) => update('risk', event.target.value as RiskLevel)}><option>Alto</option><option>Médio</option><option>Baixo</option></select></label><label>Prevalência na região<select value={form.prevalence} onChange={(event) => update('prevalence', event.target.value as PrevalenceLevel)}><option>Alta</option><option>Média</option><option>Baixa</option></select></label>
-      <label className="full-field">Hospedeiros<input value={hostsText} onChange={(event) => setHostsText(event.target.value)} placeholder="Separe por vírgulas: Cães, Gatos, Raposas" required /></label><label className="full-field">Forma de transmissão<textarea value={form.transmission} onChange={(event) => update('transmission', event.target.value)} placeholder="Descreva como ocorre a transmissão" required /></label>
-      <label className="full-field">Sintomas clínicos<textarea value={symptomsText} onChange={(event) => setSymptomsText(event.target.value)} placeholder="Separe os sintomas por vírgulas" /></label><label className="full-field">Métodos diagnósticos<textarea value={diagnosticsText} onChange={(event) => setDiagnosticsText(event.target.value)} placeholder="Separe os métodos por vírgulas" /></label><label className="full-field">Medidas de prevenção e controle<textarea value={preventionText} onChange={(event) => setPreventionText(event.target.value)} placeholder="Separe as medidas por vírgulas" /></label>
-    </div><div className="form-actions"><button className="primary-button" type="submit">Cadastrar zoonose</button><button className="secondary-button" type="button" onClick={() => setScreen('browse')}>Cancelar</button></div></form> : <>
-      <div className="zoonoses-search content-card"><div className="zoonosis-search-input"><Icon><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5" /></Icon><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nome, agente ou hospedeiro..." /></div><select value={riskFilter} onChange={(event) => setRiskFilter(event.target.value as RiskLevel | 'Todos')}><option>Todos</option><option>Alto</option><option>Médio</option><option>Baixo</option></select><span>{filtered.length} zoonose(s) encontrada(s)</span></div>
-      <div className="zoonoses-browser"><div className="zoonosis-list">{filtered.map((item) => <button className={`zoonosis-card${selectedId === item.id ? ' selected' : ''}`} key={item.id} onClick={() => setSelectedId(item.id)}><div><h3>{item.name}</h3><p><strong>Agente:</strong> {item.agent}</p><p><strong>Hospedeiros:</strong> {item.hosts.join(', ')}</p></div><div><span className={`risk-tag risk-${item.risk.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`}>{item.risk} risco</span><span className="prevalence-tag">Prev. {item.prevalence}</span></div></button>)}{filtered.length === 0 && <div className="empty-appointments">Nenhuma zoonose encontrada.</div>}</div><ZoonosisDetails item={selected} /></div>
+  const [screen, setScreen] = useState<'browse' | 'create'>('browse')
+  const [detail, setDetail] = useState<'summary' | 'full' | 'protocols'>('summary')
+  const filtered = useMemo(() => filterConditions(items, filters), [items, filters])
+  const selected = filtered.find(item => item.id === selectedId) ?? filtered[0] ?? null
+  function update(key: keyof ClinicalFilters, value: string) { setFilters(current => ({ ...current, [key]: value })); setDetail('summary') }
+  const stats = [
+    { title: 'Condições cadastradas', value: items.length, note: 'Base clínica ativa', color: 'green' },
+    { title: 'Zoonoses caninas', value: items.filter(item => item.clinical.isZoonosis).length, note: 'Atenção biossanitária', color: 'teal' },
+    { title: 'Protocolos vinculados', value: items.reduce((count, item) => count + item.clinical.protocols.length, 0), note: 'Condutas associadas', color: 'amber' },
+    { title: 'Alertas clínicos', value: items.filter(item => item.clinical.alert.trim()).length, note: 'Observações para revisão', color: 'red' },
+  ]
+  return <section className="conditions-module">
+    <header className="conditions-heading"><div><span className="conditions-eyebrow">BASE CLÍNICA CANINA</span><h2>Condições clínicas</h2><p>Consulte doenças, síndromes, zoonoses e protocolos voltados à clínica de cães.</p></div>
+      <div className="conditions-sync"><div className={`conditions-status${error ? ' offline' : ''}`} role="status"><strong><i />{loading ? 'Atualizando…' : error ? 'Falha na atualização' : 'Sistema conectado'}</strong><small>{updatedAt ? `Atualizado às ${updatedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : 'Aguardando dados'}</small></div><button className="outline-button" disabled={loading} onClick={() => void refresh()}>Atualizar dados</button></div>
+    </header>
+    {error && <p className="conditions-error" role="alert">{error}{updatedAt && ' Os últimos dados carregados foram mantidos.'}</p>}
+    {screen === 'create' ? <ConditionForm onSave={createZoonosis} onCancel={() => setScreen('browse')} /> : <>
+      <div className="conditions-search content-card"><Icon><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></Icon><input aria-label="Buscar condições clínicas" value={filters.query} onChange={e => update('query', e.target.value)} placeholder="Buscar doenças, sinal clínico, agente etiológico…" />{filters.query && <button aria-label="Limpar busca" onClick={() => update('query', '')}>×</button>}</div>
+      <div className="conditions-categories"><div role="group" aria-label="Categorias"><button className={!filters.category ? 'active' : ''} aria-pressed={!filters.category} onClick={() => update('category', '')}>Todas</button>{CATEGORIES.map(category => <button className={filters.category === category ? 'active' : ''} aria-pressed={filters.category === category} key={category} onClick={() => update('category', category)}>{category}</button>)}</div><span className="conditions-canine"><DogSymbol />Somente cães</span></div>
+      <div className="conditions-filters">
+        <Filter label="Sistema" value={filters.system} options={SYSTEMS} empty="Todos os sistemas" onChange={value => update('system', value)} />
+        <Filter label="Etiologia" value={filters.etiology} options={ETIOLOGIES} empty="Todas as etiologias" onChange={value => update('etiology', value)} />
+        <label>Zoonose<select value={filters.zoonosis} onChange={e => update('zoonosis', e.target.value)}><option value="">Todas</option><option value="yes">Sim</option><option value="no">Não</option></select></label>
+        <Filter label="Faixa etária" value={filters.age} options={AGES} empty="Todas as idades" onChange={value => update('age', value)} />
+      </div>
+      <div className="conditions-stats">{stats.map(stat => <article className={`content-card ${stat.color}`} key={stat.title}><h3>{stat.title}</h3><strong>{!updatedAt ? '—' : stat.value}</strong><p>{stat.note}</p></article>)}</div>
+      <div className="conditions-browser">
+        <section className="conditions-catalog content-card"><header><h3>Catálogo de condições</h3><label>Ordenar por:<select value={filters.sort} onChange={e => update('sort', e.target.value)}><option value="az">Nome (A–Z)</option><option value="za">Nome (Z–A)</option><option value="risk">Maior risco</option></select></label></header>
+          <div className="conditions-list" aria-busy={loading}>{loading && !updatedAt ? <p className="conditions-empty">Carregando catálogo…</p> : filtered.length ? filtered.map(item => <button key={item.id} className={`condition-row${selected?.id === item.id ? ' selected' : ''}`} aria-pressed={selected?.id === item.id} onClick={() => { setSelectedId(item.id); setDetail('summary') }}><span className="condition-avatar"><DogSymbol /></span><span className="condition-row-copy"><span className="condition-row-title"><strong>{item.name}</strong>{item.clinical.isZoonosis && <span className="condition-badge warning">! &nbsp; Zoonose</span>}</span><span>{show(item.clinical.category)} · {show(item.clinical.etiology)}</span><span>Sistema: {show(item.clinical.systems)}</span><span>Sinais principais: {show(item.symptoms)}</span></span><span className="condition-view">Ver detalhes</span><span className="condition-chevron">›</span></button>) : <div className="conditions-empty"><p>{error && !updatedAt ? 'Catálogo indisponível no momento.' : items.length ? 'Nenhuma condição corresponde aos filtros.' : 'Nenhuma condição cadastrada.'}</p>{items.length > 0 && <button className="outline-button" onClick={() => setFilters(EMPTY_FILTERS)}>Limpar filtros</button>}</div>}</div>
+          <footer><span>{filtered.length} condição(ões) encontrada(s)</span><button className="conditions-add" onClick={() => setScreen('create')}>＋ Cadastrar condição</button></footer>
+        </section>
+        <aside className="conditions-summary content-card" aria-label="Resumo clínico"><h3>{detail === 'full' ? 'Ficha clínica completa' : detail === 'protocols' ? 'Protocolos vinculados' : 'Resumo clínico'}</h3>{selected ? <>
+          <div className="condition-summary-title"><span className="condition-avatar small"><DogSymbol /></span><div><h4>{selected.name}</h4><div className="condition-badges"><span className="condition-badge">{selected.clinical.conditionType}</span>{selected.clinical.etiology && <span className="condition-badge outline">{selected.clinical.etiology}</span>}{selected.clinical.isZoonosis && <span className="condition-badge warning">! &nbsp; Zoonose</span>}</div></div></div>
+          {detail === 'protocols' ? <div className="condition-full"><Info title="Condutas cadastradas" value={selected.clinical.protocols} icon="▤" /><Info title="Prevenção e controle" value={selected.prevention} icon="♧" /></div> : <>
+            <Info title="Agente etiológico" value={selected.agent} icon="⚙" /><Info title="Transmissão" value={selected.transmission} icon="♧" /><Info title="Exames sugeridos" value={selected.diagnostics} icon="▤" /><Info title="Diagnósticos diferenciais" value={selected.clinical.differentials} icon="▧" />
+            {detail === 'full' && <div className="condition-full"><Info title="Sistemas envolvidos" value={selected.clinical.systems} icon="◇" /><Info title="Sinais clínicos" value={selected.symptoms} icon="!" /><Info title="Faixa etária" value={selected.clinical.ageGroups} icon="◷" /><Info title="Hospedeiros" value={selected.hosts} icon="♧" /><Info title="Nível de risco" value={selected.risk} icon="!" /><Info title="Prevenção e controle" value={selected.prevention} icon="▤" /></div>}
+          </>}
+          {selected.clinical.isZoonosis && <div className="condition-warning"><b aria-hidden="true">⚠</b><div><strong>Risco zoonótico</strong><p>{selected.prevention.length ? selected.prevention.join('; ') : 'Medidas de prevenção não informadas no cadastro.'}</p></div></div>}
+          {selected.clinical.alert && <div className="condition-warning clinical-alert"><div><strong>Alerta clínico</strong><p>{selected.clinical.alert}</p></div></div>}
+          <div className="condition-summary-actions"><button className="primary-button" onClick={() => setDetail(detail === 'full' ? 'summary' : 'full')}>▧ &nbsp;{detail === 'full' ? 'Voltar ao resumo' : 'Abrir ficha completa'}</button><button className="outline-button" onClick={() => setDetail(detail === 'protocols' ? 'summary' : 'protocols')}>▤ &nbsp;{detail === 'protocols' ? 'Voltar ao resumo' : 'Ver protocolos'}</button></div>
+        </> : <p className="conditions-empty">Selecione uma condição do catálogo para consultar os dados clínicos.</p>}</aside>
+      </div>
     </>}
   </section>
 }
-
-function ZoonosisDetails({ item }: { item: Zoonosis | null }) {
-  if (!item) return <aside className="zoonosis-details empty"><span>▤</span><p>Selecione uma zoonose para consultar as informações completas.</p></aside>
-  return <aside className="zoonosis-details"><div className="zoonosis-detail-heading"><div><h3>{item.name}</h3><p>Informações clínicas e epidemiológicas</p></div><div><span className={`risk-tag risk-${item.risk.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`}>{item.risk} risco</span><span className="prevalence-tag">Prevalência {item.prevalence}</span></div></div><DetailSection icon="⚕" title="Agente etiológico"><p>{item.agent}</p></DetailSection><DetailSection icon="▤" title="Hospedeiros"><ul>{item.hosts.map((host) => <li key={host}>{host}</li>)}</ul></DetailSection><DetailSection icon="⇄" title="Transmissão"><p>{item.transmission}</p></DetailSection><DetailSection icon="!" title="Sintomas clínicos" warning><ul>{item.symptoms.map((symptom) => <li key={symptom}>{symptom}</li>)}</ul></DetailSection><DetailSection icon="⌕" title="Métodos diagnósticos"><ul>{item.diagnostics.map((method) => <li key={method}>{method}</li>)}</ul></DetailSection><DetailSection icon="♢" title="Prevenção e controle"><ul>{item.prevention.map((measure) => <li key={measure}>{measure}</li>)}</ul></DetailSection></aside>
+function Filter({ label, value, options, empty, onChange }: { label: string; value: string; options: string[]; empty: string; onChange: (value: string) => void }) {
+  return <label>{label}<select value={value} onChange={e => onChange(e.target.value)}><option value="">{empty}</option>{options.map(option => <option key={option}>{option}</option>)}</select></label>
 }
-
-function DetailSection({ icon, title, warning, children }: { icon: string; title: string; warning?: boolean; children: ReactNode }) { return <section className={`zoonosis-detail-section${warning ? ' warning' : ''}`}><h4><span>{icon}</span>{title}</h4><div>{children}</div></section> }
+function Info({ title, value, icon }: { title: string; value: string | string[]; icon: string }) {
+  return <section className="condition-info"><span aria-hidden="true">{icon}</span><div><h5>{title}</h5>{Array.isArray(value) && value.length > 1 ? <ul>{value.map((text, index) => <li key={index}>{text}</li>)}</ul> : <p>{show(value)}</p>}</div></section>
+}
