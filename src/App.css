@@ -282,3 +282,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .saved-prescriptions h3 { color:var(--green-dark); }
 .saved-prescriptions article { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:12px 0; border-top:1px solid var(--line); }
 .saved-prescriptions p { color:var(--muted); font-size:13px; }
+.receituario-module { display:grid; gap:20px; padding-block:24px; }
+.receituario-module .form-actions { margin:0; flex-wrap:wrap; }
+.rx-filters,.rx-details { padding:24px; }
+.rx-history { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:18px; }
+.rx-history article { padding:24px; overflow-wrap:anywhere; }
+.rx-history h3 { margin-top:0; }
+.rx-preview { width:100%; height:650px; border:1px solid #d6e3da; border-radius:8px; background:white; margin:16px 0; }
+.rx-flow { color:#466853; line-height:1.8; }
+.rx-medications { list-style:none; padding:0; max-height:300px; overflow:auto; }
+.rx-medications li { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid #dde7df; }
+.receituario-module input,.receituario-module select { max-width:100%; }
+@media(max-width:600px) { .rx-medications li { align-items:stretch; flex-direction:column; }.rx-preview { height:500px; } }

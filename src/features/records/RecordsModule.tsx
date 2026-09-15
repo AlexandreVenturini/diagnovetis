@@ -5,6 +5,7 @@ import { exportPatientRecord } from './recordReport'
 import type { ClinicalRecord, PatientRecord, RecordKind, RecordScreen } from './recordTypes'
 import { PetService } from '../../services/PetService'
 import { ConsultaService } from '../../services/ConsultaService'
+import { PatientPrescriptions } from '../prescriptions/PatientPrescriptions'
 import { generatePrescription } from '../consultations/prescriptionReport'
 
 const petService = new PetService()
@@ -20,12 +21,12 @@ function splitItems(value: string) {
   return value.split('\n').map((item) => item.trim()).filter(Boolean)
 }
 
-export function RecordsModule() {
+export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
   const recordFormRef = useRef<HTMLFormElement>(null)
   const [patients, setPatients] = useState<PatientRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [screen, setScreen] = useState<RecordScreen>('list')
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [screen, setScreen] = useState<RecordScreen>(initialPetId ? 'details' : 'list')
+  const [selectedId, setSelectedId] = useState<number | null>(initialPetId ?? null)
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState('')
   const [kind, setKind] = useState<RecordKind>('Consulta')
@@ -163,6 +164,7 @@ export function RecordsModule() {
   return <section className="record-details-module">
     <div className="records-heading record-detail-heading"><div><button className="text-back-button" onClick={() => setScreen('list')}>‹ Prontuários</button><h2>{selected.dogName}</h2><p>Tutor: {selected.tutorName} · {selected.breed} · {selected.age}</p></div><div className="record-header-actions"><button className="outline-button" onClick={() => { const opened = recordFormRef.current ? exportPatientRecord(recordFormRef.current, selected.dogName) : false; setNotice(opened ? 'Relatório aberto com os dados atuais para impressão ou salvamento em PDF.' : 'O navegador bloqueou a janela do relatório.') }}>⇩ Exportar PDF</button><button className="primary-button" onClick={() => setScreen('create')}>+ Adicionar registro</button></div></div>
     {notice && <p className="record-notice" role="status">{notice}</p>}
+    <PatientPrescriptions petId={selected.id} />
     <section className="content-card saved-prescriptions" aria-labelledby="saved-prescriptions-title">
       <h3 id="saved-prescriptions-title">Receitas dos atendimentos</h3>
       {selected.records.some((record) => record.savedPrescription) ? selected.records.filter((record) => record.savedPrescription).map((record) => <article key={record.id}>
