@@ -8,10 +8,12 @@ import { PrescriptionService, type IssuedPrescription } from '../../services/Pre
 import { EMPTY_CONSULTATION } from '../consultations/consultationTypes'
 import { emptyPrescription, emptyPrescriptionItem, generatePrescription, prescriptionHtml, validatePrescription } from '../consultations/prescriptionReport'
 import { PrescriptionEditor } from '../consultations/PrescriptionEditor'
+import { AnimalSearch } from './AnimalSearch'
+import { applyDoseToPrescription, decimalValue } from './applyDose'
 import { calculateDose } from './doseCalculation'
 
 const service = new PrescriptionService()
-const number = (value: string) => Number(value.replace(',', '.'))
+const number = decimalValue
 const format = (value: number) => value.toLocaleString('pt-BR', { maximumSignificantDigits: 8 })
 
 export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpenRecord: (id: number) => void }) {
@@ -32,6 +34,7 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
   const [medQuery, setMedQuery] = useState('')
   const [mgKg, setMgKg] = useState('')
   const [concentration, setConcentration] = useState('')
+  const [doseFeedback, setDoseFeedback] = useState<{ inputs: string; text: string; error: boolean } | null>(null)
   const [targetItem, setTargetItem] = useState(0)
   const [preview, setPreview] = useState(false)
   const [message, setMessage] = useState('')
@@ -42,6 +45,7 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
   const dog = dogs.find(item => item.id === Number(petId))
   const vet = medicos.find(item => item.id === Number(vetId))
   const patient = { ...EMPTY_CONSULTATION, dogName: dog?.name ?? '', tutorName: dog?.tutor ?? '', breed: dog?.breed ?? '', age: dog?.age ?? '', veterinarian: vet?.nome ?? '', weight, patientId: petId }
+  const doseInputs = JSON.stringify([petId, weight, mgKg, concentration, targetItem, prescription.items[targetItem]?.medication])
   const calculation = calculateDose(number(weight), number(mgKg), number(concentration))
 
   useEffect(() => {
@@ -54,7 +58,7 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
 
   function startNew() {
     setPetId(''); setVetId(''); setWeight(''); setPrescription(emptyPrescription()); setPreview(false)
-    setMgKg(''); setConcentration(''); setTargetItem(0); setMedQuery(''); setMessage(''); setSelected(null); pending.current = null; setPendingEmission(false); setTab('new')
+    setMgKg(''); setConcentration(''); setTargetItem(0); setDoseFeedback(null); setMedQuery(''); setMessage(''); setSelected(null); pending.current = null; setPendingEmission(false); setTab('new')
   }
 
   function review() {
@@ -105,7 +109,7 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
       <p className="rx-flow">Identificação → Medicamentos e dose → Orientações → Visualização → Emissão</p>
       {preview ? <section className="content-card rx-details"><h3>Revise a receita antes de emitir</h3><iframe title="Visualização da nova receita" className="rx-preview" sandbox="" srcDoc={prescriptionHtml(patient, prescription)} /><p>Confira os dados e as doses. A emissão salva uma cópia no prontuário.</p><div className="form-actions"><button className="secondary-button" disabled={saving || pendingEmission} onClick={() => setPreview(false)}>Voltar e editar</button><button className="primary-button" disabled={saving} onClick={issue}>{saving ? 'Emitindo…' : pendingEmission ? 'Tentar emissão novamente' : 'Emitir e salvar no prontuário'}</button></div>{pendingEmission && !saving && <p>A emissão ainda não foi confirmada. Tente novamente para verificar e concluir a mesma receita.</p>}</section> : <>
         <section className="content-card consultation-panel"><h3>1. Animal, tutor e veterinário</h3><div className="consultation-form-grid">
-          <label>Selecionar animal<select value={petId} onChange={event => { const next = dogs.find(item => item.id === Number(event.target.value)); setPetId(event.target.value); setWeight(next?.weight ?? ''); setPrescription(current => ({ ...emptyPrescription(), crmv: current.crmv })); setMgKg(''); setConcentration(''); setTargetItem(0) }}><option value="">Selecione um animal</option>{dogs.map(item => <option key={item.id} value={item.id}>{item.name} — {item.tutor} (#{item.id})</option>)}</select></label>
+          <AnimalSearch dogs={dogs} selected={dog} onSelect={next => { setPetId(next ? String(next.id) : ''); setWeight(next?.weight.replace(/\s*kg\s*$/i, '').trim() ?? ''); setPrescription(current => ({ ...emptyPrescription(), crmv: current.crmv })); setMgKg(''); setConcentration(''); setTargetItem(0); setDoseFeedback(null) }} />
           <label>Tutor<input readOnly value={dog?.tutor ?? ''} /></label><label>Identificação<input readOnly value={dog ? `#${dog.id} · ${dog.breed} · ${dog.sex}` : ''} /></label><label>Peso atual (kg)<input inputMode="decimal" value={weight} onChange={event => { setWeight(event.target.value); setMgKg('') }} /></label>
           <label>Veterinário<select value={vetId} onChange={event => { setVetId(event.target.value); setPrescription(current => ({ ...current, crmv: medicos.find(item => item.id === Number(event.target.value))?.crmv ?? '' })) }}><option value="">Selecione o veterinário</option>{medicos.map(item => <option key={item.id} value={item.id}>{item.nome} — {item.crmv}</option>)}</select></label>
         </div></section>
@@ -121,7 +125,13 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
           <label>Medicamento do cálculo<select value={targetItem} onChange={event => { setTargetItem(Number(event.target.value)); setMgKg(''); setConcentration('') }}>{prescription.items.map((item, index) => <option key={index} value={index}>{index + 1}. {item.medication || 'Medicamento sem nome'}</option>)}</select></label>
           <label>Dose (mg/kg por administração)<input inputMode="decimal" value={mgKg} onChange={event => setMgKg(event.target.value)} /></label><label>Concentração (mg/mL)<input inputMode="decimal" value={concentration} onChange={event => setConcentration(event.target.value)} /></label>
         </div>{calculation && <p>{weight} kg × {mgKg} mg/kg = <strong>{format(calculation.mg)} mg</strong> → <strong>{format(calculation.ml)} mL por administração</strong></p>}
-          <button className="primary-button rx-dose-apply" disabled={!calculation || !prescription.items[targetItem]?.medication.trim()} onClick={() => { if (calculation) { setPrescription(current => ({ ...current, items: current.items.map((item, index) => index === targetItem ? { ...item, dose: `${format(calculation.ml)} mL (${format(calculation.mg)} mg) por administração` } : item) })); setMessage('Dose aplicada. Confira o valor no medicamento antes de emitir.') } }}>Aplicar dose ao medicamento</button>
+          <button type="button" className="primary-button rx-dose-apply" onClick={() => {
+            if (!dog) { setDoseFeedback({ inputs: doseInputs, text: 'Busque e selecione o animal antes de aplicar a dose.', error: true }); return }
+            const applied = applyDoseToPrescription(prescription, targetItem, weight, mgKg, concentration)
+            if (!applied.error) setPrescription(applied.prescription)
+            setDoseFeedback({ inputs: doseInputs, text: applied.error || `Dose aplicada a ${prescription.items[targetItem].medication}: ${applied.dose}. O campo Dose por administração foi preenchido na receita abaixo.`, error: !!applied.error })
+          }}>Aplicar dose ao medicamento</button>
+          {doseFeedback?.inputs === doseInputs && <p className={doseFeedback.error ? 'rx-dose-feedback error' : 'rx-dose-feedback'} role={doseFeedback.error ? 'alert' : 'status'}>{doseFeedback.text}</p>}
         </section>
         <PrescriptionEditor value={prescription} onChange={value => { setPrescription(value); if (value.items.length !== prescription.items.length) { setTargetItem(0); setMgKg(''); setConcentration('') } }} />
         <div className="form-actions"><button className="primary-button" onClick={review}>Visualizar receita</button></div>
