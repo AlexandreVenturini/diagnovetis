@@ -1,3 +1,5 @@
+import type { ExamDraft } from './examTypes'
+import { EXAME_STATUS_LABEL } from '../../models/Exame'
 import type { ConsultationData } from './consultationTypes'
 
 function escapeHtml(value: string) {
@@ -17,7 +19,7 @@ function reportField(label: string, value: string) {
   return `<div class="field"><span>${label}</span><strong>${valueOrFallback(value)}</strong></div>`
 }
 
-export function generateConsultationReport(data: ConsultationData) {
+export function generateConsultationReport(data: ConsultationData, exams: ExamDraft[] = []) {
   const reportWindow = window.open('', '_blank', 'width=900,height=800')
   if (!reportWindow) return false
 
@@ -82,10 +84,13 @@ export function generateConsultationReport(data: ConsultationData) {
     </div></section>
 
     <section><h2>4. Avaliação e Conduta</h2>
-      <div class="grid">${reportField('Suspeita / zoonose pesquisada', data.zoonosisSearch)}</div>
+      <div class="grid">${reportField('Diagnóstico clínico', data.diagnosis ?? '')}${reportField('Suspeita / zoonose pesquisada', data.zoonosisSearch)}</div>
       <div class="long-text" style="margin-top:8px"><span>Observações e conduta terapêutica</span><p>${valueOrFallback(data.conduct)}</p></div>
     </section>
 
+    <section><h2>Exames complementares</h2>
+      ${exams.length ? exams.map(exam => `<div class="long-text"><b>${valueOrFallback(exam.nome)}</b><p>${valueOrFallback(exam.categoria)} · Solicitação: ${valueOrFallback(exam.dataSolicitacao)} · ${EXAME_STATUS_LABEL[exam.status]}</p><p>Realização: ${valueOrFallback(exam.dataRealizacao)}</p><p>Resultado: ${valueOrFallback(exam.resultado, 'Aguardando resultado')}</p><p>Interpretação: ${valueOrFallback(exam.interpretacao)}</p></div>`).join('') : '<p>Nenhum exame solicitado.</p>'}
+    </section>
     <div class="signatures"><div class="signature"><strong>${valueOrFallback(data.veterinarian, 'Veterinário responsável')}</strong><span>Assinatura e CRMV</span></div><div class="signature"><strong>${valueOrFallback(data.tutorName, 'Tutor responsável')}</strong><span>Assinatura do responsável</span></div></div>
     <footer>DiagnoVetis · IFES Campus Santa Teresa · Relatório gerado eletronicamente pelo sistema</footer>
   </main>

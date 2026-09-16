@@ -64,12 +64,22 @@ function buildSelectChain(table: string, cols = '*') {
     const chain: Record<string, unknown> = {
         eq(col: string, val: unknown) { eqFilters.push([col, val]); return chain },
         single() { isSingle = true; return chain },
+        maybeSingle() { isSingle = true; return chain },
         then(resolve: (v: ReturnType<typeof exec>) => void) { resolve(exec()) },
     }
     return chain
 }
 
 export const supabaseMock = {
+    async rpc(name: string, args: { p_consulta: Row; p_exames: Row[] }) {
+        if (name !== 'salvar_consulta_com_exames') return { error: { message: 'RPC desconhecida' } }
+        if (getTable('consultas').some(row => row.id === args.p_consulta.id)) return { error: { message: 'Consulta duplicada' } }
+        const rows = args.p_exames.map(row => ({ ...row, id: row.id ?? _autoId++, consulta_id: args.p_consulta.id }))
+        if (rows.some(row => getTable('exames').some(existing => existing.id === row.id))) return { error: { message: 'Exame duplicado' } }
+        getTable('consultas').push({ ...args.p_consulta })
+        getTable('exames').push(...rows)
+        return { error: null }
+    },
     from(table: string) {
         return {
             select(cols = '*') {
@@ -105,14 +115,19 @@ export const supabaseMock = {
             },
 
             update(data: Row) {
-                return {
-                    eq(col: string, val: unknown) {
-                        const t = getTable(table)
-                        const idx = t.findIndex(r => r[col] === val)
-                        if (idx !== -1) t[idx] = { ...t[idx], ...data }
-                        return Promise.resolve({ error: null })
+                const filters: [string, unknown][] = []
+                let single = false
+                const chain = {
+                    eq(col: string, val: unknown) { filters.push([col, val]); return chain },
+                    select() { return chain },
+                    single() { single = true; return chain },
+                    then(resolve: (value: { data: Row | Row[] | null; error: null }) => void) {
+                        const rows = getTable(table).filter(row => filters.every(([col, value]) => row[col] === value))
+                        rows.forEach(row => Object.assign(row, data))
+                        resolve({ data: single ? rows[0] ?? null : rows, error: null })
                     },
                 }
+                return chain
             },
 
             delete() {

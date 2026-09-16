@@ -7,6 +7,8 @@ import type { ConsultationData, ConsultationStep } from './consultationTypes'
 import { ClinicalHistoryStep } from './steps/ClinicalHistoryStep'
 import { DiagnosisStep } from './steps/DiagnosisStep'
 import { IdentificationStep } from './steps/IdentificationStep'
+import { ComplementaryExamsStep } from './steps/ComplementaryExamsStep'
+import { validateExam, type ExamDraft } from './examTypes'
 import { PhysicalExamStep } from './steps/PhysicalExamStep'
 import { useAppointments } from '../../hooks/useAppointments'
 import type { Dog } from '../dogs/dogTypes'
@@ -17,10 +19,11 @@ type ClinicalCareModuleProps = { dogs: Dog[] }
 export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
   const [step, setStep] = useState<ConsultationStep>(1)
   const [data, setData] = useState<ConsultationData>(EMPTY_CONSULTATION)
+  const [exams, setExams] = useState<ExamDraft[]>([])
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const saveLock = useRef(false)
-  const [completed, setCompleted] = useState<{ data: ConsultationData; id: number } | null>(null)
+  const [completed, setCompleted] = useState<{ data: ConsultationData; exams: ExamDraft[]; id: number } | null>(null)
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null)
   const { salvarConsulta } = useConsultas()
   const { appointments, updateAppointment } = useAppointments()
@@ -36,6 +39,7 @@ export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
     if (!appointment) return
     const dog = dogs.find((item) => item.id === appointment.dogId)
       ?? dogs.find((item) => item.name.trim().toLocaleLowerCase('pt-BR') === appointment.dogName.trim().toLocaleLowerCase('pt-BR'))
+    setExams([])
     setData((current) => ({
       ...current,
       dogName: appointment.dogName,
@@ -50,6 +54,7 @@ export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
   }
 
   function update(key: keyof ConsultationData, value: string) {
+    if ((key === 'dogName' || key === 'tutorName') && data[key] !== value) setExams([])
     setData((current) => ({ ...current, [key]: value }))
     setMessage('')
   }
@@ -61,16 +66,18 @@ export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
       setStep(1)
       return
     }
+    const examError = exams.map(validateExam).find(Boolean)
+    if (examError) { setMessage(examError); setStep(4); return }
     saveLock.current = true
     setSaving(true)
     setMessage('')
     try {
-      const resultado = await salvarConsulta(data)
+      const resultado = await salvarConsulta(data, null, exams)
       if (!resultado.sucesso || resultado.id === undefined) {
         setMessage(resultado.erro ?? 'Não foi possível salvar o atendimento. Os dados preenchidos foram mantidos.')
         return
       }
-      setCompleted({ data: { ...data }, id: resultado.id })
+      setCompleted({ data: { ...data }, exams: structuredClone(exams), id: resultado.id })
       setMessage('Atendimento finalizado e salvo no prontuário.')
       if (selectedAppointmentId !== null) {
         try {
@@ -89,6 +96,7 @@ export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
 
   function startNew() {
     setCompleted(null)
+    setExams([])
     setData(EMPTY_CONSULTATION)
     setSelectedAppointmentId(null)
     setStep(1)
@@ -100,7 +108,7 @@ export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
     <p>Atendimento nº {completed.id} de <strong>{completed.data.dogName}</strong> salvo no prontuário.</p>
     <p>Para emitir uma receita, acesse a aba Receituário.</p>
     <div className="form-actions">
-      <button className="secondary-button" onClick={() => setMessage(generateConsultationReport(completed.data) ? 'Relatório clínico aberto.' : 'O navegador bloqueou o relatório. Permita novas janelas e tente novamente.')}>Gerar relatório clínico</button>
+      <button className="secondary-button" onClick={() => setMessage(generateConsultationReport(completed.data, completed.exams) ? 'Relatório clínico aberto.' : 'O navegador bloqueou o relatório. Permita novas janelas e tente novamente.')}>Gerar relatório clínico</button>
       <button className="secondary-button" disabled={saving} onClick={startNew}>Novo atendimento</button>
     </div>
     {message && <p className="consultation-message" role="status">{message}</p>}
@@ -112,7 +120,8 @@ export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
       {step === 1 && <IdentificationStep data={data} appointments={availableAppointments} selectedAppointmentId={selectedAppointmentId} onSelectAppointment={selectAppointment} update={update} onNext={() => setStep(2)} />}
       {step === 2 && <ClinicalHistoryStep data={data} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
       {step === 3 && <PhysicalExamStep data={data} update={update} onBack={() => setStep(2)} onNext={() => setStep(4)} />}
-      {step === 4 && <DiagnosisStep data={data} update={update} onBack={() => setStep(3)} />}
+      {step === 4 && <ComplementaryExamsStep exams={exams} onChange={setExams} onBack={() => setStep(3)} onNext={() => setStep(5)} />}
+      {step === 5 && <DiagnosisStep data={data} update={update} onBack={() => setStep(4)} />}
       </fieldset>
       {message && <p className="consultation-message" role="status">{message}</p>}
       <div className="consultation-actions">

@@ -1,3 +1,4 @@
+import type { Exame } from '../../models/Exame'
 import type { PrescricaoSalva } from '../../models/Prescricao'
 
 export type RecordKind = 'Consulta' | 'Vacina' | 'Exame' | 'Tratamento' | 'Retorno'
@@ -34,6 +35,7 @@ export type AltaRecord = {
 }
 
 export type ClinicalRecord = {
+  complementaryExams?: Exame[]
   savedPrescription?: PrescricaoSalva | null
   id: number
   kind: RecordKind

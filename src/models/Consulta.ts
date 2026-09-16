@@ -36,6 +36,7 @@ export type Alta = {
 }
 
 export class Consulta {
+    conduta = '';
     private _id: number;
     private _dataConsulta: Date;
     private _horario: string;
