@@ -1,4 +1,18 @@
+export const EXAME_STATUS = ['solicitado', 'agendado', 'coletado', 'aguardando_resultado', 'concluido', 'cancelado'] as const;
+export type ExameStatus = typeof EXAME_STATUS[number];
+export type ExameCategoria = 'laboratorial' | 'imagem' | 'outro';
+export const EXAME_STATUS_LABEL: Record<ExameStatus, string> = {
+    solicitado: 'Solicitado', agendado: 'Agendado', coletado: 'Coletado',
+    aguardando_resultado: 'Aguardando resultado', concluido: 'Concluído', cancelado: 'Cancelado',
+};
+
 export class Exame {
+    categoria: ExameCategoria = 'outro';
+    dataSolicitacao: Date;
+    dataRealizacao: Date | null;
+    status: ExameStatus;
+    interpretacao = '';
+    consultaId?: number;
     private _id: number;
     private _nomeExame: string;
     private _dataExame: Date;
@@ -14,6 +28,9 @@ export class Exame {
         this._nomeExame = nomeExame;
         this._dataExame = dataExame;
         this._resultado = resultado;
+        this.dataSolicitacao = dataExame;
+        this.dataRealizacao = resultado.trim() ? dataExame : null;
+        this.status = resultado.trim() ? 'concluido' : 'solicitado';
     }
 
     get nomeExame(): string {

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Consulta, type ExameFisico, type Alta } from '../models/Consulta'
 import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
+import { ExameService } from '../services/ExameService'
+import type { ExamDraft } from '../features/consultations/examTypes'
 import { ConsultaService } from '../services/ConsultaService'
 import { MedicoService } from '../services/MedicoService'
 import { PetService } from '../services/PetService'
@@ -40,14 +42,11 @@ async function resolverPet(nomeCao: string, nomeTutor: string) {
 export function useConsultas() {
     const [consultas, setConsultas] = useState<Consulta[]>([])
 
-    const refresh = useCallback(async () => {
-        const lista = await consultaService.listarConsultas()
-        setConsultas(lista)
-    }, [])
+    const refresh = useCallback(() => consultaService.listarConsultas().then(setConsultas), [])
 
     useEffect(() => { void refresh().catch(() => {}) }, [refresh])
 
-    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number }> {
+    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null, exams: ExamDraft[] = []): Promise<{ sucesso: boolean; erro?: string; id?: number }> {
       try {
         if (prescricao) {
             const error = validatePrescription(data, prescricao.prescription)
@@ -73,7 +72,7 @@ export function useConsultas() {
                 await proximoId(),
                 dataConsultaParaHoje(),
                 new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                data.conduct,
+                data.diagnosis ?? '',
                 `Queixa: ${data.mainComplaint}. Histórico: ${data.history}`,
                 medico,
                 pet,
@@ -82,12 +81,13 @@ export function useConsultas() {
                     data.zoonosisSearch || 'Sem suspeita de zoonose',
                     new Date()
                 ),
-                [],
+                new ExameService().criarSolicitacoes(exams),
                 [],
                 [],
                 exameFisico,
                 alta
             )
+            consulta.conduta = data.conduct
             consulta.prescricao = prescricao
             await consultaService.adicionarConsulta(consulta)
             // Uma falha ao recarregar a lista não desfaz a consulta já gravada.

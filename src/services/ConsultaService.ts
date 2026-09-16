@@ -1,7 +1,8 @@
 import { Aluno } from "../models/Aluno";
 import { Consulta, type ExameFisico, type Alta } from "../models/Consulta";
 import { DiagnosticoZoonose } from "../models/DiagnosticoZoonose";
-import { Exame } from "../models/Exame";
+import { ExameService } from "./ExameService";
+import { exameToRow } from "./storage/exameMapping";
 import { Medico } from "../models/Medico";
 import { Medicamento } from "../models/Medicamento";
 import { MedicamentoReceitado } from "../models/MedicamentoReceitado";
@@ -18,8 +19,7 @@ interface AlunoRowJoined { id: number; nome: string; telefone: string; email: st
 interface MedicamentoRow { id: number; nome_comercial: string; principio_ativo: string; descricao: string; concentracao: number; unidade_concentracao: string; forma_farmaceutica: string; via_administracao: string; tipo_uso: string; }
 interface MedicamentoReceitadoRow { quantidade: number; dose: string; vezes_ao_dia: number; duracao_dias: number; observacao: string; medicamentos: MedicamentoRow; }
 interface ReceitaRow { id: number; medicamentos_receitados: MedicamentoReceitadoRow[]; }
-interface ExameRow { id: number; nome_exame: string; data_exame: string; resultado: string; }
-interface ConsultaRow { prescricao?: Consulta["prescricao"]; id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
+interface ConsultaRow { conduta?: string; prescricao?: Consulta["prescricao"]; id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
 
 async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
     const pet = await petService.buscarPorId(row.pet_id);
@@ -28,10 +28,7 @@ async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
     const m = row.medicos;
     const responsavel = new Medico(m.id, m.nome, m.telefone, m.email, m.especialidade, m.crmv);
 
-    const { data: examesData } = await supabase.from("exames").select("*").eq("consulta_id", row.id);
-    const exames: Exame[] = (examesData ?? []).map((e: ExameRow) =>
-        new Exame(e.id, e.nome_exame, new Date(e.data_exame), e.resultado)
-    );
+    const exames = await new ExameService().listarPorConsulta(row.id);
 
     const { data: receitasData } = await supabase
         .from("receitas")
@@ -99,6 +96,7 @@ async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
     };
 
     const consulta = new Consulta(row.id, new Date(row.data_consulta), row.horario, row.diagnostico, row.observacoes, responsavel, pet, diagnosticoZoonose, exames, receitas, alunos, exameFisico, alta);
+    consulta.conduta = row.conduta ?? '';
     consulta.prescricao = row.prescricao ?? null;
     return consulta;
 }
@@ -117,12 +115,13 @@ export class ConsultaService {
         validarDataFutura(consulta.dataConsulta, "dataConsulta");
         validarObrigatorio(consulta.horario, "horario");
 
-        const { error } = await supabase.from("consultas").insert({
+        const consultaRow = {
             id: consulta.id,
             ...(consulta.prescricao ? { prescricao: consulta.prescricao } : {}),
             data_consulta: consulta.dataConsulta.toISOString(),
             horario: consulta.horario,
             diagnostico: consulta.diagnostico,
+            ...(consulta.conduta ? { conduta: consulta.conduta } : {}),
             observacoes: consulta.observacoes,
             responsavel_id: consulta.responsavel.id,
             pet_id: consulta.pet.id,
@@ -151,22 +150,16 @@ export class ConsultaService {
             alta_condicao: consulta.alta.condicao ?? null,
             alta_orientacoes: consulta.alta.orientacoes ?? null,
             alta_prognostico: consulta.alta.prognostico ?? null,
-        });
+        };
+        const { error } = consulta.exames.length
+            ? await supabase.rpc('salvar_consulta_com_exames', { p_consulta: consultaRow, p_exames: consulta.exames.map(exameToRow) })
+            : await supabase.from('consultas').insert(consultaRow);
         if (error) {
+            if (consulta.exames.length) throw new Error('Não foi possível confirmar a gravação da consulta com exames. Confira a conexão e a migração de exames complementares. Os dados foram mantidos.');
             if (consulta.prescricao && error.message.includes('prescricao')) {
                 throw new Error('Não foi possível salvar a receita. Verifique se a atualização do banco para receitas foi aplicada. Os dados do atendimento foram mantidos.');
             }
             throw new Error(error.message);
-        }
-
-        for (const exame of consulta.exames) {
-            await supabase.from("exames").insert({
-                id: exame.id,
-                consulta_id: consulta.id,
-                nome_exame: exame.nomeExame,
-                data_exame: exame.dataExame.toISOString(),
-                resultado: exame.resultado
-            });
         }
 
         for (const receita of consulta.receitas) {
