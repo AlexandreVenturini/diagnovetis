@@ -370,3 +370,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .exam-result-editor { margin-top:16px; padding:16px; min-width:0; border:1px solid #ccd9d0; border-radius:8px; }.exam-result-editor .form-actions { margin-top:16px; flex-wrap:wrap; }.exam-result-editor input,.exam-result-editor select { background:#fff; }
 @media(max-width:620px) { .exam-request,.record-exam,.exam-result-editor { padding:12px; }.exam-custom button,.exam-result-editor button { width:100%; }.exam-result-editor .consultation-form-grid { grid-template-columns:1fr; } }
 @media print { .exam-no-print { display:none!important; }.record-exam { break-inside:avoid; } }
+.rx-animal-search { min-width:0; }
+.rx-field-help { margin:8px 0 0; color:#647268; font-size:12px; line-height:1.5; }
+.rx-animal-results { list-style:none; padding:0; margin:10px 0 0; border:1px solid #d1dfd6; border-radius:9px; max-height:260px; overflow-y:auto; }
+.rx-animal-results li + li { border-top:1px solid #e4ece7; }
+.rx-animal-results button { display:flex; flex-direction:column; gap:5px; width:100%; padding:12px 14px; border:0; background:#fff; text-align:left; color:#225b35; }
+.rx-animal-results button:hover,.rx-animal-results button:focus-visible { background:#edf7f0; }
+.rx-animal-results span,.rx-selected-animal span { font-size:12px; color:#58685e; overflow-wrap:anywhere; }
+.rx-selected-animal { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:14px; border:1px solid #b9d8c3; border-radius:9px; background:#f1f8f3; }
+.rx-selected-animal > div { display:grid; gap:6px; min-width:0; color:#176534; }
+.rx-dose-feedback { padding:13px 16px; border:1px solid #bad7c3; border-radius:8px; background:#eff8f2; color:#176534; line-height:1.5; overflow-wrap:anywhere; }
+.rx-dose-feedback.error { background:#fff5e7; border-color:#ebcb98; color:#77511a; }
