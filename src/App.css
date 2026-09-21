@@ -381,3 +381,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .rx-selected-animal > div { display:grid; gap:6px; min-width:0; color:#176534; }
 .rx-dose-feedback { padding:13px 16px; border:1px solid #bad7c3; border-radius:8px; background:#eff8f2; color:#176534; line-height:1.5; overflow-wrap:anywhere; }
 .rx-dose-feedback.error { background:#fff5e7; border-color:#ebcb98; color:#77511a; }
+
+.exam-report-fields { min-width:0; display:grid; gap:16px; padding:18px; border:1px solid #b6d3bf; border-radius:8px; background:#f4faf6; }
+.exam-report-fields legend { color:#176534; font-weight:700; padding:0 6px; }
+.exam-report-fields label { display:grid; gap:8px; }
+.exam-report-fields small { color:#52665a; }
+.exam-report-actions { display:flex; flex-wrap:wrap; align-items:center; gap:16px; }
+.exam-report-download { color:#176534; overflow-wrap:anywhere; }

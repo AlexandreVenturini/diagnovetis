@@ -1,3 +1,4 @@
+import { ExamReportFields } from './ExamReportFields'
 import { EXAME_STATUS, EXAME_STATUS_LABEL } from '../../models/Exame'
 import { localDate, type ExamDraft } from './examTypes'
 
@@ -7,6 +8,7 @@ export function ExamFields({ value, onChange, resultOnly = false }: { value: Exa
     <label>Status<select value={value.status} onChange={e => onChange({ ...value, status: e.target.value as ExamDraft['status'] })}>{EXAME_STATUS.map(status => <option key={status} value={status}>{EXAME_STATUS_LABEL[status]}</option>)}</select></label>
     <label>Data de realização<input type="date" min={value.dataSolicitacao} max={localDate()} value={value.dataRealizacao} onChange={e => onChange({ ...value, dataRealizacao: e.target.value })} required={value.status === 'concluido'} /></label>
     <label className="full-field">Resultado<textarea value={value.resultado} onChange={e => onChange({ ...value, resultado: e.target.value })} placeholder="Aguardando resultado" required={value.status === 'concluido'} /></label>
+    <ExamReportFields value={value} onChange={onChange} />
     <label className="full-field">Interpretação clínica<textarea value={value.interpretacao} onChange={e => onChange({ ...value, interpretacao: e.target.value })} placeholder="Registre a interpretação do profissional responsável" /></label>
   </div>
 }

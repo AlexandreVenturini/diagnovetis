@@ -89,7 +89,7 @@ export function generateConsultationReport(data: ConsultationData, exams: ExamDr
     </section>
 
     <section><h2>Exames complementares</h2>
-      ${exams.length ? exams.map(exam => `<div class="long-text"><b>${valueOrFallback(exam.nome)}</b><p>${valueOrFallback(exam.categoria)} · Solicitação: ${valueOrFallback(exam.dataSolicitacao)} · ${EXAME_STATUS_LABEL[exam.status]}</p><p>Realização: ${valueOrFallback(exam.dataRealizacao)}</p><p>Resultado: ${valueOrFallback(exam.resultado, 'Aguardando resultado')}</p><p>Interpretação: ${valueOrFallback(exam.interpretacao)}</p></div>`).join('') : '<p>Nenhum exame solicitado.</p>'}
+      ${exams.length ? exams.map(exam => `<div class="long-text"><b>${valueOrFallback(exam.nome)}</b><p>${valueOrFallback(exam.categoria)} · Solicitação: ${valueOrFallback(exam.dataSolicitacao)} · ${EXAME_STATUS_LABEL[exam.status]}</p><p>Realização: ${valueOrFallback(exam.dataRealizacao)}</p><p>Resultado: ${valueOrFallback(exam.resultado, 'Aguardando resultado')}</p><p>Laudo: ${valueOrFallback(exam.laudo ?? '')}</p>${exam.laudoAnexo ? `<p>Anexo do laudo: ${valueOrFallback(exam.laudoAnexo.nome)} (disponível no prontuário)</p>` : ''}<p>Interpretação: ${valueOrFallback(exam.interpretacao)}</p></div>`).join('') : '<p>Nenhum exame solicitado.</p>'}
     </section>
     <div class="signatures"><div class="signature"><strong>${valueOrFallback(data.veterinarian, 'Veterinário responsável')}</strong><span>Assinatura e CRMV</span></div><div class="signature"><strong>${valueOrFallback(data.tutorName, 'Tutor responsável')}</strong><span>Assinatura do responsável</span></div></div>
     <footer>DiagnoVetis · IFES Campus Santa Teresa · Relatório gerado eletronicamente pelo sistema</footer>
