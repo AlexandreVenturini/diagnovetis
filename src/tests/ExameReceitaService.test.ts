@@ -245,15 +245,21 @@ describe('Exames complementares no atendimento', () => {
 
     it('registra o resultado dias depois sem alterar os outros dados da consulta', async () => {
         const { newExam, examToDraft, localDate } = await import('../features/consultations/examTypes')
-        const draft = { ...newExam('Hemograma', 'laboratorial'), dataSolicitacao: '2025-01-01' }
+        const draft = { ...newExam('Hemograma', 'laboratorial'), dataSolicitacao: '2025-01-01', laudo: 'Laudo inicial', laudoAnexo: { nome: 'exame.pdf', tipo: 'application/pdf', dados: 'data:application/pdf;base64,JVBERi0xLjc=' } }
         await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([draft])))
         const before = await consultaService.buscarPorId(1)
         const [exam] = await exameService.listarPorConsulta(1)
-        await exameService.atualizarResultado(exam, { ...examToDraft(exam), status: 'concluido', dataRealizacao: localDate(), resultado: 'Resultado cadastrado', interpretacao: 'Interpretação registrada' })
+        expect(exam.laudo).toBe('Laudo inicial')
+        expect(exam.laudoAnexo).toEqual(draft.laudoAnexo)
+        await exameService.atualizarResultado(exam, { ...examToDraft(exam), status: 'concluido', dataRealizacao: localDate(), resultado: 'Resultado cadastrado', laudo: 'Laudo revisado', interpretacao: 'Interpretação registrada' })
         const after = await consultaService.buscarPorId(1)
         expect(after?.diagnostico).toBe(before?.diagnostico)
         expect(after?.observacoes).toBe(before?.observacoes)
         expect(after?.responsavel.id).toBe(before?.responsavel.id)
+        expect(after?.exames[0].laudo).toBe('Laudo revisado')
+        expect(after?.exames[0].laudoAnexo).toEqual(draft.laudoAnexo)
+        await exameService.atualizarResultado(after!.exames[0], { ...examToDraft(after!.exames[0]), laudoAnexo: null })
+        expect((await exameService.buscarPorId(exam.id))?.laudoAnexo).toBeNull()
         expect(after?.exames[0].status).toBe('concluido')
         expect(after?.exames[0].interpretacao).toBe('Interpretação registrada')
         expect(after?.exames[0].dataSolicitacao.getFullYear()).toBe(2025)

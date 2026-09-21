@@ -6,7 +6,11 @@ export const EXAME_STATUS_LABEL: Record<ExameStatus, string> = {
     aguardando_resultado: 'Aguardando resultado', concluido: 'Concluído', cancelado: 'Cancelado',
 };
 
+export type LaudoAnexo = { nome: string; tipo: string; dados: string };
+
 export class Exame {
+    laudo = '';
+    laudoAnexo: LaudoAnexo | null = null;
     categoria: ExameCategoria = 'outro';
     dataSolicitacao: Date;
     dataRealizacao: Date | null;
