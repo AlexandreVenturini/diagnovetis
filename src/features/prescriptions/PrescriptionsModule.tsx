@@ -1,3 +1,5 @@
+import { PrescriptionHistoryFilters } from './PrescriptionHistoryFilters'
+import { dateInput, filterPrescriptionHistory, type HistoryFilters } from './historyFilters'
 import { useEffect, useRef, useState } from 'react'
 import type { Dog } from '../dogs/dogTypes'
 import type { Medico } from '../../models/Medico'
@@ -24,8 +26,7 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [reload, setReload] = useState(0)
-  const [query, setQuery] = useState('')
-  const [date, setDate] = useState('')
+  const [filters, setFilters] = useState<HistoryFilters>(() => ({ view: 'week', date: dateInput(), query: '', veterinarian: '', medication: '' }))
   const [selected, setSelected] = useState<IssuedPrescription | null>(null)
   const [petId, setPetId] = useState('')
   const [vetId, setVetId] = useState('')
@@ -75,6 +76,7 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
       setPendingEmission(true)
       const row = await service.issue(...pending.current)
       setHistory(current => [row, ...current.filter(item => item.id !== row.id)])
+      setFilters({ view: 'week', date: dateInput(new Date(row.snapshot.issuedAt)), query: '', veterinarian: '', medication: '' })
       setSelected(row); setTab('history'); setPreview(false); pending.current = null; setPendingEmission(false)
       setPetId(''); setVetId(''); setWeight(''); setPrescription(emptyPrescription()); setMgKg(''); setConcentration(''); setTargetItem(0); setMedQuery('')
       setMessage('Receita emitida e salva no prontuário do animal.')
@@ -87,10 +89,7 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
     catch { setMessage('Não foi possível abrir esta receita. Confira os dados salvos.') }
   }
 
-  const filtered = history.filter(row => {
-    const { patient: p, prescription: rx } = row.snapshot
-    return `${p.dogName} ${p.tutorName} ${p.veterinarian} ${rx.crmv} ${rx.items.map(item => item.medication).join(' ')}`.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR').trim()) && (!date || new Date(row.snapshot.issuedAt).toLocaleDateString('sv-SE') === date)
-  })
+  const filtered = filterPrescriptionHistory(history, filters)
 
   return <section className="receituario-module">
     <div className="records-heading"><div><h2>Receituário</h2><p>Emita receitas e acompanhe o histórico de cada animal.</p></div></div>
@@ -100,11 +99,12 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
     </div>
     {message && <p role="status" className="consultation-message">{message}</p>}
     {loading ? <p role="status">Carregando receituário…</p> : loadError ? <div role="alert"><p>{loadError}</p><button className="secondary-button" onClick={() => { setLoading(true); setReload(value => value + 1) }}>Tentar novamente</button></div> : tab === 'history' ? <>
-      <div className="content-card consultation-form-grid rx-filters"><label>Buscar receitas<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Animal, tutor, veterinário ou medicamento" /></label><label>Data de emissão<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label></div>
+      <PrescriptionHistoryFilters history={history} value={filters} onChange={value => { setFilters(value); setSelected(null) }} />
+      {!selected && <div className="agenda-list-heading"><h3>{filters.view === 'day' ? 'Receitas do dia' : filters.view === 'week' ? 'Receitas da semana' : 'Receitas do mês'}</h3><span>{filtered.length} resultado(s)</span></div>}
       {selected ? <section className="content-card rx-details"><button className="text-back-button" onClick={() => setSelected(null)}>‹ Voltar ao histórico</button><h3>Receita de {selected.snapshot.patient.dogName}</h3><p>{new Date(selected.snapshot.issuedAt).toLocaleString('pt-BR')} · {selected.snapshot.patient.veterinarian}</p>
         <iframe className="rx-preview" title="Detalhes da receita emitida" sandbox="" srcDoc={prescriptionHtml(selected.snapshot.patient, selected.snapshot.prescription, new Date(selected.snapshot.issuedAt))} />
         <div className="form-actions"><button className="primary-button" onClick={() => print(selected)}>PDF / Impressão</button><button className="secondary-button" onClick={() => onOpenRecord(selected.petId)}>Abrir prontuário</button><button className="secondary-button" onClick={startNew}>Nova receita</button></div>
-      </section> : <div className="rx-history">{!filtered.length && <p>Nenhuma receita encontrada.</p>}{filtered.map(row => <article className="content-card" key={row.id}><h3>{row.snapshot.patient.dogName}</h3><p>Tutor: {row.snapshot.patient.tutorName}</p><p>{new Date(row.snapshot.issuedAt).toLocaleDateString('pt-BR')} · {row.snapshot.patient.veterinarian}</p><p>{row.snapshot.prescription.items.map(item => item.medication).join(', ')}</p><button className="outline-button" onClick={() => { setSelected(row); setMessage('') }}>Ver detalhes</button></article>)}</div>}
+      </section> : <div className="rx-history">{!filtered.length && <p>Nenhuma receita encontrada neste período com os filtros selecionados.</p>}{filtered.map(row => <article className="content-card" key={row.id}><h3>{row.snapshot.patient.dogName}</h3><p>Tutor: {row.snapshot.patient.tutorName}</p><p>{new Date(row.snapshot.issuedAt).toLocaleDateString('pt-BR')} · {row.snapshot.patient.veterinarian}</p><p>{row.snapshot.prescription.items.map(item => item.medication).join(', ')}</p><button className="outline-button" onClick={() => { setSelected(row); setMessage('') }}>Ver detalhes</button></article>)}</div>}
     </> : <>
       <p className="rx-flow">Identificação → Medicamentos e dose → Orientações → Visualização → Emissão</p>
       {preview ? <section className="content-card rx-details"><h3>Revise a receita antes de emitir</h3><iframe title="Visualização da nova receita" className="rx-preview" sandbox="" srcDoc={prescriptionHtml(patient, prescription)} /><p>Confira os dados e as doses. A emissão salva uma cópia no prontuário.</p><div className="form-actions"><button className="secondary-button" disabled={saving || pendingEmission} onClick={() => setPreview(false)}>Voltar e editar</button><button className="primary-button" disabled={saving} onClick={issue}>{saving ? 'Emitindo…' : pendingEmission ? 'Tentar emissão novamente' : 'Emitir e salvar no prontuário'}</button></div>{pendingEmission && !saving && <p>A emissão ainda não foi confirmada. Tente novamente para verificar e concluir a mesma receita.</p>}</section> : <>
