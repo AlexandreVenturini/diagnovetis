@@ -4,6 +4,7 @@ import type { Appointment, AppointmentReminder, AppointmentStatus, AppointmentVi
 
 type AppointmentListProps = {
   appointments: Appointment[]
+  onStartCare?: (appointment: Appointment) => void
   onCreate: () => void
   onUpdate: (id: number, changes: Partial<Appointment>) => void
 }
@@ -34,7 +35,7 @@ function startOfWeek(date: Date) {
   return result
 }
 
-export function AppointmentList({ appointments, onCreate, onUpdate }: AppointmentListProps) {
+export function AppointmentList({ appointments, onCreate, onUpdate, onStartCare }: AppointmentListProps) {
   const initialDate = appointments.find((item) => item.date)?.date ?? toDateInput(new Date())
   const [view, setView] = useState<AppointmentView>('week')
   const [cursorDate, setCursorDate] = useState(initialDate)
@@ -156,6 +157,7 @@ export function AppointmentList({ appointments, onCreate, onUpdate }: Appointmen
                   <div><div className="appointment-name-row"><strong>{appointment.dogName}</strong><span className={`status-badge status-${appointment.status}`}>{STATUS_LABELS[appointment.status]}</span></div><p>Tutor: {appointment.tutorName}</p><div className="appointment-meta"><span>▣ {formatDate(appointment.date)}</span><span>◷ {appointment.time || 'Horário não informado'}</span></div></div>
                   <div className="appointment-card-side"><span className="service-label">{appointment.serviceType}</span><span className="appointment-chevron"><Icon><path d="m7 10 5 5 5-5" /></Icon></span></div>
                 </button>
+                {onStartCare && !['completed', 'cancelled', 'no-show'].includes(appointment.status) && <div className="appointment-care-action"><button type="button" className="primary-button" onClick={() => onStartCare(appointment)}>Ir para atendimento</button></div>}
                 {isExpanded && <div className="appointment-details">
                   <div><span>Veterinário</span><strong>{appointment.veterinarian || 'Não informado'}</strong></div><div><span>Tipo</span><strong>Horário marcado</strong></div><div><span>Observações</span><strong>{appointment.notes || 'Nenhuma observação'}</strong></div>
                   {appointment.cancellationReason && <div className="appointment-notes"><span>Motivo do cancelamento</span><strong>{appointment.cancellationReason}</strong></div>}

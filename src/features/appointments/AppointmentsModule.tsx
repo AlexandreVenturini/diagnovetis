@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { AppointmentForm } from './AppointmentForm'
 import { AppointmentList } from './AppointmentList'
 import { useAppointments } from '../../hooks/useAppointments'
-import type { AppointmentFormData, AppointmentScreen } from './appointmentTypes'
+import type { Appointment, AppointmentFormData, AppointmentScreen } from './appointmentTypes'
 import type { Dog } from '../dogs/dogTypes'
 
-type AppointmentsModuleProps = { initialScreen?: AppointmentScreen; dogs: Dog[] }
+type AppointmentsModuleProps = { initialScreen?: AppointmentScreen; dogs: Dog[]; onStartCare?: (appointment: Appointment) => void }
 
-export function AppointmentsModule({ initialScreen = 'list', dogs }: AppointmentsModuleProps) {
+export function AppointmentsModule({ initialScreen = 'list', dogs, onStartCare }: AppointmentsModuleProps) {
   const [screen, setScreen] = useState<AppointmentScreen>(initialScreen)
   const [formError, setFormError] = useState('')
   const { appointments, createAppointment, updateAppointment } = useAppointments()
@@ -27,5 +27,5 @@ export function AppointmentsModule({ initialScreen = 'list', dogs }: Appointment
     return <AppointmentForm dogs={dogs} onSave={handleCreate} onCancel={() => { setFormError(''); setScreen('list') }} error={formError} />
   }
 
-  return <AppointmentList appointments={appointments} onCreate={() => setScreen('create')} onUpdate={updateAppointment} />
+  return <AppointmentList onStartCare={onStartCare} appointments={appointments} onCreate={() => setScreen('create')} onUpdate={updateAppointment} />
 }
