@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react'
+import type { Appointment } from '../appointments/appointmentTypes'
+import { consultationFromAppointment } from './consultationFromAppointment'
 import { useConsultas } from '../../hooks/useConsultas'
 import { ConsultationHeader } from './ConsultationHeader'
 import { generateConsultationReport } from './consultationReport'
@@ -14,17 +16,17 @@ import { useAppointments } from '../../hooks/useAppointments'
 import type { Dog } from '../dogs/dogTypes'
 
 
-type ClinicalCareModuleProps = { dogs: Dog[] }
+type ClinicalCareModuleProps = { dogs: Dog[]; initialAppointment?: Appointment }
 
-export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
+export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareModuleProps) {
   const [step, setStep] = useState<ConsultationStep>(1)
-  const [data, setData] = useState<ConsultationData>(EMPTY_CONSULTATION)
+  const [data, setData] = useState<ConsultationData>(() => initialAppointment ? consultationFromAppointment(initialAppointment, dogs) : EMPTY_CONSULTATION)
   const [exams, setExams] = useState<ExamDraft[]>([])
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const saveLock = useRef(false)
   const [completed, setCompleted] = useState<{ data: ConsultationData; exams: ExamDraft[]; id: number } | null>(null)
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null)
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(initialAppointment?.id ?? null)
   const { salvarConsulta } = useConsultas()
   const { appointments, updateAppointment } = useAppointments()
 
@@ -37,19 +39,8 @@ export function ClinicalCareModule({ dogs }: ClinicalCareModuleProps) {
     if (id === null) return
     const appointment = appointments.find((item) => item.id === id)
     if (!appointment) return
-    const dog = dogs.find((item) => item.id === appointment.dogId)
-      ?? dogs.find((item) => item.name.trim().toLocaleLowerCase('pt-BR') === appointment.dogName.trim().toLocaleLowerCase('pt-BR'))
     setExams([])
-    setData((current) => ({
-      ...current,
-      dogName: appointment.dogName,
-      tutorName: appointment.tutorName,
-      veterinarian: appointment.veterinarian,
-      age: dog?.age || appointment.dogAge || current.age,
-      breed: dog?.breed || appointment.dogBreed || current.breed,
-      mainComplaint: current.mainComplaint || appointment.serviceType,
-      history: current.history || [dog?.history, appointment.notes].filter(Boolean).join('\n'),
-    }))
+    setData(current => consultationFromAppointment(appointment, dogs, current))
     setMessage('Dados do agendamento carregados com sucesso.')
   }
 

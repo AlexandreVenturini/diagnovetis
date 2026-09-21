@@ -388,3 +388,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .exam-report-fields small { color:#52665a; }
 .exam-report-actions { display:flex; flex-wrap:wrap; align-items:center; gap:16px; }
 .exam-report-download { color:#176534; overflow-wrap:anywhere; }
+
+.appointment-care-action { padding:0 16px 16px; }
+.appointment-care-action button { padding:10px 16px; }
+@media(max-width:620px) { .appointment-care-action button { width:100%; } }
