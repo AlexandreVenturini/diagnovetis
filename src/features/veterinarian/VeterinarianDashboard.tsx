@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { Appointment } from '../appointments/appointmentTypes'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { MainNavigation } from '../../components/layout/MainNavigation'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
@@ -19,6 +20,7 @@ type VeterinarianDashboardProps = {
 }
 
 export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) {
+  const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
   const [activeModule, setActiveModule] = useState('dashboard')
   const [recordPetId, setRecordPetId] = useState<number | undefined>()
   const [screen, setScreen] = useState<DogScreen>('list')
@@ -54,6 +56,7 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
   }
 
   function openModule(module: string) {
+    if (module === 'consultations' && activeModule !== 'consultations') setCareAppointment(undefined)
     setActiveModule(module)
     if (module === 'records') setRecordPetId(undefined)
     if (module === 'dogs') setScreen('list')
@@ -88,8 +91,8 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
           {screen === 'edit' && selected && <DogForm dog={selected} editing onSave={handleEdit} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />}
           {screen === 'details' && selected && <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />}
         </>}
-        {activeModule === 'appointments' && <AppointmentsModule dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
-        {activeModule === 'consultations' && <ClinicalCareModule dogs={dogs} />}
+        {activeModule === 'appointments' && <AppointmentsModule onStartCare={appointment => { setCareAppointment(appointment); setActiveModule('consultations') }} dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
+        {activeModule === 'consultations' && <ClinicalCareModule dogs={dogs} initialAppointment={careAppointment} />}
         {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={(id) => { setRecordPetId(id); setActiveModule('records') }} />}
         {activeModule === 'records' && <RecordsModule initialPetId={recordPetId} />}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
