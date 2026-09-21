@@ -31,11 +31,13 @@ describe('Solicitação e resultado de exames', () => {
     const write = vi.fn()
     vi.stubGlobal('window', { open: () => ({ document: { open: vi.fn(), write, close: vi.fn() } }) })
     try {
-      generateConsultationReport(EMPTY_CONSULTATION, [{ ...newExam('<script>teste</script>', 'outro'), interpretacao: '<img src=x>' }])
+      generateConsultationReport(EMPTY_CONSULTATION, [{ ...newExam('<script>teste</script>', 'outro'), interpretacao: '<img src=x>', laudo: '<script>laudo</script>', laudoAnexo: { nome: '<img src=x>.pdf', tipo: 'application/pdf', dados: 'data:application/pdf;base64,JVBERi0=' } }])
       const html = write.mock.calls[0][0]
       expect(html).toContain('Exames complementares')
       expect(html).toContain('Aguardando resultado')
       expect(html).toContain('&lt;script&gt;')
+      expect(html).toContain('Laudo: &lt;script&gt;laudo&lt;/script&gt;')
+      expect(html).toContain('Anexo do laudo: &lt;img src=x&gt;.pdf')
       expect(html).not.toContain('<img src=x>')
     } finally { vi.unstubAllGlobals() }
   })

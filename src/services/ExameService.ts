@@ -32,7 +32,7 @@ export class ExameService {
             dataSolicitacao: `${exam.dataSolicitacao.getFullYear()}-${String(exam.dataSolicitacao.getMonth() + 1).padStart(2, '0')}-${String(exam.dataSolicitacao.getDate()).padStart(2, '0')}` })
         const { data, error } = await supabase.from('exames').update({
             data_realizacao: draft.dataRealizacao || null, status: updated.status,
-            resultado: updated.resultado, interpretacao_clinica: updated.interpretacao,
+            laudo: updated.laudo, laudo_anexo: updated.laudoAnexo, resultado: updated.resultado, interpretacao_clinica: updated.interpretacao,
         }).eq('id', exam.id).eq('consulta_id', exam.consultaId).select('*').single()
         if (error || !data) throw new Error('Não foi possível salvar o resultado. Confira a conexão e a atualização do banco. Os campos foram mantidos.')
         return exameFromRow(data as ExameRow)
