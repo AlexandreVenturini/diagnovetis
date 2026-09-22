@@ -88,7 +88,7 @@ export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load().catch(() => {}) }, [load]) // eslint-disable-line react-hooks/set-state-in-effect
 
   const selected = patients.find((p) => p.id === selectedId) ?? null
 

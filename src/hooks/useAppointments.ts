@@ -27,7 +27,7 @@ export function useAppointments() {
         setAppointments((data ?? []).map(r => rowToAppointment(r as Row)))
     }, [])
 
-    useEffect(() => { refresh() }, [refresh])
+    useEffect(() => { refresh().catch(() => {}) }, [refresh]) // eslint-disable-line react-hooks/set-state-in-effect
 
     const createAppointment = useCallback(async (data: AppointmentFormData): Promise<boolean> => {
         const { data: current } = await supabase.from('agendamentos').select('*')

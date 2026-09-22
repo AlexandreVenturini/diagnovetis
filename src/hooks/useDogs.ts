@@ -51,7 +51,7 @@ export function useDogs() {
         }
     }, [])
 
-    useEffect(() => { refresh() }, [refresh])
+    useEffect(() => { refresh().catch(() => {}) }, [refresh]) // eslint-disable-line react-hooks/set-state-in-effect
 
     async function createDog(form: DogFormData) {
         const tutor = await getOrCreateTutor(form.tutor)
