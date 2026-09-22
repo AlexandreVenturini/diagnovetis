@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '../../components/common/Icon'
 import { AppHeader } from '../../components/layout/AppHeader'
+import { AdminPanel } from '../admin/AdminPanel'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import { DogDetails } from '../dogs/DogDetails'
 import { DogForm } from '../dogs/DogForm'
@@ -11,7 +12,7 @@ import { AttendantHome } from './AttendantHome'
 
 type AttendantDashboardProps = {
   onLogout: () => void
-  user: { email: string; name: string } | null
+  user: { email: string; name: string; isAdmin: boolean } | null
 }
 
 type AttendantModule = 'dashboard' | 'dogs' | 'appointments'
@@ -38,6 +39,7 @@ const NAV_ITEMS: { id: AttendantModule; label: string; icon: React.ReactNode }[]
 
 export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) {
   const [activeModule, setActiveModule] = useState<AttendantModule>('dashboard')
+  const [showAdmin, setShowAdmin] = useState(false)
   const [screen, setScreen] = useState<DogScreen>('list')
   const [appointmentEntry, setAppointmentEntry] = useState<AppointmentEntry>({ screen: 'list', key: 0 })
   const [selected, setSelected] = useState<Dog | null>(null)
@@ -86,19 +88,26 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
     setScreen('list')
   }
 
+  if (showAdmin) {
+    return (
+      <div className="app-shell">
+        <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
+        <main className="shell-width dashboard-content">
+          <AdminPanel onClose={() => setShowAdmin(false)} />
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
       <main className="shell-width dashboard-content">
         <section className="user-row">
-          <div>
-            <p>Atendente logado:</p>
-            <strong>{user?.name || user?.email || '—'}</strong>
-            {user?.name && (
-              <small style={{ display: 'block', opacity: 0.7, fontWeight: 400 }}>{user.email}</small>
-            )}
+          <div className="profile-badge">
+            <span>Perfil:</span>
+            Estudante
           </div>
-          <div className="profile-badge"><span>Perfil:</span>Atendente</div>
           <button className="logout-button" onClick={onLogout}><span>↪</span> Sair</button>
         </section>
 
