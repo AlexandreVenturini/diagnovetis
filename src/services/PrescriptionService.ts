@@ -23,7 +23,6 @@ export class PrescriptionService {
     if (error) throw new Error(error)
     const weight = Number(snapshot.patient.weight?.replace(',', '.'))
     if (!Number.isFinite(weight) || weight <= 0) throw new Error('Informe um peso válido em kg.')
-    // O mesmo identificador é reutilizado em tentativas após falha de conexão.
     const result = await supabase.from('prescricoes').upsert({ id, pet_id: petId, veterinario_id: veterinarianId, snapshot }, { onConflict: 'id', ignoreDuplicates: true })
     if (result.error) throw new Error('Não foi possível emitir a receita. Confira a conexão e a atualização do banco. Seus dados foram mantidos.')
     const saved = await supabase.from('prescricoes').select('*').eq('id', id).single()

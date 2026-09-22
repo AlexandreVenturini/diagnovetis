@@ -66,8 +66,24 @@ export function useConsultas() {
                 mucosas: data.mucosa || undefined,
                 hidratacao: data.hydration || undefined,
                 nivelConsciencia: data.consciousness || undefined,
+                pelePelagem: data.skinAndCoat || undefined,
+                olhos: data.eyes || undefined,
+                ouvidos: data.ears || undefined,
+                bocaDentes: data.mouthAndTeeth || undefined,
+                sistemaRespiratorio: data.respiratorySystem || undefined,
+                sistemaCardiovascular: data.cardiovascularSystem || undefined,
+                sistemaGastrointestinal: data.gastrointestinalSystem || undefined,
+                sistemaUrinario: data.urinarySystem || undefined,
+                sistemaReprodutivo: data.reproductiveSystem || undefined,
+                sistemaNeurologico: data.neurologicalSystem || undefined,
+                dor: data.pain || undefined,
             }
-            const alta: Alta = {}
+            const alta: Alta = {
+                data: data.dischargeDate || undefined,
+                condicao: data.dischargeCondition || undefined,
+                orientacoes: data.dischargeInstructions || undefined,
+                prognostico: data.dischargePrognosis || undefined,
+            }
             const consulta = new Consulta(
                 await proximoId(),
                 dataConsultaParaHoje(),
@@ -90,7 +106,6 @@ export function useConsultas() {
             consulta.conduta = data.conduct
             consulta.prescricao = prescricao
             await consultaService.adicionarConsulta(consulta)
-            // Uma falha ao recarregar a lista não desfaz a consulta já gravada.
             void refresh().catch(() => {})
             return { sucesso: true, id: consulta.id }
         } catch (e) {
