@@ -20,25 +20,44 @@ type VeterinarianDashboardProps = {
   user: { email: string; name: string } | null
 }
 
+type AppointmentEntry = { screen: 'list' | 'create'; key: number }
+
 export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardProps) {
-  const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
   const [activeModule, setActiveModule] = useState('dashboard')
-  const [recordPetId, setRecordPetId] = useState<number | undefined>()
   const [screen, setScreen] = useState<DogScreen>('list')
-  const [appointmentEntry, setAppointmentEntry] = useState<{ screen: 'list' | 'create'; key: number }>({ screen: 'list', key: 0 })
   const [selected, setSelected] = useState<Dog | null>(null)
+  const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
+  const [recordPetId, setRecordPetId] = useState<number | undefined>()
+  const [appointmentEntry, setAppointmentEntry] = useState<AppointmentEntry>({ screen: 'list', key: 0 })
 
   const { dogs, createDog, createTutor, updateDog, removeDog } = useDogs()
 
-  async function handleCreate(data: DogFormData) {
-    await createDog(data)
-    setScreen('list')
+  function openModule(module: string) {
+    if (module === 'consultations' && activeModule !== 'consultations') setCareAppointment(undefined)
+    if (module === 'records') setRecordPetId(undefined)
+    if (module === 'dogs') setScreen('list')
+    if (module === 'appointments') setAppointmentEntry((prev) => ({ screen: 'list', key: prev.key + 1 }))
+    setActiveModule(module)
   }
 
-  async function handleEdit(data: DogFormData) {
-    if (!selected) return
-    await updateDog(selected.id, data)
-    setScreen('list')
+  function openNewDog() {
+    setActiveModule('dogs')
+    setScreen('create')
+  }
+
+  function openNewAppointment() {
+    setActiveModule('appointments')
+    setAppointmentEntry((prev) => ({ screen: 'create', key: prev.key + 1 }))
+  }
+
+  function startCare(appointment: Appointment) {
+    setCareAppointment(appointment)
+    setActiveModule('consultations')
+  }
+
+  function openRecord(petId: number) {
+    setRecordPetId(petId)
+    setActiveModule('records')
   }
 
   function openEdit(dog: Dog) {
@@ -51,50 +70,75 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
     setScreen('details')
   }
 
-  function handleRemove(dog: Dog) {
-    removeDog(dog.id)
+  async function handleCreate(data: DogFormData) {
+    await createDog(data)
     setScreen('list')
   }
 
-  function openModule(module: string) {
-    if (module === 'consultations' && activeModule !== 'consultations') setCareAppointment(undefined)
-    setActiveModule(module)
-    if (module === 'records') setRecordPetId(undefined)
-    if (module === 'dogs') setScreen('list')
-    if (module === 'appointments') setAppointmentEntry((current) => ({ screen: 'list', key: current.key + 1 }))
+  async function handleEdit(data: DogFormData) {
+    if (!selected) return
+    await updateDog(selected.id, data)
+    setScreen('list')
   }
 
-  function openNewDog() { setScreen('create'); setActiveModule('dogs') }
-  function openNewAppointment() { setAppointmentEntry((current) => ({ screen: 'create', key: current.key + 1 })); setActiveModule('appointments') }
+  async function handleRemove(dog: Dog) {
+    await removeDog(dog.id)
+    setScreen('list')
+  }
 
   return (
     <div className="app-shell">
       <AppHeader />
       <main className="shell-width dashboard-content">
         <section className="user-row">
-          <div><p>Veterinário(a) logado:</p><strong>{user?.name || user?.email || '—'}</strong>{user?.name && <small style={{ display: 'block', opacity: 0.7, fontWeight: 400 }}>{user.email}</small>}</div>
+          <div>
+            <p>Veterinário(a) logado:</p>
+            <strong>{user?.name || user?.email || '—'}</strong>
+            {user?.name && (
+              <small style={{ display: 'block', opacity: 0.7, fontWeight: 400 }}>{user.email}</small>
+            )}
+          </div>
           <div className="profile-badge"><span>Perfil:</span>Médico Veterinário</div>
           <button className="logout-button" onClick={onLogout}><span>↪</span> Sair</button>
         </section>
 
         <MainNavigation activeModule={activeModule} onSelect={openModule} />
 
-        {activeModule === 'dashboard' && <DashboardHome dogs={dogs} onOpenModule={openModule} onNewDog={openNewDog} onNewAppointment={openNewAppointment} />}
+        {activeModule === 'dashboard' && (
+          <DashboardHome dogs={dogs} onOpenModule={openModule} onNewDog={openNewDog} onNewAppointment={openNewAppointment} />
+        )}
 
-        {activeModule === 'dogs' && <aside className="profile-notice">
-          <span>♧</span>
-          <p><strong>Perfil Veterinário:</strong> Acesso completo a todos os módulos do sistema</p>
-        </aside>}
+        {activeModule === 'dogs' && (
+          <>
+            <aside className="profile-notice">
+              <span>♧</span>
+              <p><strong>Perfil Veterinário:</strong> Acesso completo a todos os módulos do sistema</p>
+            </aside>
+            {screen === 'list' && (
+              <DogList dogs={dogs} onCreate={() => setScreen('create')} onEdit={openEdit} onDetails={openDetails} />
+            )}
+            {screen === 'create' && (
+              <DogForm onSave={handleCreate} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />
+            )}
+            {screen === 'edit' && selected && (
+              <DogForm dog={selected} editing onSave={handleEdit} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />
+            )}
+            {screen === 'details' && selected && (
+              <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />
+            )}
+          </>
+        )}
 
-        {activeModule === 'dogs' && <>
-          {screen === 'list' && <DogList dogs={dogs} onCreate={() => setScreen('create')} onEdit={openEdit} onDetails={openDetails} />}
-          {screen === 'create' && <DogForm onSave={handleCreate} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />}
-          {screen === 'edit' && selected && <DogForm dog={selected} editing onSave={handleEdit} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />}
-          {screen === 'details' && selected && <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />}
-        </>}
-        {activeModule === 'appointments' && <AppointmentsModule onStartCare={appointment => { setCareAppointment(appointment); setActiveModule('consultations') }} dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />}
+        {activeModule === 'appointments' && (
+          <AppointmentsModule
+            dogs={dogs}
+            key={appointmentEntry.key}
+            initialScreen={appointmentEntry.screen}
+            onStartCare={startCare}
+          />
+        )}
         {activeModule === 'consultations' && <ClinicalCareModule dogs={dogs} initialAppointment={careAppointment} />}
-        {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={(id) => { setRecordPetId(id); setActiveModule('records') }} />}
+        {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={openRecord} />}
         {activeModule === 'records' && <RecordsModule initialPetId={recordPetId} />}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
         {activeModule === 'medications' && <MedicationsModule />}

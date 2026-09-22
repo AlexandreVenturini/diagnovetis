@@ -74,5 +74,3 @@ export type PatientRecord = {
   records: ClinicalRecord[]
 }
 
-export type ClinicalRecordForm = Omit<ClinicalRecord, 'id' | 'attachments' | 'validation' | 'validatedBy'> & { attachments: string[] }
-export type RecordScreen = 'list' | 'details' | 'create'
