@@ -43,7 +43,7 @@ export class SupabaseRepository<T extends { id: number }> implements Repository<
         if (error) throw new Error(error.message)
     }
 
-    findByIdSync(_id: number): T | undefined {
+    findByIdSync(_id: number): T | undefined { // eslint-disable-line @typescript-eslint/no-unused-vars
         return undefined
     }
 }

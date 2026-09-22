@@ -46,7 +46,7 @@ function resolveJoins(_table: string, cols: string, rows: Row[]): Row[] {
 }
 
 function buildSelectChain(table: string, cols = '*') {
-    let eqFilters: [string, unknown][] = []
+    const eqFilters: [string, unknown][] = []
     let isSingle = false
 
     const exec = (): { data: Row | Row[] | null; error: null } => {
@@ -92,7 +92,7 @@ export const supabaseMock = {
                 })
 
                 const afterInsert = {
-                    select(_cols = '*') {
+                    select(_cols?: string) { // eslint-disable-line @typescript-eslint/no-unused-vars
                         let isSingle = false
                         const afterSelect = {
                             single() { isSingle = true; return afterSelect },
