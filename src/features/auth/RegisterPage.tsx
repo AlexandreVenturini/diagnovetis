@@ -55,6 +55,20 @@ export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
       return
     }
 
+    if (role === 'veterinarian' && data.user) {
+      const { error: dbError } = await supabase.from('medicos').insert({
+        nome: name.trim(),
+        email: email.trim(),
+        crmv: crmv.trim(),
+        telefone: '',
+        especialidade: '',
+      })
+      if (dbError) {
+        setMessage('Conta criada, mas não foi possível registrar o médico: ' + dbError.message)
+        return
+      }
+    }
+
     if (data.session) {
       onRegistered(role)
       return
