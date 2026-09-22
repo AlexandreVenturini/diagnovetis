@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Appointment } from '../appointments/appointmentTypes'
 import { AppHeader } from '../../components/layout/AppHeader'
+import { AdminPanel } from '../admin/AdminPanel'
 import { MainNavigation } from '../../components/layout/MainNavigation'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
@@ -17,13 +18,14 @@ import type { Dog, DogFormData, DogScreen } from '../dogs/dogTypes'
 
 type VeterinarianDashboardProps = {
   onLogout: () => void
-  user: { email: string; name: string } | null
+  user: { email: string; name: string; isAdmin: boolean } | null
 }
 
 type AppointmentEntry = { screen: 'list' | 'create'; key: number }
 
 export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardProps) {
   const [activeModule, setActiveModule] = useState('dashboard')
+  const [showAdmin, setShowAdmin] = useState(false)
   const [screen, setScreen] = useState<DogScreen>('list')
   const [selected, setSelected] = useState<Dog | null>(null)
   const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
@@ -86,19 +88,26 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
     setScreen('list')
   }
 
+  if (showAdmin) {
+    return (
+      <div className="app-shell">
+        <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
+        <main className="shell-width dashboard-content">
+          <AdminPanel onClose={() => setShowAdmin(false)} />
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
       <main className="shell-width dashboard-content">
         <section className="user-row">
-          <div>
-            <p>Veterinário(a) logado:</p>
-            <strong>{user?.name || user?.email || '—'}</strong>
-            {user?.name && (
-              <small style={{ display: 'block', opacity: 0.7, fontWeight: 400 }}>{user.email}</small>
-            )}
+          <div className="profile-badge">
+            <span>Perfil:</span>
+            Médico Veterinário
           </div>
-          <div className="profile-badge"><span>Perfil:</span>Médico Veterinário</div>
           <button className="logout-button" onClick={onLogout}><span>↪</span> Sair</button>
         </section>
 

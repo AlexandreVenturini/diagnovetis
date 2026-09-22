@@ -11,7 +11,7 @@ function readRole(role: unknown): UserRole | null {
   return role === 'veterinarian' || role === 'attendant' ? role : null
 }
 
-type AuthUser = { email: string; name: string }
+type AuthUser = { email: string; name: string; isAdmin: boolean }
 
 function App() {
   const [role, setRole] = useState<UserRole | null>(null)
@@ -22,7 +22,7 @@ function App() {
   function applySession(sessionUser: { email?: string; user_metadata?: Record<string, unknown> } | null | undefined) {
     const meta = sessionUser?.user_metadata ?? {}
     setRole(readRole(meta.role))
-    setUser(sessionUser ? { email: sessionUser.email ?? '', name: String(meta.name ?? '') } : null)
+    setUser(sessionUser ? { email: sessionUser.email ?? '', name: String(meta.name ?? ''), isAdmin: meta.is_admin === true } : null)
   }
 
   useEffect(() => {

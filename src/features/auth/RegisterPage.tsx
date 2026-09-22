@@ -131,7 +131,7 @@ export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
                     transition: 'all 0.15s',
                   }}
                 >
-                  {r === 'veterinarian' ? '🩺 Veterinário(a)' : '🗂️ Atendente'}
+                  {r === 'veterinarian' ? '🩺 Veterinário(a)' : '📚 Estudante'}
                 </button>
               )
             })}
