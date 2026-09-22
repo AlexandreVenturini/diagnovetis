@@ -231,7 +231,6 @@ describe('MedicamentoReceitado model', () => {
     })
 })
 
-// Integração entre a solicitação, a consulta e o acompanhamento posterior.
 describe('Exames complementares no atendimento', () => {
     it('salva solicitações sem resultado e preserva o vínculo com a consulta', async () => {
         const { newExam } = await import('../features/consultations/examTypes')
