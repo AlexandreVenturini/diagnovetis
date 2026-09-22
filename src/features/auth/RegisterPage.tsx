@@ -55,13 +55,11 @@ export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
       return
     }
 
-    // Se o e-mail não precisa de confirmação, já teremos sessão
     if (data.session) {
       onRegistered(role)
       return
     }
 
-    // Caso precise confirmar o e-mail
     setSuccess(true)
   }
 

@@ -1,7 +1,6 @@
 export function parseDogAge(age: string) {
   const value = age.trim()
   if (!value) return { years: '', months: '' }
-  // Cadastros antigos guardavam apenas o número de anos.
   if (/^\d+$/.test(value)) return { years: value, months: '0' }
   const years = value.match(/(\d+)\s*anos?/i)?.[1]
   const months = value.match(/(\d+)\s*m(?:ês|eses)/i)?.[1]

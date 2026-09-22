@@ -27,7 +27,6 @@ export class ExameService {
         return (await Promise.all((data ?? []).map(row => this.listarPorConsulta(row.id)))).flat()
     }
     async atualizarResultado(exam: Exame, draft: ExamDraft): Promise<Exame> {
-        // Nome, categoria, solicitação e consulta de origem não são alterados nesta operação.
         const updated = draftToExam({ ...draft, nome: exam.nomeExame, categoria: exam.categoria,
             dataSolicitacao: `${exam.dataSolicitacao.getFullYear()}-${String(exam.dataSolicitacao.getMonth() + 1).padStart(2, '0')}-${String(exam.dataSolicitacao.getDate()).padStart(2, '0')}` })
         const { data, error } = await supabase.from('exames').update({
