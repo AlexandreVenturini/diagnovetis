@@ -17,9 +17,10 @@ import type { Dog, DogFormData, DogScreen } from '../dogs/dogTypes'
 
 type VeterinarianDashboardProps = {
   onLogout: () => void
+  user: { email: string; name: string } | null
 }
 
-export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) {
+export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardProps) {
   const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
   const [activeModule, setActiveModule] = useState('dashboard')
   const [recordPetId, setRecordPetId] = useState<number | undefined>()
@@ -71,7 +72,7 @@ export function VeterinarianDashboard({ onLogout }: VeterinarianDashboardProps) 
       <AppHeader />
       <main className="shell-width dashboard-content">
         <section className="user-row">
-          <div><p>Veterinário(a) logado:</p><strong>veterinario@ifes.edu.br</strong></div>
+          <div><p>Veterinário(a) logado:</p><strong>{user?.name || user?.email || '—'}</strong>{user?.name && <small style={{ display: 'block', opacity: 0.7, fontWeight: 400 }}>{user.email}</small>}</div>
           <div className="profile-badge"><span>Perfil:</span>Médico Veterinário</div>
           <button className="logout-button" onClick={onLogout}><span>↪</span> Sair</button>
         </section>

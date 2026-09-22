@@ -11,23 +11,32 @@ function readRole(role: unknown): UserRole | null {
   return role === 'veterinarian' || role === 'attendant' ? role : null
 }
 
+type AuthUser = { email: string; name: string }
+
 function App() {
   const [role, setRole] = useState<UserRole | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
   const [registering, setRegistering] = useState(false)
+
+  function applySession(sessionUser: { email?: string; user_metadata?: Record<string, unknown> } | null | undefined) {
+    const meta = sessionUser?.user_metadata ?? {}
+    setRole(readRole(meta.role))
+    setUser(sessionUser ? { email: sessionUser.email ?? '', name: String(meta.name ?? '') } : null)
+  }
 
   useEffect(() => {
     let active = true
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
-      setRole(readRole(data.session?.user.user_metadata.role))
+      applySession(data.session?.user)
       setCheckingSession(false)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return
-      setRole(readRole(session?.user.user_metadata.role))
+      applySession(session?.user)
       setCheckingSession(false)
     })
 
@@ -46,11 +55,11 @@ function App() {
   }
 
   if (role === 'veterinarian') {
-    return <VeterinarianDashboard onLogout={logout} />
+    return <VeterinarianDashboard onLogout={logout} user={user} />
   }
 
   if (role === 'attendant') {
-    return <AttendantDashboard onLogout={logout} />
+    return <AttendantDashboard onLogout={logout} user={user} />
   }
 
   if (registering) {
