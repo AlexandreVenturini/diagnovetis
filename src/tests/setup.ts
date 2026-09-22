@@ -1,6 +1,5 @@
 import { beforeEach, vi } from 'vitest'
 
-// ── Mock do localStorage ────────────────────────────────────────────────────
 const store: Record<string, string> = {}
 
 const localStorageMock = {
@@ -14,7 +13,6 @@ const localStorageMock = {
 
 Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock, writable: true })
 
-// ── Mock em memória do Supabase ─────────────────────────────────────────────
 const supabaseTables: Record<string, Record<string, unknown>[]> = {}
 let _autoId = 1000
 
@@ -30,9 +28,7 @@ function clearAllTables() {
 
 type Row = Record<string, unknown>
 
-/** Resolve joins — suporta "tabela(*)" e "tabela!fk_col(*)" */
 function resolveJoins(_table: string, cols: string, rows: Row[]): Row[] {
-    // match all join specs: "word!word(*)" ou "word(*)"
     const pattern = /(\w+)(?:!(\w+))?\(\*\)/g
     let match: RegExpExecArray | null
     let result = rows
@@ -95,7 +91,6 @@ export const supabaseMock = {
                     return row
                 })
 
-                // Suporte a .insert().select().single()
                 const afterInsert = {
                     select(_cols = '*') {
                         let isSingle = false
@@ -146,12 +141,7 @@ vi.mock('../services/storage/supabaseClient', () => ({
     supabase: supabaseMock,
 }))
 
-// ── Limpeza entre testes ────────────────────────────────────────────────────
 beforeEach(async () => {
-    // Limpa o localStorage mock
     localStorageMock.clear()
-
-    // Limpa o banco em memória do Supabase
     clearAllTables()
-
 })
