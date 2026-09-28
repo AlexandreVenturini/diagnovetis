@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { LoginPage } from './features/auth/LoginPage'
 import type { UserRole } from './features/auth/LoginPage'
 import { RegisterPage } from './features/auth/RegisterPage'
+import { checkAccess } from './features/auth/profile'
 import { VeterinarianDashboard } from './features/veterinarian/VeterinarianDashboard'
 import { AttendantDashboard } from './features/attendant/AttendantDashboard'
 import { supabase } from './services/storage/supabaseClient'
 import './App.css'
-
-function readRole(role: unknown): UserRole | null {
-  return role === 'veterinarian' || role === 'attendant' ? role : null
-}
 
 type AuthUser = { email: string; name: string; isAdmin: boolean }
 
@@ -18,26 +16,48 @@ function App() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
   const [registering, setRegistering] = useState(false)
+  const [notice, setNotice] = useState('')
+  const requestId = useRef(0)
 
-  function applySession(sessionUser: { email?: string; user_metadata?: Record<string, unknown> } | null | undefined) {
-    const meta = sessionUser?.user_metadata ?? {}
-    setRole(readRole(meta.role))
-    setUser(sessionUser ? { email: sessionUser.email ?? '', name: String(meta.name ?? ''), isAdmin: meta.is_admin === true } : null)
+  async function applySession(sessionUser: User | null | undefined) {
+    const current = ++requestId.current
+
+    if (!sessionUser) {
+      setRole(null)
+      setUser(null)
+      setCheckingSession(false)
+      return
+    }
+
+    const access = await checkAccess(sessionUser.id)
+    if (current !== requestId.current) return
+
+    if (!access.ok) {
+      setRole(null)
+      setUser(null)
+      setNotice(access.message)
+      setCheckingSession(false)
+      await supabase.auth.signOut()
+      return
+    }
+
+    setNotice('')
+    setRegistering(false)
+    setRole(access.role)
+    setUser({ email: access.profile.email, name: access.profile.name, isAdmin: access.profile.is_admin })
+    setCheckingSession(false)
   }
 
   useEffect(() => {
     let active = true
 
     supabase.auth.getSession().then(({ data }) => {
-      if (!active) return
-      applySession(data.session?.user)
-      setCheckingSession(false)
+      if (active) void applySession(data.session?.user)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return
-      applySession(session?.user)
-      setCheckingSession(false)
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') return
+      setTimeout(() => { if (active) void applySession(session?.user) }, 0)
     })
 
     return () => {
@@ -63,15 +83,16 @@ function App() {
   }
 
   if (registering) {
-    return (
-      <RegisterPage
-        onBack={() => setRegistering(false)}
-        onRegistered={(r) => { setRegistering(false); setRole(r) }}
-      />
-    )
+    return <RegisterPage onBack={() => setRegistering(false)} />
   }
 
-  return <LoginPage onLogin={setRole} onRegister={() => setRegistering(true)} />
+  return (
+    <LoginPage
+      notice={notice}
+      onDismissNotice={() => setNotice('')}
+      onRegister={() => { setNotice(''); setRegistering(true) }}
+    />
+  )
 }
 
 export default App

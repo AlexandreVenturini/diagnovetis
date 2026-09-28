@@ -1,23 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../services/storage/supabaseClient'
-
-type PendingUser = {
-  id: string
-  email: string
-  name: string
-  role: string
-  crmv?: string
-  createdAt: string
-}
-
-type ActiveUser = {
-  id: string
-  email: string
-  name: string
-  role: string
-  isAdmin: boolean
-  suspended: boolean
-}
+import type { Profile } from '../auth/profile'
 
 type AdminPanelProps = {
   onClose: () => void
@@ -36,8 +19,8 @@ function Avatar({ name }: { name: string }) {
   )
 }
 
-function RoleBadge({ role }: { role: string }) {
-  const label = role === 'veterinarian' ? 'Veterinário' : role === 'attendant' ? 'Estudante' : role
+function RoleBadge({ role }: { role: string | null }) {
+  const label = role === 'veterinarian' ? 'Veterinário' : role === 'attendant' ? 'Estudante' : 'Sem perfil'
   const color = role === 'veterinarian' ? '#166534' : '#854d0e'
   const bg = role === 'veterinarian' ? '#dcfce7' : '#fef9c3'
   return (
@@ -58,82 +41,74 @@ function StatusBadge({ suspended }: { suspended: boolean }) {
   )
 }
 
+function EmailBadge({ confirmed }: { confirmed: boolean }) {
+  return (
+    <span style={{
+      fontSize: '0.72rem', fontWeight: 600, padding: '0.2rem 0.55rem', borderRadius: '999px',
+      background: confirmed ? '#dcfce7' : '#f3f4f6', color: confirmed ? '#166534' : '#6b7280',
+    }}>
+      {confirmed ? 'E-mail confirmado' : 'E-mail não confirmado'}
+    </span>
+  )
+}
+
 export function AdminPanel({ onClose }: AdminPanelProps) {
   const [tab, setTab] = useState<'pending' | 'users'>('pending')
-  const [pending, setPending] = useState<PendingUser[]>([])
-  const [users, setUsers] = useState<ActiveUser[]>([])
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+
+  const pending = profiles.filter(p => p.status === 'pendente')
+  const users = profiles.filter(p => p.status !== 'pendente')
 
   useEffect(() => { void loadData() }, [])
 
   async function loadData() {
     setLoading(true)
     setMessage('')
-    const { data, error } = await supabase.auth.admin.listUsers()
-    if (error || !data) {
-      setPending([])
-      setUsers([])
-      setLoading(false)
-      return
-    }
-    const all = data.users
-    setPending(all
-      .filter(u => !u.email_confirmed_at && u.user_metadata?.role)
-      .map(u => ({
-        id: u.id, email: u.email ?? '',
-        name: String(u.user_metadata?.name ?? ''),
-        role: String(u.user_metadata?.role ?? ''),
-        crmv: u.user_metadata?.crmv as string | undefined,
-        createdAt: u.created_at,
-      }))
-    )
-    setUsers(all
-      .filter(u => u.email_confirmed_at)
-      .map(u => ({
-        id: u.id, email: u.email ?? '',
-        name: String(u.user_metadata?.name ?? ''),
-        role: String(u.user_metadata?.role ?? ''),
-        isAdmin: u.user_metadata?.is_admin === true,
-        suspended: u.banned_until != null,
-      }))
-    )
+    const [{ data: auth }, { data, error }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }).returns<Profile[]>(),
+    ])
+    setCurrentUserId(auth.user?.id ?? null)
+    if (error) setMessage('Erro ao carregar usuários: ' + error.message)
+    setProfiles(data ?? [])
     setLoading(false)
   }
 
-  async function approveUser(userId: string) {
-    const { error } = await supabase.auth.admin.updateUserById(userId, { email_confirm: true })
-    if (error) { setMessage('Erro ao aprovar: ' + error.message); return }
+  async function updateProfile(userId: string, changes: Partial<Pick<Profile, 'status' | 'is_admin'>>, errorLabel: string) {
+    const { error } = await supabase.from('profiles').update(changes).eq('id', userId)
+    if (error) { setMessage(errorLabel + ': ' + error.message); return }
     await loadData()
   }
 
-  async function rejectUser(userId: string) {
-    const { error } = await supabase.auth.admin.deleteUser(userId)
-    if (error) { setMessage('Erro ao rejeitar: ' + error.message); return }
+  async function deleteUser(userId: string, errorLabel: string) {
+    const { error } = await supabase.rpc('admin_remover_usuario', { p_user_id: userId })
+    if (error) { setMessage(errorLabel + ': ' + error.message); return }
     await loadData()
   }
 
-  async function toggleAdmin(userId: string, currentIsAdmin: boolean) {
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
-      user_metadata: { is_admin: !currentIsAdmin },
-    })
-    if (error) { setMessage('Erro ao atualizar admin: ' + error.message); return }
-    await loadData()
+  function approveUser(userId: string) {
+    return updateProfile(userId, { status: 'aprovado' }, 'Erro ao aprovar')
   }
 
-  async function toggleSuspend(userId: string, suspended: boolean) {
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
-      ban_duration: suspended ? 'none' : '876000h',
-    })
-    if (error) { setMessage('Erro ao suspender: ' + error.message); return }
-    await loadData()
+  function rejectUser(userId: string) {
+    if (!window.confirm('Rejeitar este cadastro? A conta será excluída.')) return
+    return deleteUser(userId, 'Erro ao rejeitar')
   }
 
-  async function removeUser(userId: string) {
+  function toggleAdmin(userId: string, currentIsAdmin: boolean) {
+    return updateProfile(userId, { is_admin: !currentIsAdmin }, 'Erro ao atualizar admin')
+  }
+
+  function toggleSuspend(userId: string, suspended: boolean) {
+    return updateProfile(userId, { status: suspended ? 'aprovado' : 'suspenso' }, 'Erro ao suspender')
+  }
+
+  function removeUser(userId: string) {
     if (!window.confirm('Tem certeza que deseja remover este usuário permanentemente?')) return
-    const { error } = await supabase.auth.admin.deleteUser(userId)
-    if (error) { setMessage('Erro ao remover: ' + error.message); return }
-    await loadData()
+    return deleteUser(userId, 'Erro ao remover')
   }
 
   return (
@@ -167,7 +142,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           const active = tab === t
           const label = t === 'pending'
             ? `Pendentes${pending.length > 0 ? ` (${pending.length})` : ''}`
-            : 'Usuários ativos'
+            : 'Usuários'
           return (
             <button
               key={t}
@@ -228,6 +203,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>{u.name || '—'}</span>
                     <RoleBadge role={u.role} />
+                    <EmailBadge confirmed={u.email_confirmado} />
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: '#6b7280' }}>{u.email}</p>
                   {u.crmv && <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#9ca3af' }}>CRMV: {u.crmv}</p>}
@@ -259,7 +235,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
       ) : (
         users.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
-            <p>Nenhum usuário ativo.</p>
+            <p>Nenhum usuário cadastrado.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -268,43 +244,46 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 display: 'flex', alignItems: 'center', gap: '1rem',
                 background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: '12px',
                 padding: '1rem 1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                opacity: u.suspended ? 0.6 : 1,
+                opacity: u.status === 'suspenso' ? 0.6 : 1,
               }}>
                 <Avatar name={u.name} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111827' }}>{u.name || '—'}</span>
                     <RoleBadge role={u.role} />
-                    {u.isAdmin && (
+                    {u.is_admin && (
                       <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: '999px', background: '#e0e7ff', color: '#3730a3' }}>
                         Admin
                       </span>
                     )}
-                    <StatusBadge suspended={u.suspended} />
+                    <StatusBadge suspended={u.status === 'suspenso'} />
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: '#6b7280' }}>{u.email}</p>
                 </div>
+                {u.id === currentUserId ? (
+                  <span style={{ fontSize: '0.78rem', color: '#9ca3af', flexShrink: 0 }}>Você</span>
+                ) : (
                 <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   <button
-                    onClick={() => toggleAdmin(u.id, u.isAdmin)}
+                    onClick={() => toggleAdmin(u.id, u.is_admin)}
                     style={{
                       padding: '0.35rem 0.8rem', background: '#f3f4f6', color: '#374151',
                       border: '1.5px solid #d1d5db', borderRadius: '7px', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem',
                     }}
                   >
-                    {u.isAdmin ? 'Remover admin' : 'Tornar admin'}
+                    {u.is_admin ? 'Remover admin' : 'Tornar admin'}
                   </button>
                   <button
-                    onClick={() => toggleSuspend(u.id, u.suspended)}
+                    onClick={() => toggleSuspend(u.id, u.status === 'suspenso')}
                     style={{
                       padding: '0.35rem 0.8rem',
-                      background: u.suspended ? '#dcfce7' : '#fef9c3',
-                      color: u.suspended ? '#166534' : '#854d0e',
-                      border: `1.5px solid ${u.suspended ? '#86efac' : '#fde68a'}`,
+                      background: u.status === 'suspenso' ? '#dcfce7' : '#fef9c3',
+                      color: u.status === 'suspenso' ? '#166534' : '#854d0e',
+                      border: `1.5px solid ${u.status === 'suspenso' ? '#86efac' : '#fde68a'}`,
                       borderRadius: '7px', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem',
                     }}
                   >
-                    {u.suspended ? 'Reativar' : 'Suspender'}
+                    {u.status === 'suspenso' ? 'Reativar' : 'Suspender'}
                   </button>
                   <button
                     onClick={() => removeUser(u.id)}
@@ -316,6 +295,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     Remover
                   </button>
                 </div>
+                )}
               </div>
             ))}
           </div>

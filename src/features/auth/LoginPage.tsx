@@ -7,11 +7,20 @@ import { isSupabaseConfigured, supabase } from '../../services/storage/supabaseC
 export type UserRole = 'veterinarian' | 'attendant'
 
 type LoginPageProps = {
-  onLogin: (role: UserRole) => void
+  notice: string
+  onDismissNotice: () => void
   onRegister: () => void
 }
 
-export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
+function translateAuthError(code: string | undefined, fallback: string) {
+  if (code === 'email_not_confirmed') {
+    return 'Seu e-mail ainda não foi confirmado. Acesse o link que enviamos (verifique também a caixa de spam).'
+  }
+  if (code === 'invalid_credentials') return 'E-mail ou senha incorretos.'
+  return fallback
+}
+
+export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -20,36 +29,21 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('')
+    onDismissNotice()
     if (!isSupabaseConfigured) {
       setMessage('Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ou VITE_SUPABASE_KEY) no arquivo .env.local e reinicie o servidor local.')
       return
     }
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       })
 
       if (error) {
-        setMessage(error.message)
-        return
+        setMessage(translateAuthError(error.code, error.message))
       }
-
-      if (!data.user.email_confirmed_at) {
-        await supabase.auth.signOut()
-        setMessage('Seu cadastro ainda não foi aprovado. Aguarde a liberação de um administrador.')
-        return
-      }
-
-      const role = data.user.user_metadata.role
-      if (role !== 'veterinarian' && role !== 'attendant') {
-        await supabase.auth.signOut()
-        setMessage('O usuário não possui um perfil de acesso válido.')
-        return
-      }
-
-      onLogin(role)
     } catch {
       setMessage('Não foi possível conectar ao serviço de login. Verifique sua conexão e tente novamente.')
     } finally {
@@ -80,7 +74,7 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
             <input id="password" type="password" autoComplete="current-password" placeholder="Digite sua senha" value={password} onChange={(event) => setPassword(event.target.value)} required />
           </div>
 
-          {message && <p className="form-message error" role="status">{message}</p>}
+          {(message || notice) && <p className="form-message error" role="status">{message || notice}</p>}
           <button className="submit-button" type="submit" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
         </form>
 

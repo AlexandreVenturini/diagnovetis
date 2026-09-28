@@ -7,10 +7,9 @@ import type { UserRole } from './LoginPage'
 
 type RegisterPageProps = {
   onBack: () => void
-  onRegistered: (role: UserRole) => void
 }
 
-export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
+export function RegisterPage({ onBack }: RegisterPageProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -44,6 +43,7 @@ export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
       email: email.trim(),
       password,
       options: {
+        emailRedirectTo: window.location.origin,
         data: { role, name: name.trim(), crmv: role === 'veterinarian' ? crmv.trim() : undefined },
       },
     })
@@ -70,8 +70,7 @@ export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
     }
 
     if (data.session) {
-      onRegistered(role)
-      return
+      await supabase.auth.signOut()
     }
 
     setSuccess(true)
@@ -87,9 +86,15 @@ export function RegisterPage({ onBack, onRegistered }: RegisterPageProps) {
             <p className="brand-subtitle">Cadastro realizado!</p>
           </header>
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <p style={{ marginBottom: '1rem' }}>
-              Um e-mail de confirmação foi enviado para <strong>{email}</strong>.<br />
-              Acesse o link no e-mail para ativar sua conta.
+            <p style={{ marginBottom: '0.75rem' }}>
+              Enviamos um e-mail de confirmação para <strong>{email}</strong>.<br />
+              Acesse o link no e-mail para confirmar seu endereço.
+            </p>
+            <p style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+              Não encontrou? Verifique também a caixa de spam ou lixo eletrônico.
+            </p>
+            <p style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>
+              Depois da confirmação, seu cadastro ainda precisa ser aprovado por um administrador para liberar o acesso.
             </p>
             <button className="submit-button" onClick={onBack}>Voltar para o login</button>
           </div>
