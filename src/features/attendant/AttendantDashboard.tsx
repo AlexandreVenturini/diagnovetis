@@ -6,6 +6,7 @@ import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import type { Appointment } from '../appointments/appointmentTypes'
 import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
 import { RecordsModule } from '../records/RecordsModule'
+import { PrescriptionsModule } from '../prescriptions/PrescriptionsModule'
 import { DogDetails } from '../dogs/DogDetails'
 import { DogForm } from '../dogs/DogForm'
 import { DogList } from '../dogs/DogList'
@@ -18,7 +19,7 @@ type AttendantDashboardProps = {
   user: { email: string; name: string; isAdmin: boolean } | null
 }
 
-type AttendantModule = 'dashboard' | 'dogs' | 'appointments' | 'consultations' | 'records'
+type AttendantModule = 'dashboard' | 'dogs' | 'appointments' | 'consultations' | 'prescriptions' | 'records'
 
 type AppointmentEntry = { screen: 'list' | 'create'; key: number }
 
@@ -44,6 +45,11 @@ const NAV_ITEMS: { id: AttendantModule; label: string; icon: React.ReactNode }[]
     icon: <Icon><path d="M9 3h6v4H9zM5 5h4m6 0h4v16H5V5" /><path d="M12 11v6m-3-3h6" /></Icon>,
   },
   {
+    id: 'prescriptions',
+    label: 'Receituário',
+    icon: <Icon><path d="M7 3h7l4 4v14H7zM14 3v4h4" /><path d="M10 11h5m-5 4h3" /></Icon>,
+  },
+  {
     id: 'records',
     label: 'Prontuários',
     icon: <Icon><path d="M6 3h8l4 4v14H6zM14 3v5h5M9 12h6m-6 4h6" /></Icon>,
@@ -59,6 +65,7 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
   const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
   const [careKey, setCareKey] = useState(0)
   const [recordsKey, setRecordsKey] = useState(0)
+  const [recordPetId, setRecordPetId] = useState<number | undefined>()
 
   const { dogs, createDog, createTutor, updateDog, removeDog } = useDogs()
 
@@ -68,9 +75,15 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
       setCareKey((prev) => prev + 1)
     }
     setActiveModule(module)
-    if (module === 'records') setRecordsKey((prev) => prev + 1)
+    if (module === 'records') { setRecordPetId(undefined); setRecordsKey((prev) => prev + 1) }
     if (module === 'dogs') setScreen('list')
     if (module === 'appointments') setAppointmentEntry((prev) => ({ screen: 'list', key: prev.key + 1 }))
+  }
+
+  function openRecord(petId: number) {
+    setRecordPetId(petId)
+    setRecordsKey((prev) => prev + 1)
+    setActiveModule('records')
   }
 
   function startCare(appointment: Appointment) {
@@ -148,13 +161,13 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
               {icon}{label}
             </button>
           ))}
-          <span>Cadastro, agenda, atendimento supervisionado e prontuários</span>
+          <span>Cadastro, agenda, atendimento, receitas e prontuários</span>
         </nav>
 
         {activeModule !== 'dashboard' && (
           <aside className="attendant-notice">
             <span>▣</span>
-            <p><strong>Perfil Estudante:</strong> Você tem acesso ao cadastro de pets, agendamentos, atendimentos e prontuários; atendimentos e correções precisam da liberação de um professor</p>
+            <p><strong>Perfil Estudante:</strong> Você tem acesso ao cadastro de pets, agendamentos, atendimentos, receitas e prontuários; atendimentos, receitas e correções precisam da aprovação de um professor</p>
           </aside>
         )}
 
@@ -198,7 +211,9 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
           <ClinicalCareModule key={careKey} dogs={dogs} initialAppointment={careAppointment} role="attendant" userEmail={user?.email} />
         )}
 
-        {activeModule === 'records' && <RecordsModule key={recordsKey} role="attendant" />}
+        {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={openRecord} role="attendant" />}
+
+        {activeModule === 'records' && <RecordsModule key={recordsKey} initialPetId={recordPetId} role="attendant" />}
       </main>
     </div>
   )

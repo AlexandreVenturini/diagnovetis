@@ -23,6 +23,12 @@ export class PrescriptionService {
     ].sort((a, b) => b.snapshot.issuedAt.localeCompare(a.snapshot.issuedAt))
   }
 
+  async get(id: string): Promise<IssuedPrescription> {
+    const { data, error } = await supabase.from('prescricoes').select('*').eq('id', id).single()
+    if (error || !data) throw new Error('Não foi possível carregar a receita emitida.')
+    return { id: data.id as string, petId: data.pet_id as number, snapshot: data.snapshot as PrescricaoSalva }
+  }
+
   async issue(id: string, petId: number, veterinarianId: number, snapshot: PrescricaoSalva): Promise<IssuedPrescription> {
     const error = validatePrescription(snapshot.patient, snapshot.prescription)
     if (error) throw new Error(error)

@@ -3,20 +3,25 @@ import {
   LIBERACAO_EXPIRA_MS, buscarStatusLiberacao, cancelarLiberacao, liberarAtendimento,
   listarEstudantes, listarVeterinarios, observarLiberacoes, solicitarLiberacao,
 } from './supervision'
-import type { Liberacao, StudentOption, VeterinarianOption } from './supervision'
+import type { Liberacao, ReceitaParaAprovar, StudentOption, VeterinarianOption } from './supervision'
 
 type SupervisionGateProps = {
   onLiberado: (liberacao: Liberacao) => void
   consultaId?: number
+  receita?: ReceitaParaAprovar
   onCancel?: () => void
+  onRecusado?: (mensagem: string) => void
 }
 
 type PedidoAguardando = { id: string; supervisor: VeterinarianOption; participantes: StudentOption[]; enviadoEm: number }
 
 const optionCardStyle = { border: '1px solid #e5e7eb', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' }
 
-export function SupervisionGate({ onLiberado, consultaId, onCancel }: SupervisionGateProps) {
+export function SupervisionGate({ onLiberado, consultaId, receita, onCancel, onRecusado }: SupervisionGateProps) {
   const retificacao = consultaId !== undefined
+  const paraReceita = receita !== undefined
+  const semParticipantes = retificacao || paraReceita
+  const alvo = paraReceita ? 'a receita' : retificacao ? 'a retificação' : 'o atendimento'
   const [veterinarians, setVeterinarians] = useState<VeterinarianOption[]>([])
   const [students, setStudents] = useState<StudentOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,8 +33,12 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
   const [message, setMessage] = useState('')
   const [aguardando, setAguardando] = useState<PedidoAguardando | null>(null)
   const onLiberadoRef = useRef(onLiberado)
+  const onRecusadoRef = useRef(onRecusado)
 
-  useEffect(() => { onLiberadoRef.current = onLiberado }, [onLiberado])
+  useEffect(() => {
+    onLiberadoRef.current = onLiberado
+    onRecusadoRef.current = onRecusado
+  }, [onLiberado, onRecusado])
 
   useEffect(() => {
     let active = true
@@ -57,14 +66,17 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
         setMessage('O pedido expirou sem resposta. Envie um novo pedido ou use a senha do professor.')
         return
       }
-      const status = await buscarStatusLiberacao(pedido.id).catch(() => null)
-      if (!active) return
-      if (status === 'aberta') {
+      const situacao = await buscarStatusLiberacao(pedido.id).catch(() => null)
+      if (!active || !situacao) return
+      const aprovadoReceita = paraReceita && situacao.status === 'finalizada' && situacao.prescricaoId
+      if (situacao.status === 'aberta' || aprovadoReceita) {
         onLiberadoRef.current({ id: pedido.id, supervisor: pedido.supervisor, participantes: pedido.participantes })
-      } else if (status === 'recusada') {
+      } else if (situacao.status === 'recusada') {
+        const mensagem = `${pedido.supervisor.nome} recusou ${paraReceita ? 'a receita' : 'o pedido'}${situacao.motivoRecusa ? `: ${situacao.motivoRecusa}` : '.'}`
         setAguardando(null)
-        setMessage(`${pedido.supervisor.nome} recusou o pedido de liberação.`)
-      } else if (status === 'cancelada' || status === 'finalizada') {
+        if (onRecusadoRef.current) onRecusadoRef.current(mensagem)
+        else setMessage(mensagem)
+      } else if (situacao.status === 'cancelada' || situacao.status === 'finalizada') {
         setAguardando(null)
       }
     }
@@ -74,7 +86,7 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
       active = false
       stop()
     }
-  }, [aguardando])
+  }, [aguardando, paraReceita])
 
   const filteredStudents = useMemo(() => {
     const query = studentQuery.trim().toLocaleLowerCase('pt-BR')
@@ -95,14 +107,14 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
     setSending(true)
     setMessage('')
     try {
-      const id = await liberarAtendimento(supervisor.profileId, password, retificacao ? [] : participants, consultaId ?? null)
+      const id = await liberarAtendimento(supervisor.profileId, password, semParticipantes ? [] : participants, consultaId ?? null, receita ?? null)
       setPassword('')
       if (!id) { setMessage('Senha incorreta. Peça ao professor para digitar novamente.'); return }
       onLiberado({ id, supervisor, participantes: selectedStudents })
     } catch (error) {
       setPassword('')
       const text = (error as Error).message
-      setMessage(text.includes('tentativas') ? text : 'Não foi possível liberar o atendimento. Tente novamente.')
+      setMessage(text.includes('tentativas') ? text : `Não foi possível liberar ${alvo}. Tente novamente.`)
     } finally {
       setSending(false)
     }
@@ -114,7 +126,7 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
     setSending(true)
     setMessage('')
     try {
-      const id = await solicitarLiberacao(supervisor.profileId, retificacao ? [] : participants, consultaId ?? null)
+      const id = await solicitarLiberacao(supervisor.profileId, semParticipantes ? [] : participants, consultaId ?? null, receita ?? null)
       setAguardando({ id, supervisor, participantes: selectedStudents, enviadoEm: Date.now() })
     } catch {
       setMessage('Não foi possível enviar o pedido ao professor. Tente novamente.')
@@ -134,10 +146,10 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
   if (aguardando) {
     return (
       <section className="consultation-panel content-card">
-        <h2>{retificacao ? 'Aguardando aprovação da retificação' : 'Aguardando aprovação'}</h2>
+        <h2>{paraReceita ? 'Aguardando aprovação da receita' : retificacao ? 'Aguardando aprovação da retificação' : 'Aguardando aprovação'}</h2>
         <p>O pedido foi enviado para <strong>{aguardando.supervisor.nome}</strong>. Ele aparece no sino no topo da tela do professor, que pode aprovar pelo celular ou computador.</p>
         {aguardando.participantes.length > 0 && <p>Participantes: {aguardando.participantes.map((p) => p.nome).join(', ')}</p>}
-        <p style={{ color: '#6b7280' }}>Esta tela abre {retificacao ? 'a retificação' : 'o atendimento'} sozinha assim que o professor aprovar. O pedido expira em 30 minutos.</p>
+        <p style={{ color: '#6b7280' }}>Esta tela {paraReceita ? 'emite a receita' : `abre ${alvo}`} sozinha assim que o professor aprovar. O pedido expira em 30 minutos.</p>
         <div className="consultation-next">
           <button className="secondary-button" onClick={() => void cancelarPedido()}>Cancelar pedido</button>
         </div>
@@ -147,8 +159,10 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
 
   return (
     <section className="consultation-panel content-card">
-      <h2>{retificacao ? `Liberação da retificação do atendimento nº ${consultaId}` : 'Liberação do atendimento'}</h2>
-      <p>{retificacao
+      <h2>{paraReceita ? 'Aprovação da receita' : retificacao ? `Liberação da retificação do atendimento nº ${consultaId}` : 'Liberação do atendimento'}</h2>
+      <p>{paraReceita
+        ? 'Receitas montadas por estudantes só são emitidas com a aprovação de um médico-veterinário. A receita sai no nome e com o CRMV de quem aprovar.'
+        : retificacao
         ? 'Alterações feitas por estudantes em atendimentos finalizados precisam da autorização de um professor. Escolha o professor, que libera a retificação de uma das duas formas abaixo.'
         : 'Antes de começar, escolha o professor responsável pela supervisão e os colegas que vão participar. Depois, o professor libera o atendimento de uma das duas formas abaixo.'}</p>
 
@@ -161,7 +175,7 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
         </label>
       </div>
 
-      {!retificacao && <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.75rem 1rem', margin: '1rem 0' }} disabled={sending}>
+      {!semParticipantes && <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.75rem 1rem', margin: '1rem 0' }} disabled={sending}>
         <legend style={{ padding: '0 0.35rem', fontWeight: 600 }}>Alunos participantes ({participants.length})</legend>
         {students.length === 0 ? (
           <p style={{ margin: 0, color: '#6b7280' }}>Nenhum outro estudante cadastrado.</p>
@@ -200,13 +214,15 @@ export function SupervisionGate({ onLiberado, consultaId, onCancel }: Supervisio
             </label>
           </div>
           <button className="primary-button" onClick={() => void liberarComSenha()} disabled={sending}>
-            {sending ? 'Verificando...' : 'Liberar com senha'}
+            {sending ? 'Verificando...' : paraReceita ? 'Aprovar com senha' : 'Liberar com senha'}
           </button>
         </div>
 
         <div style={optionCardStyle}>
           <strong>Professor em outro lugar</strong>
-          <p style={{ margin: 0, color: '#4b5563' }}>Envia um pedido para a conta do professor. Ele aprova pelo sino no topo da tela, no celular ou computador, sem precisar digitar a senha aqui.</p>
+          <p style={{ margin: 0, color: '#4b5563' }}>{paraReceita
+            ? 'Envia a receita para a conta do professor. Ele revisa os medicamentos e aprova pelo sino no topo da tela, no celular ou computador.'
+            : 'Envia um pedido para a conta do professor. Ele aprova pelo sino no topo da tela, no celular ou computador, sem precisar digitar a senha aqui.'}</p>
           <button className="secondary-button" onClick={() => void enviarPedido()} disabled={sending} style={{ marginTop: 'auto' }}>
             Enviar pedido ao professor
           </button>
