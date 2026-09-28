@@ -36,6 +36,12 @@ export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
         return
       }
 
+      if (!data.user.email_confirmed_at) {
+        await supabase.auth.signOut()
+        setMessage('Seu cadastro ainda não foi aprovado. Aguarde a liberação de um administrador.')
+        return
+      }
+
       const role = data.user.user_metadata.role
       if (role !== 'veterinarian' && role !== 'attendant') {
         await supabase.auth.signOut()
