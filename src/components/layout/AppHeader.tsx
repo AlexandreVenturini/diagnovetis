@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react'
 import { BrandMark } from '../common/BrandMark'
 
 type AppHeaderProps = {
   isAdmin?: boolean
   onAdminClick?: () => void
+  actions?: ReactNode
 }
 
-export function AppHeader({ isAdmin, onAdminClick }: AppHeaderProps) {
+export function AppHeader({ isAdmin, onAdminClick, actions }: AppHeaderProps) {
   return (
     <header className="topbar" style={{ position: 'relative' }}>
       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', padding: '0 1.25rem', boxSizing: 'border-box' }}>
@@ -16,6 +18,8 @@ export function AppHeader({ isAdmin, onAdminClick }: AppHeaderProps) {
             <span>IFES Santa Teresa</span>
           </div>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {actions}
         {isAdmin && (
           <button
             onClick={onAdminClick}
@@ -39,6 +43,7 @@ export function AppHeader({ isAdmin, onAdminClick }: AppHeaderProps) {
             <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.05em' }}>ADM</span>
           </button>
         )}
+        </div>
       </div>
     </header>
   )

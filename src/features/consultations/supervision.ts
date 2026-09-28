@@ -29,3 +29,47 @@ export async function cancelarLiberacao(liberacaoId: string): Promise<void> {
   const { error } = await supabase.rpc('cancelar_liberacao', { p_liberacao: liberacaoId })
   if (error) throw new Error(error.message)
 }
+
+export type LiberacaoStatus = 'pendente' | 'aberta' | 'recusada' | 'finalizada' | 'cancelada'
+export type PedidoLiberacao = { id: string; alunoNome: string; alunoMatricula: string; participantes: string[]; criadaEm: string }
+
+type PedidoRow = { id: string; aluno_nome: string; aluno_matricula: string | null; participantes: string[] | null; criada_em: string }
+
+export const LIBERACAO_EXPIRA_MS = 30 * 60 * 1000
+
+export async function solicitarLiberacao(supervisorId: string, participantes: string[]): Promise<string> {
+  const { data, error } = await supabase.rpc('solicitar_liberacao', { p_supervisor: supervisorId, p_participantes: participantes })
+  if (error) throw new Error(error.message)
+  return data as string
+}
+
+export async function buscarStatusLiberacao(liberacaoId: string): Promise<LiberacaoStatus | null> {
+  const { data, error } = await supabase.from('liberacoes_atendimento').select('status').eq('id', liberacaoId).maybeSingle<{ status: LiberacaoStatus }>()
+  if (error) throw new Error(error.message)
+  return data?.status ?? null
+}
+
+export async function responderLiberacao(liberacaoId: string, aprovar: boolean): Promise<void> {
+  const { error } = await supabase.rpc('responder_liberacao', { p_liberacao: liberacaoId, p_aprovar: aprovar })
+  if (error) throw new Error(error.message)
+}
+
+export async function listarPedidosPendentes(): Promise<PedidoLiberacao[]> {
+  const { data, error } = await supabase.rpc('pedidos_liberacao_pendentes')
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as PedidoRow[]).map((row) => ({
+    id: row.id, alunoNome: row.aluno_nome, alunoMatricula: row.aluno_matricula ?? '', participantes: row.participantes ?? [], criadaEm: row.criada_em,
+  }))
+}
+
+export function observarLiberacoes(filter: string, onChange: () => void): () => void {
+  const channel = supabase
+    .channel(`liberacoes-${filter}-${Math.random().toString(36).slice(2)}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'liberacoes_atendimento', filter }, onChange)
+    .subscribe()
+  const interval = window.setInterval(onChange, 10000)
+  return () => {
+    window.clearInterval(interval)
+    void supabase.removeChannel(channel)
+  }
+}

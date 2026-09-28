@@ -5,6 +5,7 @@ import { AdminPanel } from '../admin/AdminPanel'
 import { MainNavigation } from '../../components/layout/MainNavigation'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
+import { SupervisionRequestsBell } from '../consultations/SupervisionRequestsBell'
 import { PrescriptionsModule } from '../prescriptions/PrescriptionsModule'
 import { RecordsModule } from '../records/RecordsModule'
 import { ZoonosesModule } from '../zoonoses/ZoonosesModule'
@@ -91,7 +92,7 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
   if (showAdmin) {
     return (
       <div className="app-shell">
-        <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
+        <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} actions={<SupervisionRequestsBell />} />
         <main className="shell-width dashboard-content">
           <AdminPanel onClose={() => setShowAdmin(false)} />
         </main>
@@ -101,7 +102,7 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
 
   return (
     <div className="app-shell">
-      <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
+      <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} actions={<SupervisionRequestsBell />} />
       <main className="shell-width dashboard-content">
         <section className="user-row">
           <div className="profile-badge">

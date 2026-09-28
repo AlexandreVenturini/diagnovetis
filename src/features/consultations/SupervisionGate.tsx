@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
-import { liberarAtendimento, listarEstudantes, listarVeterinarios } from './supervision'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  LIBERACAO_EXPIRA_MS, buscarStatusLiberacao, cancelarLiberacao, liberarAtendimento,
+  listarEstudantes, listarVeterinarios, observarLiberacoes, solicitarLiberacao,
+} from './supervision'
 import type { Liberacao, StudentOption, VeterinarianOption } from './supervision'
 
 type SupervisionGateProps = {
   onLiberado: (liberacao: Liberacao) => void
 }
+
+type PedidoAguardando = { id: string; supervisor: VeterinarianOption; participantes: StudentOption[]; enviadoEm: number }
+
+const optionCardStyle = { border: '1px solid #e5e7eb', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' }
 
 export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
   const [veterinarians, setVeterinarians] = useState<VeterinarianOption[]>([])
@@ -16,6 +23,10 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
   const [password, setPassword] = useState('')
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
+  const [aguardando, setAguardando] = useState<PedidoAguardando | null>(null)
+  const onLiberadoRef = useRef(onLiberado)
+
+  useEffect(() => { onLiberadoRef.current = onLiberado }, [onLiberado])
 
   useEffect(() => {
     let active = true
@@ -30,18 +41,52 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
     return () => { active = false }
   }, [])
 
+  useEffect(() => {
+    if (!aguardando) return
+    let active = true
+    const pedido = aguardando
+
+    async function verificar() {
+      if (Date.now() - pedido.enviadoEm > LIBERACAO_EXPIRA_MS) {
+        await cancelarLiberacao(pedido.id).catch(() => {})
+        if (!active) return
+        setAguardando(null)
+        setMessage('O pedido expirou sem resposta. Envie um novo pedido ou use a senha do professor.')
+        return
+      }
+      const status = await buscarStatusLiberacao(pedido.id).catch(() => null)
+      if (!active) return
+      if (status === 'aberta') {
+        onLiberadoRef.current({ id: pedido.id, supervisor: pedido.supervisor, participantes: pedido.participantes })
+      } else if (status === 'recusada') {
+        setAguardando(null)
+        setMessage(`${pedido.supervisor.nome} recusou o pedido de liberação.`)
+      } else if (status === 'cancelada' || status === 'finalizada') {
+        setAguardando(null)
+      }
+    }
+
+    const stop = observarLiberacoes(`id=eq.${pedido.id}`, () => { void verificar() })
+    return () => {
+      active = false
+      stop()
+    }
+  }, [aguardando])
+
   const filteredStudents = useMemo(() => {
     const query = studentQuery.trim().toLocaleLowerCase('pt-BR')
     return students.filter((student) => `${student.nome} ${student.matricula}`.toLocaleLowerCase('pt-BR').includes(query))
   }, [students, studentQuery])
 
+  const supervisor = veterinarians.find((vet) => vet.profileId === supervisorId)
+  const selectedStudents = students.filter((student) => participants.includes(student.profileId))
+
   function toggleParticipant(profileId: string) {
     setParticipants((current) => current.includes(profileId) ? current.filter((id) => id !== profileId) : [...current, profileId])
   }
 
-  async function submit() {
+  async function liberarComSenha() {
     if (sending) return
-    const supervisor = veterinarians.find((vet) => vet.profileId === supervisorId)
     if (!supervisor) { setMessage('Selecione o professor responsável pela supervisão.'); return }
     if (!password) { setMessage('O professor precisa digitar a senha para liberar o atendimento.'); return }
     setSending(true)
@@ -50,7 +95,7 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
       const id = await liberarAtendimento(supervisor.profileId, password, participants)
       setPassword('')
       if (!id) { setMessage('Senha incorreta. Peça ao professor para digitar novamente.'); return }
-      onLiberado({ id, supervisor, participantes: students.filter((student) => participants.includes(student.profileId)) })
+      onLiberado({ id, supervisor, participantes: selectedStudents })
     } catch (error) {
       setPassword('')
       const text = (error as Error).message
@@ -60,12 +105,47 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
     }
   }
 
+  async function enviarPedido() {
+    if (sending) return
+    if (!supervisor) { setMessage('Selecione o professor responsável pela supervisão.'); return }
+    setSending(true)
+    setMessage('')
+    try {
+      const id = await solicitarLiberacao(supervisor.profileId, participants)
+      setAguardando({ id, supervisor, participantes: selectedStudents, enviadoEm: Date.now() })
+    } catch {
+      setMessage('Não foi possível enviar o pedido ao professor. Tente novamente.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  async function cancelarPedido() {
+    if (!aguardando) return
+    await cancelarLiberacao(aguardando.id).catch(() => {})
+    setAguardando(null)
+  }
+
   if (loading) return <section className="consultation-panel content-card"><p>Carregando professores e estudantes...</p></section>
+
+  if (aguardando) {
+    return (
+      <section className="consultation-panel content-card">
+        <h2>Aguardando aprovação</h2>
+        <p>O pedido foi enviado para <strong>{aguardando.supervisor.nome}</strong>. Ele aparece no sino no topo da tela do professor, que pode aprovar pelo celular ou computador.</p>
+        {aguardando.participantes.length > 0 && <p>Participantes: {aguardando.participantes.map((p) => p.nome).join(', ')}</p>}
+        <p style={{ color: '#6b7280' }}>Esta tela abre o atendimento sozinha assim que o professor aprovar. O pedido expira em 30 minutos.</p>
+        <div className="consultation-next">
+          <button className="secondary-button" onClick={() => void cancelarPedido()}>Cancelar pedido</button>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="consultation-panel content-card">
       <h2>Liberação do atendimento</h2>
-      <p>Antes de começar, escolha o professor responsável pela supervisão e os colegas que vão participar. O professor digita a própria senha para liberar o atendimento.</p>
+      <p>Antes de começar, escolha o professor responsável pela supervisão e os colegas que vão participar. Depois, o professor libera o atendimento de uma das duas formas abaixo.</p>
 
       <div className="consultation-form-grid">
         <label>Professor supervisor *
@@ -96,27 +176,39 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
         )}
       </fieldset>
 
-      <div className="consultation-form-grid">
-        <label>Senha do professor *
-          <input
-            type="password"
-            name="supervisor-authorization"
-            autoComplete="off"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            onKeyDown={(event) => { if (event.key === 'Enter') void submit() }}
-            placeholder="Digitada pelo professor"
-            disabled={sending}
-          />
-        </label>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+        <div style={optionCardStyle}>
+          <strong>Professor presente</strong>
+          <div className="consultation-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+            <label>Senha do professor supervisor
+              <input
+                type="password"
+                name="supervisor-authorization"
+                autoComplete="off"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                onKeyDown={(event) => { if (event.key === 'Enter') void liberarComSenha() }}
+                placeholder="O professor digita a própria senha aqui"
+                disabled={sending}
+              />
+              <small style={{ fontWeight: 400, color: '#6b7280' }}>É a mesma senha que o professor usa para entrar no DiagnoVetis. Você continua logado na sua conta.</small>
+            </label>
+          </div>
+          <button className="primary-button" onClick={() => void liberarComSenha()} disabled={sending}>
+            {sending ? 'Verificando...' : 'Liberar com senha'}
+          </button>
+        </div>
+
+        <div style={optionCardStyle}>
+          <strong>Professor em outro lugar</strong>
+          <p style={{ margin: 0, color: '#4b5563' }}>Envia um pedido para a conta do professor. Ele aprova pelo sino no topo da tela, no celular ou computador, sem precisar digitar a senha aqui.</p>
+          <button className="secondary-button" onClick={() => void enviarPedido()} disabled={sending} style={{ marginTop: 'auto' }}>
+            Enviar pedido ao professor
+          </button>
+        </div>
       </div>
 
       {message && <p className="consultation-message" role="status">{message}</p>}
-      <div className="consultation-next">
-        <button className="primary-button" onClick={() => void submit()} disabled={sending || !supervisorId || !password}>
-          {sending ? 'Verificando...' : 'Liberar atendimento'}
-        </button>
-      </div>
     </section>
   )
 }
