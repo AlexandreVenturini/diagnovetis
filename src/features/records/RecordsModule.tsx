@@ -15,10 +15,13 @@ const consultaService = new ConsultaService()
 type Screen = 'list' | 'details' | 'retify'
 
 async function fetchPatients(): Promise<PatientRecord[]> {
-  const pets = await petService.listarPets()
-  return Promise.all(
-    pets.map(async (pet) => {
-      const consultas = await consultaService.listarPorPet(pet.id)
+  const [pets, todasConsultas] = await Promise.all([petService.listarPets(), consultaService.listarConsultas()])
+  const consultasPorPet = new Map<number, typeof todasConsultas>()
+  for (const consulta of todasConsultas) {
+    consultasPorPet.set(consulta.pet.id, [...(consultasPorPet.get(consulta.pet.id) ?? []), consulta])
+  }
+  return pets.map((pet) => {
+      const consultas = consultasPorPet.get(pet.id) ?? []
       const records: ClinicalRecord[] = consultas.map((c) => ({
         id: c.id,
         kind: 'Consulta' as RecordKind,
@@ -71,7 +74,6 @@ async function fetchPatients(): Promise<PatientRecord[]> {
         records,
       }
     })
-  )
 }
 
 export function RecordsModule({ initialPetId, role = 'veterinarian' }: { initialPetId?: number; role?: UserRole }) {

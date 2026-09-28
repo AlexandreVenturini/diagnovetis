@@ -47,11 +47,24 @@ function resolveJoins(_table: string, cols: string, rows: Row[]): Row[] {
 
 function buildSelectChain(table: string, cols = '*') {
     const eqFilters: [string, unknown][] = []
+    const inFilters: [string, unknown[]][] = []
+    let orderBy: [string, boolean] | null = null
+    let limitCount: number | null = null
     let isSingle = false
 
     const exec = (): { data: Row | Row[] | null; error: null } => {
         let rows = [...getTable(table)]
         for (const [col, val] of eqFilters) rows = rows.filter(r => r[col] === val)
+        for (const [col, vals] of inFilters) rows = rows.filter(r => vals.includes(r[col]))
+        if (orderBy) {
+            const [col, ascending] = orderBy
+            rows.sort((a, b) => {
+                const x = a[col] as number | string
+                const y = b[col] as number | string
+                return (Number(x > y) - Number(x < y)) * (ascending ? 1 : -1)
+            })
+        }
+        if (limitCount !== null) rows = rows.slice(0, limitCount)
         rows = resolveJoins(table, cols, rows)
         if (isSingle) return { data: rows[0] ?? null, error: null }
         return { data: rows, error: null }
@@ -59,6 +72,9 @@ function buildSelectChain(table: string, cols = '*') {
 
     const chain: Record<string, unknown> = {
         eq(col: string, val: unknown) { eqFilters.push([col, val]); return chain },
+        in(col: string, vals: unknown[]) { inFilters.push([col, vals]); return chain },
+        order(col: string, options?: { ascending?: boolean }) { orderBy = [col, options?.ascending !== false]; return chain },
+        limit(count: number) { limitCount = count; return chain },
         single() { isSingle = true; return chain },
         maybeSingle() { isSingle = true; return chain },
         then(resolve: (v: ReturnType<typeof exec>) => void) { resolve(exec()) },

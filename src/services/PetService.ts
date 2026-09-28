@@ -1,4 +1,5 @@
 import { Pet } from "../models/Pet";
+import type { Tutor } from "../models/Tutor";
 import { SupabaseRepository } from "./storage/SupabaseRepository";
 import { supabase } from "./storage/supabaseClient";
 import { TutorService } from "./TutorService";
@@ -37,19 +38,36 @@ export const petRepository = new SupabaseRepository<Pet>(
     }
 );
 
+function montarPets(rows: PetRow[], tutores: Tutor[]): Pet[] {
+    const tutoresPorId = new Map(tutores.map(t => [t.id, t]));
+    const pets: Pet[] = [];
+    for (const r of rows) {
+        const tutor = tutoresPorId.get(r.tutor_id);
+        if (!tutor) continue;
+        const pet = new Pet(r.id, r.nome, r.especie, r.raca, tutor, [], r.idade ?? '', r.peso ?? '', r.sexo ?? '', r.historico ?? '');
+        tutor.adicionarPet(pet);
+        pets.push(pet);
+    }
+    return pets;
+}
+
 export class PetService {
     async listarPets(): Promise<Pet[]> {
-        const { data, error } = await supabase.from("pets").select("*");
+        const [{ data, error }, tutores] = await Promise.all([
+            supabase.from("pets").select("*"),
+            tutorService.listarTutores(),
+        ]);
         if (error) throw new Error(error.message);
-        const pets: Pet[] = [];
-        for (const r of data ?? []) {
-            const tutor = await tutorService.buscarPorId(r.tutor_id);
-            if (!tutor) continue;
-            const pet = new Pet(r.id, r.nome, r.especie, r.raca, tutor, [], r.idade ?? '', r.peso ?? '', r.sexo ?? '', r.historico ?? '');
-            tutor.adicionarPet(pet);
-            pets.push(pet);
-        }
-        return pets;
+        return montarPets((data ?? []) as PetRow[], tutores);
+    }
+
+    async listarPorIds(ids: number[]): Promise<Pet[]> {
+        if (ids.length === 0) return [];
+        const { data, error } = await supabase.from("pets").select("*").in("id", ids);
+        if (error) throw new Error(error.message);
+        const rows = (data ?? []) as PetRow[];
+        const tutores = await tutorService.listarPorIds([...new Set(rows.map(r => r.tutor_id))]);
+        return montarPets(rows, tutores);
     }
 
     async adicionarPet(pet: Pet): Promise<void> {

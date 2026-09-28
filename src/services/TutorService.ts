@@ -58,6 +58,19 @@ export class TutorService {
         });
     }
 
+    async listarPorIds(ids: number[]): Promise<Tutor[]> {
+        if (ids.length === 0) return [];
+        const { data, error } = await supabase
+            .from("tutores")
+            .select("*, enderecos(*)")
+            .in("id", ids);
+        if (error) throw new Error(error.message);
+        return (data ?? []).map(r => {
+            const e = r.enderecos as EnderecoRow;
+            return new Tutor(r.id, r.nome, r.telefone, r.email, new Date(r.data_cadastro), new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep), [], r.cpf ?? '');
+        });
+    }
+
     async adicionarTutor(tutor: Tutor): Promise<void> {
         const todos = await this.listarTutores();
         validarIdUnico(tutor.id, todos, "tutor");

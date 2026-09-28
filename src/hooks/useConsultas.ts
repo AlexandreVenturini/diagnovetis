@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from 'react'
 import { Consulta, type ExameFisico, type Alta } from '../models/Consulta'
 import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
 import { ExameService } from '../services/ExameService'
@@ -13,11 +12,6 @@ import { validatePrescription } from '../features/consultations/prescriptionRepo
 const consultaService = new ConsultaService()
 const medicoService = new MedicoService()
 const petService = new PetService()
-
-async function proximoId(): Promise<number> {
-    const consultas = await consultaService.listarConsultas()
-    return consultas.length > 0 ? Math.max(...consultas.map(c => c.id)) + 1 : 1
-}
 
 function dataConsultaParaHoje(): Date {
     const hoje = new Date()
@@ -41,12 +35,6 @@ async function resolverPet(nomeCao: string, nomeTutor: string) {
 }
 
 export function useConsultas() {
-    const [consultas, setConsultas] = useState<Consulta[]>([])
-
-    const refresh = useCallback(() => consultaService.listarConsultas().then(setConsultas), [])
-
-    useEffect(() => { void refresh().catch(() => {}) }, [refresh])
-
     async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null, exams: ExamDraft[] = [], liberacaoId: string | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number }> {
       try {
         if (prescricao) {
@@ -86,7 +74,7 @@ export function useConsultas() {
                 prognostico: data.dischargePrognosis || undefined,
             }
             const consulta = new Consulta(
-                await proximoId(),
+                await consultaService.proximoId(),
                 dataConsultaParaHoje(),
                 new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 data.diagnosis ?? '',
@@ -108,7 +96,6 @@ export function useConsultas() {
             consulta.prescricao = prescricao
             consulta.liberacaoId = liberacaoId
             await consultaService.adicionarConsulta(consulta)
-            void refresh().catch(() => {})
             return { sucesso: true, id: consulta.id }
         } catch (e) {
             return { sucesso: false, erro: (e as Error).message }
@@ -123,5 +110,5 @@ export function useConsultas() {
         return consultaService.listarPorMedico(medicoId)
     }
 
-    return { consultas, salvarConsulta, listarPorPet, listarPorMedico }
+    return { salvarConsulta, listarPorPet, listarPorMedico }
 }
