@@ -40,7 +40,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       setMessage('A senha deve ter pelo menos 6 caracteres.')
       return
     }
-    if (role === 'veterinarian' && !/^\d{1,6}$/.test(crmvNumero)) {
+    if (role === 'veterinarian' && !/^\d{1,10}$/.test(crmvNumero)) {
       setMessage('Informe o número do CRMV (somente números).')
       return
     }
@@ -238,7 +238,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                     inputMode="numeric"
                     placeholder="Número. Ex: 12345"
                     value={crmvNumero}
-                    onChange={(e) => setCrmvNumero(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={(e) => setCrmvNumero(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     required
                   />
                 </div>

@@ -82,7 +82,7 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
           <p style={{ margin: 0, color: '#6b7280' }}>Nenhum outro estudante cadastrado.</p>
         ) : (
           <>
-            <input value={studentQuery} onChange={(event) => setStudentQuery(event.target.value)} placeholder="Buscar por nome ou matrícula" style={{ width: '100%', marginBottom: '0.5rem' }} />
+            <input value={studentQuery} onChange={(event) => setStudentQuery(event.target.value)} placeholder="Buscar por nome ou matrícula" style={{ width: '100%', height: '40px', padding: '0 15px', marginBottom: '0.5rem', border: '1px solid #d1d1d1', borderRadius: '9px', fontSize: '14px', outline: 0 }} />
             <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'grid', gap: '0.35rem' }}>
               {filteredStudents.map((student) => (
                 <label key={student.profileId} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 400 }}>
