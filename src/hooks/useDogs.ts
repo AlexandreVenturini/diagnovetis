@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { dateInput } from '../features/common/period'
 import type { Dog, DogFormData } from '../features/dogs/dogTypes'
 import type { TutorFormData } from '../features/tutors/tutorTypes'
 import { Pet } from '../models/Pet'
@@ -22,6 +23,7 @@ function petToDog(pet: Pet): Dog {
         tutor: pet.tutor.nome,
         contact: pet.tutor.telefone,
         history: pet.historico,
+        createdAt: pet.criadoEm ? dateInput(new Date(pet.criadoEm)) : '',
     }
 }
 

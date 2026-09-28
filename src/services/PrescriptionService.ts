@@ -1,14 +1,19 @@
 import { supabase } from './storage/supabaseClient'
 import type { PrescricaoSalva } from '../models/Prescricao'
+import { rangeEndIso, rangeStartIso, type DateRange } from '../features/common/period'
 import { validatePrescription } from '../features/consultations/prescriptionReport'
 
 export type IssuedPrescription = { id: string; petId: number; snapshot: PrescricaoSalva }
 
 export class PrescriptionService {
-  async list(petId?: number): Promise<IssuedPrescription[]> {
+  async list(petId?: number, range: DateRange | null = null): Promise<IssuedPrescription[]> {
     let current = supabase.from('prescricoes').select('*')
     let legacy = supabase.from('consultas').select('id, pet_id, prescricao').not('prescricao', 'is', null)
     if (petId !== undefined) { current = current.eq('pet_id', petId); legacy = legacy.eq('pet_id', petId) }
+    if (range) {
+      current = current.gte('created_at', rangeStartIso(range)).lte('created_at', rangeEndIso(range))
+      legacy = legacy.gte('data_consulta', rangeStartIso(range)).lte('data_consulta', rangeEndIso(range))
+    }
     const [recent, old] = await Promise.all([current, legacy])
     if (recent.error) throw new Error('Não foi possível carregar o receituário. Confira a conexão e a atualização do banco de dados.')
     if (old.error) throw new Error(old.error.message)

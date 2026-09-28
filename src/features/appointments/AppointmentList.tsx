@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react'
 import { Icon } from '../../components/common/Icon'
-import type { Appointment, AppointmentReminder, AppointmentStatus, AppointmentView, ReminderType } from './appointmentTypes'
+import { PeriodFilter } from '../common/PeriodFilter'
+import { inRange, periodNoun, periodRange, type PeriodValue } from '../common/period'
+import type { Appointment, AppointmentReminder, AppointmentStatus, ReminderType } from './appointmentTypes'
 
 type AppointmentListProps = {
   appointments: Appointment[]
   onStartCare?: (appointment: Appointment) => void
   onCreate: () => void
   onUpdate: (id: number, changes: Partial<Appointment>) => void
+  period?: PeriodValue
+  onPeriodChange?: (value: PeriodValue) => void
+  query?: string
+  onQueryChange?: (value: string) => void
+  reminderAppointments?: Appointment[]
+  onCheckConflict?: (veterinarian: string, date: string, time: string, ignoreId: number) => Promise<boolean>
+  loading?: boolean
 }
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
@@ -28,19 +37,17 @@ function formatDate(date: string, options?: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat('pt-BR', options ?? { day: '2-digit', month: '2-digit', year: 'numeric' }).format(parseDate(date))
 }
 
-function startOfWeek(date: Date) {
-  const result = new Date(date)
-  const day = result.getDay()
-  result.setDate(result.getDate() - (day === 0 ? 6 : day - 1))
-  return result
-}
-
-export function AppointmentList({ appointments, onCreate, onUpdate, onStartCare }: AppointmentListProps) {
+export function AppointmentList({ appointments, onCreate, onUpdate, onStartCare, period: controlledPeriod, onPeriodChange, query: controlledQuery, onQueryChange, reminderAppointments, onCheckConflict, loading = false }: AppointmentListProps) {
   const initialDate = appointments.find((item) => item.date)?.date ?? toDateInput(new Date())
-  const [view, setView] = useState<AppointmentView>('week')
-  const [cursorDate, setCursorDate] = useState(initialDate)
+  const [localPeriod, setLocalPeriod] = useState<PeriodValue>({ view: 'week', date: initialDate })
+  const [localQuery, setLocalQuery] = useState('')
+  const period = controlledPeriod ?? localPeriod
+  const setPeriod = onPeriodChange ?? setLocalPeriod
+  const query = controlledQuery ?? localQuery
+  const setQuery = onQueryChange ?? setLocalQuery
+  const searching = Boolean(query.trim())
+  const range = searching ? null : periodRange(period)
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [query, setQuery] = useState('')
   const [veterinarian, setVeterinarian] = useState('all')
   const [service, setService] = useState('all')
   const [status, setStatus] = useState<AppointmentStatus | 'all'>('all')
@@ -66,50 +73,27 @@ export function AppointmentList({ appointments, onCreate, onUpdate, onStartCare 
   }), [appointments, query, veterinarian, service, status])
 
   const visibleAppointments = filtered.filter((appointment) => {
-    if (!appointment.date) return view === 'day'
-    const date = parseDate(appointment.date)
-    const cursor = parseDate(cursorDate)
-    if (view === 'day') return appointment.date === cursorDate
-    if (view === 'week') {
-      const start = startOfWeek(cursor)
-      const end = new Date(start); end.setDate(end.getDate() + 6)
-      return date >= start && date <= end
-    }
-    return date.getMonth() === cursor.getMonth() && date.getFullYear() === cursor.getFullYear()
+    if (!appointment.date) return period.view === 'day' || !range
+    return inRange(appointment.date, range)
   }).sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
-
-  const pendingReminders = appointments.flatMap((appointment) => appointment.reminders
+  const pendingReminders = (reminderAppointments ?? appointments).flatMap((appointment) => appointment.reminders
     .filter((reminder) => !reminder.done)
     .map((reminder) => ({ appointment, reminder })))
     .sort((a, b) => a.reminder.date.localeCompare(b.reminder.date))
-
-  function changePeriod(amount: number) {
-    const date = parseDate(cursorDate)
-    if (view === 'day') date.setDate(date.getDate() + amount)
-    if (view === 'week') date.setDate(date.getDate() + amount * 7)
-    if (view === 'month') date.setMonth(date.getMonth() + amount)
-    setCursorDate(toDateInput(date))
-  }
-
-  function periodLabel() {
-    const cursor = parseDate(cursorDate)
-    if (view === 'day') return formatDate(cursorDate, { weekday: 'long', day: '2-digit', month: 'long' })
-    if (view === 'month') return formatDate(cursorDate, { month: 'long', year: 'numeric' })
-    const start = startOfWeek(cursor); const end = new Date(start); end.setDate(end.getDate() + 6)
-    return `${formatDate(toDateInput(start), { day: '2-digit', month: 'short' })} — ${formatDate(toDateInput(end), { day: '2-digit', month: 'short', year: 'numeric' })}`
-  }
 
   function openReschedule(appointment: Appointment) {
     setRescheduling(appointment); setNewDate(appointment.date); setNewTime(appointment.time); setDialogError('')
   }
 
-  function confirmReschedule() {
+  async function confirmReschedule() {
     if (!rescheduling || !newDate || !newTime) return
     const conflict = appointments.some((item) => item.id !== rescheduling.id && item.status !== 'cancelled'
       && item.veterinarian === rescheduling.veterinarian && item.date === newDate && item.time === newTime)
+      || Boolean(await onCheckConflict?.(rescheduling.veterinarian, newDate, newTime, rescheduling.id))
     if (conflict) { setDialogError('Este veterinário já possui uma consulta nesse horário.'); return }
     onUpdate(rescheduling.id, { date: newDate, time: newTime, status: 'confirmed' })
-    setCursorDate(newDate); setRescheduling(null)
+    if (period.view !== 'all') setPeriod({ ...period, date: newDate })
+    setRescheduling(null)
   }
 
   function confirmCancellation() {
@@ -132,24 +116,19 @@ export function AppointmentList({ appointments, onCreate, onUpdate, onStartCare 
         <button className="primary-button new-button" onClick={onCreate}><Icon><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 3v4m10-4v4M3 10h18" /></Icon>Novo Agendamento</button>
       </div>
 
-      <div className="agenda-toolbar content-card">
-        <div className="view-switch" aria-label="Visualização da agenda">
-          {(['day', 'week', 'month'] as AppointmentView[]).map((item) => <button key={item} className={view === item ? 'active' : ''} onClick={() => setView(item)}>{item === 'day' ? 'Dia' : item === 'week' ? 'Semana' : 'Mês'}</button>)}
-        </div>
-        <div className="period-navigation"><button aria-label="Período anterior" onClick={() => changePeriod(-1)}>‹</button><strong>{periodLabel()}</strong><button aria-label="Próximo período" onClick={() => changePeriod(1)}>›</button><button className="today-button" onClick={() => setCursorDate(toDateInput(new Date()))}>Hoje</button></div>
-        <div className="agenda-filters">
-          <label className="agenda-search"><span>Buscar</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tutor ou animal" /></label>
-          <label><span>Veterinário</span><select value={veterinarian} onChange={(event) => setVeterinarian(event.target.value)}><option value="all">Todos</option>{veterinarians.map((item) => <option key={item}>{item}</option>)}</select></label>
-          <label><span>Serviço</span><select value={service} onChange={(event) => setService(event.target.value)}><option value="all">Todos</option>{services.map((item) => <option key={item}>{item}</option>)}</select></label>
-          <label><span>Situação</span><select value={status} onChange={(event) => setStatus(event.target.value as AppointmentStatus | 'all')}><option value="all">Todas</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
-        </div>
-      </div>
+      <PeriodFilter label="Visualização da agenda" value={period} onChange={setPeriod} searching={searching}>
+        <label className="agenda-search"><span>Buscar</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tutor ou animal" /></label>
+        <label><span>Veterinário</span><select value={veterinarian} onChange={(event) => setVeterinarian(event.target.value)}><option value="all">Todos</option>{veterinarians.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label><span>Serviço</span><select value={service} onChange={(event) => setService(event.target.value)}><option value="all">Todos</option>{services.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label><span>Situação</span><select value={status} onChange={(event) => setStatus(event.target.value as AppointmentStatus | 'all')}><option value="all">Todas</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+      </PeriodFilter>
 
       <div className="agenda-grid enhanced-agenda-grid">
         <div className="upcoming-column">
-          <div className="agenda-list-heading"><h3>{view === 'day' ? 'Consultas do dia' : view === 'week' ? 'Consultas da semana' : 'Consultas do mês'}</h3><span>{visibleAppointments.length} resultado(s)</span></div>
+          <div className="agenda-list-heading"><h3>{searching ? 'Resultado da busca' : `Consultas ${periodNoun(period.view)}`}</h3><span>{visibleAppointments.length} resultado(s)</span></div>
           <div className="appointment-cards">
-            {visibleAppointments.length === 0 && <div className="empty-appointments">Nenhuma consulta encontrada neste período.</div>}
+            {loading && <div className="empty-appointments">Carregando agenda...</div>}
+            {!loading && visibleAppointments.length === 0 && <div className="empty-appointments">Nenhuma consulta encontrada neste período.</div>}
             {visibleAppointments.map((appointment) => {
               const isExpanded = expandedId === appointment.id
               return <article className={`appointment-card status-${appointment.status}${isExpanded ? ' expanded' : ''}`} key={appointment.id}>

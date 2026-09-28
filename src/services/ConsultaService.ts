@@ -9,8 +9,11 @@ import { Receita } from "../models/Receita";
 import { supabase } from "./storage/supabaseClient";
 import { PetService } from "./PetService";
 import { validarObrigatorio, validarDataFutura, validarIdUnico } from "./validation/validadores";
+import { dateInput, rangeEndIso, rangeStartIso, type DateRange } from "../features/common/period";
 
 const petService = new PetService();
+
+export type ResumoConsulta = { id: number; petId: number; date: string; veterinarian: string };
 
 interface MedicoRow { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
 interface MedRowInAluno { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
@@ -141,6 +144,19 @@ export class ConsultaService {
         const { data, error } = await supabase.from("consultas").select("*, medicos!responsavel_id(*)");
         if (error) throw new Error(error.message);
         return carregarConsultas((data ?? []) as ConsultaRow[]);
+    }
+
+    async listarResumo(range: DateRange | null = null): Promise<ResumoConsulta[]> {
+        let query = supabase.from("consultas").select("id, pet_id, data_consulta, responsavel_id, medicos!responsavel_id(*)");
+        if (range) query = query.gte("data_consulta", rangeStartIso(range)).lte("data_consulta", rangeEndIso(range));
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        return ((data ?? []) as unknown as { id: number; pet_id: number; data_consulta: string; medicos: MedicoRow | null }[]).map(r => ({
+            id: r.id,
+            petId: r.pet_id,
+            date: dateInput(new Date(r.data_consulta)),
+            veterinarian: r.medicos?.nome ?? '',
+        }));
     }
 
     async proximoId(): Promise<number> {

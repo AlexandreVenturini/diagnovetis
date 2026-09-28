@@ -1,6 +1,9 @@
 import { PrescriptionHistoryFilters } from './PrescriptionHistoryFilters'
 import { dateInput, filterPrescriptionHistory, type HistoryFilters } from './historyFilters'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { usePeriod } from '../common/usePeriod'
+import { useRangeData } from '../common/useRangeData'
+import { periodNoun, periodRange, type DateRange } from '../common/period'
 import type { Dog } from '../dogs/dogTypes'
 import type { Medico } from '../../models/Medico'
 import type { Medicamento } from '../../models/Medicamento'
@@ -20,13 +23,23 @@ const format = (value: number) => value.toLocaleString('pt-BR', { maximumSignifi
 
 export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpenRecord: (id: number) => void }) {
   const [tab, setTab] = useState<'history' | 'new'>('history')
-  const [history, setHistory] = useState<IssuedPrescription[]>([])
   const [medicos, setMedicos] = useState<Medico[]>([])
   const [medications, setMedications] = useState<Medicamento[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [reload, setReload] = useState(0)
-  const [filters, setFilters] = useState<HistoryFilters>(() => ({ view: 'week', date: dateInput(), query: '', veterinarian: '', medication: '' }))
+  const [period, setPeriod] = usePeriod('receituario')
+  const [extraFilters, setExtraFilters] = useState({ query: '', veterinarian: '', medication: '' })
+  const filters: HistoryFilters = { ...period, ...extraFilters }
+  const range = extraFilters.query.trim() ? null : periodRange(period)
+  const fetchHistory = useCallback((target: DateRange | null) => service.list(undefined, target), [])
+  const historyData = useRangeData(fetchHistory, (row: IssuedPrescription) => row.id, range)
+  const history = historyData.items
+
+  function setFilters(value: HistoryFilters) {
+    setPeriod({ view: value.view, date: value.date })
+    setExtraFilters({ query: value.query, veterinarian: value.veterinarian, medication: value.medication })
+  }
   const [selected, setSelected] = useState<IssuedPrescription | null>(null)
   const [petId, setPetId] = useState('')
   const [vetId, setVetId] = useState('')
@@ -51,8 +64,8 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
 
   useEffect(() => {
     let active = true
-    Promise.all([service.list(), new MedicoService().listarMedicos(), new MedicamentoService().listarMedicamentos()]).then(([rows, vets, meds]) => {
-      if (active) { setHistory(rows); setMedicos(vets); setMedications(meds); setLoadError(''); setLoading(false) }
+    Promise.all([new MedicoService().listarMedicos(), new MedicamentoService().listarMedicamentos()]).then(([vets, meds]) => {
+      if (active) { setMedicos(vets); setMedications(meds); setLoadError(''); setLoading(false) }
     }).catch(error => { if (active) { setLoadError(error.message); setLoading(false) } })
     return () => { active = false }
   }, [reload])
@@ -75,8 +88,8 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
       pending.current ??= [crypto.randomUUID(), dog.id, vet.id, { version: 1, issuedAt: new Date().toISOString(), patient: { ...patient }, prescription: structuredClone(prescription) }]
       setPendingEmission(true)
       const row = await service.issue(...pending.current)
-      setHistory(current => [row, ...current.filter(item => item.id !== row.id)])
-      setFilters({ view: 'week', date: dateInput(new Date(row.snapshot.issuedAt)), query: '', veterinarian: '', medication: '' })
+      historyData.upsert([row])
+      setFilters({ view: period.view === 'all' ? 'all' : period.view, date: dateInput(new Date(row.snapshot.issuedAt)), query: '', veterinarian: '', medication: '' })
       setSelected(row); setTab('history'); setPreview(false); pending.current = null; setPendingEmission(false)
       setPetId(''); setVetId(''); setWeight(''); setPrescription(emptyPrescription()); setMgKg(''); setConcentration(''); setTargetItem(0); setMedQuery('')
       setMessage('Receita emitida e salva no prontuário do animal.')
@@ -90,6 +103,8 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
   }
 
   const filtered = filterPrescriptionHistory(history, filters)
+  const historyLoading = loading || historyData.loading
+  const historyError = loadError || historyData.error
 
   return <section className="receituario-module">
     <div className="records-heading"><div><h2>Receituário</h2><p>Emita receitas e acompanhe o histórico de cada animal.</p></div></div>
@@ -98,9 +113,9 @@ export function PrescriptionsModule({ dogs, onOpenRecord }: { dogs: Dog[]; onOpe
       <button className={tab === 'new' ? 'primary-button' : 'secondary-button'} disabled={saving} onClick={() => { if (selected) startNew(); else setTab('new') }}>Nova receita</button>
     </div>
     {message && <p role="status" className="consultation-message">{message}</p>}
-    {loading ? <p role="status">Carregando receituário…</p> : loadError ? <div role="alert"><p>{loadError}</p><button className="secondary-button" onClick={() => { setLoading(true); setReload(value => value + 1) }}>Tentar novamente</button></div> : tab === 'history' ? <>
-      <PrescriptionHistoryFilters history={history} value={filters} onChange={value => { setFilters(value); setSelected(null) }} />
-      {!selected && <div className="agenda-list-heading"><h3>{filters.view === 'day' ? 'Receitas do dia' : filters.view === 'week' ? 'Receitas da semana' : 'Receitas do mês'}</h3><span>{filtered.length} resultado(s)</span></div>}
+    {tab === 'history' && !historyError && <PrescriptionHistoryFilters history={history} value={filters} onChange={value => { setFilters(value); setSelected(null) }} />}
+    {historyLoading ? <p role="status">Carregando receituário…</p> : historyError ? <div role="alert"><p>{historyError}</p><button className="secondary-button" onClick={() => { setLoading(true); setReload(value => value + 1); historyData.reset() }}>Tentar novamente</button></div> : tab === 'history' ? <>
+      {!selected && <div className="agenda-list-heading"><h3>{extraFilters.query.trim() ? 'Resultado da busca' : `Receitas ${periodNoun(filters.view)}`}</h3><span>{filtered.length} resultado(s)</span></div>}
       {selected ? <section className="content-card rx-details"><button className="text-back-button" onClick={() => setSelected(null)}>‹ Voltar ao histórico</button><h3>Receita de {selected.snapshot.patient.dogName}</h3><p>{new Date(selected.snapshot.issuedAt).toLocaleString('pt-BR')} · {selected.snapshot.patient.veterinarian}</p>
         <iframe className="rx-preview" title="Detalhes da receita emitida" sandbox="" srcDoc={prescriptionHtml(selected.snapshot.patient, selected.snapshot.prescription, new Date(selected.snapshot.issuedAt))} />
         <div className="form-actions"><button className="primary-button" onClick={() => print(selected)}>PDF / Impressão</button><button className="secondary-button" onClick={() => onOpenRecord(selected.petId)}>Abrir prontuário</button><button className="secondary-button" onClick={startNew}>Nova receita</button></div>

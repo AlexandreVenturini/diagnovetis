@@ -21,7 +21,9 @@ describe('Filtros do histórico de receitas', () => {
   it('combina busca, veterinário, medicamento e período', () => {
     const history = [row('2026-09-21', 'Rex', 'Ana', 'A'), row('2026-09-27', 'Bia', 'João', 'B'), row('2026-09-28', 'Tobi', 'Ana', 'A')]
     expect(filterPrescriptionHistory(history, filters).map(item => item.id)).toEqual(['Rex', 'Bia'])
-    expect(filterPrescriptionHistory(history, { ...filters, query: ' MARIA ', veterinarian: 'Ana', medication: 'A' }).map(item => item.id)).toEqual(['Rex'])
+    expect(filterPrescriptionHistory(history, { ...filters, query: ' MARIA ', veterinarian: 'Ana', medication: 'A' }).map(item => item.id)).toEqual(['Rex', 'Tobi'])
+    expect(filterPrescriptionHistory(history, { ...filters, veterinarian: 'Ana', medication: 'A' }).map(item => item.id)).toEqual(['Rex'])
+    expect(filterPrescriptionHistory(history, { ...filters, view: 'all' }).length).toBe(3)
     expect(filterPrescriptionHistory(history, { ...filters, veterinarian: 'Ana', medication: 'B' })).toEqual([])
     expect(filterPrescriptionHistory(history, { ...filters, view: 'day' }).length).toBe(1)
     expect(filterPrescriptionHistory(history, { ...filters, view: 'month' }).length).toBe(3)

@@ -48,6 +48,7 @@ function resolveJoins(_table: string, cols: string, rows: Row[]): Row[] {
 function buildSelectChain(table: string, cols = '*') {
     const eqFilters: [string, unknown][] = []
     const inFilters: [string, unknown[]][] = []
+    const predicates: ((row: Row) => boolean)[] = []
     let orderBy: [string, boolean] | null = null
     let limitCount: number | null = null
     let isSingle = false
@@ -56,6 +57,7 @@ function buildSelectChain(table: string, cols = '*') {
         let rows = [...getTable(table)]
         for (const [col, val] of eqFilters) rows = rows.filter(r => r[col] === val)
         for (const [col, vals] of inFilters) rows = rows.filter(r => vals.includes(r[col]))
+        for (const predicate of predicates) rows = rows.filter(predicate)
         if (orderBy) {
             const [col, ascending] = orderBy
             rows.sort((a, b) => {
@@ -73,6 +75,11 @@ function buildSelectChain(table: string, cols = '*') {
     const chain: Record<string, unknown> = {
         eq(col: string, val: unknown) { eqFilters.push([col, val]); return chain },
         in(col: string, vals: unknown[]) { inFilters.push([col, vals]); return chain },
+        gte(col: string, val: string | number) { predicates.push(r => r[col] != null && (r[col] as string | number) >= val); return chain },
+        lte(col: string, val: string | number) { predicates.push(r => r[col] != null && (r[col] as string | number) <= val); return chain },
+        neq(col: string, val: unknown) { predicates.push(r => JSON.stringify(r[col]) !== JSON.stringify(typeof val === 'string' && val.startsWith('[') ? JSON.parse(val) : val)); return chain },
+        is(col: string, val: null) { predicates.push(r => (r[col] ?? null) === val); return chain },
+        not(col: string, op: string, val: unknown) { if (op === 'is') predicates.push(r => (r[col] ?? null) !== val); return chain },
         order(col: string, options?: { ascending?: boolean }) { orderBy = [col, options?.ascending !== false]; return chain },
         limit(count: number) { limitCount = count; return chain },
         single() { isSingle = true; return chain },

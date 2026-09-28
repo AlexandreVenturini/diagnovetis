@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { Icon } from '../../components/common/Icon'
 import type { Dog } from './dogTypes'
 import { formatDogAge } from './dogAge'
+import { PeriodFilter } from '../common/PeriodFilter'
+import { usePeriod } from '../common/usePeriod'
+import { inRange, periodNoun, periodRange } from '../common/period'
 
 type DogListProps = {
   dogs: Dog[]
@@ -10,6 +14,14 @@ type DogListProps = {
 }
 
 export function DogList({ dogs, onCreate, onEdit, onDetails }: DogListProps) {
+  const [period, setPeriod] = usePeriod('cadastro')
+  const [query, setQuery] = useState('')
+  const normalizedQuery = query.trim().toLocaleLowerCase('pt-BR')
+  const range = normalizedQuery ? null : periodRange(period)
+  const visibleDogs = dogs.filter((dog) => normalizedQuery
+    ? `${dog.name} ${dog.tutor} ${dog.breed}`.toLocaleLowerCase('pt-BR').includes(normalizedQuery)
+    : inRange(dog.createdAt ?? '', range))
+
   return (
     <section className="dog-list">
       <div className="section-heading">
@@ -17,8 +29,19 @@ export function DogList({ dogs, onCreate, onEdit, onDetails }: DogListProps) {
         <button className="primary-button new-button" onClick={onCreate}><span>＋</span> Novo Cadastro</button>
       </div>
 
+      <PeriodFilter label="Período de cadastro" value={period} onChange={setPeriod} searching={Boolean(normalizedQuery)}>
+        <label className="agenda-search"><span>Buscar</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Animal, tutor ou raça" /></label>
+      </PeriodFilter>
+
+      <div className="agenda-list-heading">
+        <h3>{normalizedQuery ? 'Resultado da busca' : `Cadastrados ${periodNoun(period.view)}`}</h3>
+        <span>{visibleDogs.length} de {dogs.length} animal(is)</span>
+      </div>
+
+      {visibleDogs.length === 0 && <div className="empty-appointments">{normalizedQuery ? 'Nenhum animal encontrado com essa busca.' : 'Nenhum animal cadastrado neste período.'}</div>}
+
       <div className="dog-grid">
-        {dogs.map((dog) => (
+        {visibleDogs.map((dog) => (
           <article className="dog-card" key={dog.id}>
             <div className="dog-card-heading">
               <h3>{dog.name}</h3>

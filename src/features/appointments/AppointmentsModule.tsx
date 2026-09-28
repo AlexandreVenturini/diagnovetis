@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { AppointmentForm } from './AppointmentForm'
 import { AppointmentList } from './AppointmentList'
 import { useAppointments } from '../../hooks/useAppointments'
+import { usePeriod } from '../common/usePeriod'
+import { periodRange } from '../common/period'
 import type { Appointment, AppointmentFormData, AppointmentScreen } from './appointmentTypes'
 import type { Dog } from '../dogs/dogTypes'
 
@@ -10,7 +12,10 @@ type AppointmentsModuleProps = { initialScreen?: AppointmentScreen; dogs: Dog[];
 export function AppointmentsModule({ initialScreen = 'list', dogs, onStartCare }: AppointmentsModuleProps) {
   const [screen, setScreen] = useState<AppointmentScreen>(initialScreen)
   const [formError, setFormError] = useState('')
-  const { appointments, createAppointment, updateAppointment } = useAppointments()
+  const [period, setPeriod] = usePeriod('agenda')
+  const [query, setQuery] = useState('')
+  const range = query.trim() ? null : periodRange(period)
+  const { appointments, reminderAppointments, loading, hasConflict, createAppointment, updateAppointment } = useAppointments(range)
 
   async function handleCreate(data: AppointmentFormData) {
     const ok = await createAppointment(data)
@@ -27,5 +32,17 @@ export function AppointmentsModule({ initialScreen = 'list', dogs, onStartCare }
     return <AppointmentForm dogs={dogs} onSave={handleCreate} onCancel={() => { setFormError(''); setScreen('list') }} error={formError} />
   }
 
-  return <AppointmentList onStartCare={onStartCare} appointments={appointments} onCreate={() => setScreen('create')} onUpdate={updateAppointment} />
+  return <AppointmentList
+    onStartCare={onStartCare}
+    appointments={appointments}
+    onCreate={() => setScreen('create')}
+    onUpdate={updateAppointment}
+    period={period}
+    onPeriodChange={setPeriod}
+    query={query}
+    onQueryChange={setQuery}
+    reminderAppointments={reminderAppointments}
+    onCheckConflict={hasConflict}
+    loading={loading}
+  />
 }

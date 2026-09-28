@@ -12,6 +12,7 @@ export class Pet {
     private _peso: string;
     private _sexo: string;
     private _historico: string;
+    criadoEm: string | null = null;
 
     constructor(
         id: number,

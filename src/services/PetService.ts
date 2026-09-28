@@ -17,6 +17,7 @@ interface PetRow {
     peso: string;
     sexo: string;
     historico: string;
+    criado_em?: string | null;
 }
 
 export const petRepository = new SupabaseRepository<Pet>(
@@ -45,6 +46,7 @@ function montarPets(rows: PetRow[], tutores: Tutor[]): Pet[] {
         const tutor = tutoresPorId.get(r.tutor_id);
         if (!tutor) continue;
         const pet = new Pet(r.id, r.nome, r.especie, r.raca, tutor, [], r.idade ?? '', r.peso ?? '', r.sexo ?? '', r.historico ?? '');
+        pet.criadoEm = r.criado_em ?? null;
         tutor.adicionarPet(pet);
         pets.push(pet);
     }
