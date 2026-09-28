@@ -6,6 +6,36 @@ type AdminPanelProps = {
   onClose: () => void
 }
 
+const CFMV_BUSCA_URL = 'https://siscad.cfmv.gov.br/paginas/busca'
+
+const smallButtonStyle = {
+  padding: '0.15rem 0.5rem', background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db',
+  borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.72rem', textDecoration: 'none',
+}
+
+function CrmvInfo({ crmv }: { crmv: string }) {
+  const [copied, setCopied] = useState(false)
+  const numero = crmv.split('-').pop() ?? crmv
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(numero)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+      <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>CRMV: {crmv}</span>
+      <button type="button" onClick={copy} style={smallButtonStyle}>{copied ? 'Copiado!' : 'Copiar número'}</button>
+      <a href={CFMV_BUSCA_URL} target="_blank" rel="noopener noreferrer" style={smallButtonStyle}>Consultar no CFMV ↗</a>
+    </div>
+  )
+}
+
 function Avatar({ name }: { name: string }) {
   const initials = name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
   return (
@@ -206,7 +236,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     <EmailBadge confirmed={u.email_confirmado} />
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: '#6b7280' }}>{u.email}</p>
-                  {u.crmv && <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#9ca3af' }}>CRMV: {u.crmv}</p>}
+                  {u.crmv && <CrmvInfo crmv={u.crmv} />}
+                  {u.matricula && <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#6b7280' }}>Matrícula: {u.matricula}</p>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
                   <button

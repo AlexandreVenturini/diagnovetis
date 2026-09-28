@@ -9,6 +9,7 @@ export type Profile = {
   email: string
   role: UserRole | null
   crmv: string | null
+  matricula: string | null
   is_admin: boolean
   status: ProfileStatus
   email_confirmado: boolean

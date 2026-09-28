@@ -5,6 +5,8 @@ import { Icon } from '../../components/common/Icon'
 import { supabase } from '../../services/storage/supabaseClient'
 import type { UserRole } from './LoginPage'
 
+const UFS = ['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO']
+
 type RegisterPageProps = {
   onBack: () => void
 }
@@ -15,13 +17,15 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [role, setRole] = useState<UserRole>('veterinarian')
-  const [crmv, setCrmv] = useState('')
+  const [crmvUf, setCrmvUf] = useState('ES')
+  const [crmvNumero, setCrmvNumero] = useState('')
+  const [matricula, setMatricula] = useState('')
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  function formatCrmv(value: string) {
-    return value.toUpperCase().replace(/[^A-Z0-9/-]/g, '').slice(0, 14)
+  function formatMatricula(value: string) {
+    return value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20)
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -36,37 +40,53 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       setMessage('A senha deve ter pelo menos 6 caracteres.')
       return
     }
+    if (role === 'veterinarian' && !/^\d{1,6}$/.test(crmvNumero)) {
+      setMessage('Informe o número do CRMV (somente números).')
+      return
+    }
+    if (role === 'attendant' && matricula.length < 4) {
+      setMessage('Informe sua matrícula do IFES.')
+      return
+    }
+
+    const crmv = role === 'veterinarian' ? `${crmvUf}-${Number(crmvNumero)}` : undefined
+    const matriculaFinal = role === 'attendant' ? matricula : undefined
 
     setLoading(true)
+
+    const { data: emUso, error: checkError } = await supabase.rpc('cadastro_disponivel', { p_crmv: crmv ?? null, p_matricula: matriculaFinal ?? null })
+    if (checkError) {
+      setLoading(false)
+      setMessage('Não foi possível verificar os dados do cadastro. Tente novamente.')
+      return
+    }
+    if (emUso === 'crmv') {
+      setLoading(false)
+      setMessage('Este CRMV já está cadastrado. Se ele é seu, procure um administrador.')
+      return
+    }
+    if (emUso === 'matricula') {
+      setLoading(false)
+      setMessage('Esta matrícula já está cadastrada. Se ela é sua, procure um administrador.')
+      return
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { role, name: name.trim(), crmv: role === 'veterinarian' ? crmv.trim() : undefined },
+        data: { role, name: name.trim(), crmv, matricula: matriculaFinal },
       },
     })
 
     setLoading(false)
 
     if (error) {
-      setMessage(error.message)
+      setMessage(error.message.includes('Database error')
+        ? 'Não foi possível criar a conta. Verifique se o CRMV ou a matrícula já estão em uso.'
+        : error.message)
       return
-    }
-
-    if (role === 'veterinarian' && data.user) {
-      const { error: dbError } = await supabase.from('medicos').insert({
-        nome: name.trim(),
-        email: email.trim(),
-        crmv: crmv.trim(),
-        telefone: '',
-        especialidade: '',
-      })
-      if (dbError) {
-        setMessage('Conta criada, mas não foi possível registrar o médico: ' + dbError.message)
-        return
-      }
     }
 
     if (data.session) {
@@ -200,14 +220,44 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           {role === 'veterinarian' && (
             <>
               <label htmlFor="reg-crmv">CRMV</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select
+                  id="reg-crmv-uf"
+                  aria-label="UF do CRMV"
+                  value={crmvUf}
+                  onChange={(e) => setCrmvUf(e.target.value)}
+                  style={{ padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #d1d5db', background: 'transparent', color: 'inherit' }}
+                >
+                  {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+                </select>
+                <div className="input-wrap" style={{ flex: 1 }}>
+                  <Icon><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /></Icon>
+                  <input
+                    id="reg-crmv"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Número. Ex: 12345"
+                    value={crmvNumero}
+                    onChange={(e) => setCrmvNumero(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    required
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {role === 'attendant' && (
+            <>
+              <label htmlFor="reg-matricula">Matrícula</label>
               <div className="input-wrap">
-                <Icon><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /></Icon>
+                <Icon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h6M7 13h10" /></Icon>
                 <input
-                  id="reg-crmv"
+                  id="reg-matricula"
                   type="text"
-                  placeholder="Ex: ES-12345/2024"
-                  value={crmv}
-                  onChange={(e) => setCrmv(formatCrmv(e.target.value))}
+                  placeholder="Sua matrícula no IFES"
+                  value={matricula}
+                  onChange={(e) => setMatricula(formatMatricula(e.target.value))}
+                  required
                 />
               </div>
             </>
