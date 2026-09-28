@@ -35,7 +35,12 @@ describe('Atendimento a partir da agenda', () => {
     const html = renderToStaticMarkup(<ClinicalCareModule dogs={dogs} initialAppointment={appointment} />)
     expect(html).toContain('value="Rex"')
     expect(html).toContain('value="Maria"')
-    expect(html).toContain('value="Dra. Ana"')
+    expect(html).toContain('Veterinário que Atendeu *<select')
     expect(html).toContain('value="4 anos"')
+  })
+  it('exige a liberação do professor antes de abrir o atendimento do estudante', () => {
+    const html = renderToStaticMarkup(<ClinicalCareModule dogs={dogs} initialAppointment={appointment} role="attendant" />)
+    expect(html).not.toContain('1. Identificação do Paciente')
+    expect(html).toContain('Carregando professores e estudantes')
   })
 })

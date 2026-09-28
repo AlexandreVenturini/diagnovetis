@@ -35,6 +35,11 @@ export type Alta = {
     prognostico?: string
 }
 
+export type ParticipanteConsulta = {
+    nome: string;
+    papel: 'registrou' | 'participante' | 'supervisor';
+};
+
 export class Consulta {
     conduta = '';
     private _id: number;
@@ -51,6 +56,9 @@ export class Consulta {
     exameFisico: ExameFisico;
     alta: Alta;
     prescricao: PrescricaoSalva | null = null;
+    participantes: ParticipanteConsulta[] = [];
+    supervisorNome = '';
+    liberacaoId: string | null = null;
 
     constructor(
         id: number,

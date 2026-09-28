@@ -25,8 +25,9 @@ function dataConsultaParaHoje(): Date {
     return hoje
 }
 
-async function resolverMedico(nomeVeterinario: string) {
+async function resolverMedico(nomeVeterinario: string, medicoId?: number) {
     const medicos = await medicoService.listarMedicos()
+    if (medicoId) return medicos.find(m => m.id === medicoId) ?? null
     const encontrados = medicos.filter(m => m.nome.trim().toLocaleLowerCase('pt-BR') === nomeVeterinario.trim().toLocaleLowerCase('pt-BR'))
     return encontrados.length === 1 ? encontrados[0] : null
 }
@@ -46,14 +47,14 @@ export function useConsultas() {
 
     useEffect(() => { void refresh().catch(() => {}) }, [refresh])
 
-    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null, exams: ExamDraft[] = []): Promise<{ sucesso: boolean; erro?: string; id?: number }> {
+    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null, exams: ExamDraft[] = [], liberacaoId: string | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number }> {
       try {
         if (prescricao) {
             const error = validatePrescription(data, prescricao.prescription)
             if (error) return { sucesso: false, erro: error }
         }
-        const medico = await resolverMedico(data.veterinarian)
-        if (!medico) return { sucesso: false, erro: 'Não foi possível identificar um único veterinário. Informe o nome completo cadastrado.' }
+        const medico = await resolverMedico(data.veterinarian, Number(data.veterinarianId) || undefined)
+        if (!medico) return { sucesso: false, erro: 'Não foi possível identificar o veterinário. Selecione um veterinário da lista.' }
 
         const pet = await resolverPet(data.dogName, data.tutorName)
         if (!pet) return { sucesso: false, erro: 'Não foi possível identificar um único paciente. Confira o nome do animal e do tutor cadastrados.' }
@@ -105,6 +106,7 @@ export function useConsultas() {
             )
             consulta.conduta = data.conduct
             consulta.prescricao = prescricao
+            consulta.liberacaoId = liberacaoId
             await consultaService.adicionarConsulta(consulta)
             void refresh().catch(() => {})
             return { sucesso: true, id: consulta.id }

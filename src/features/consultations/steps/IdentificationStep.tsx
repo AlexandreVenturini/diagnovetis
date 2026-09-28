@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ConsultationData } from '../consultationTypes'
 import type { Appointment } from '../../appointments/appointmentTypes'
+import type { VeterinarianOption } from '../supervision'
 
 type IdentificationStepProps = {
   data: ConsultationData
@@ -9,6 +10,8 @@ type IdentificationStepProps = {
   onSelectAppointment: (id: number | null) => void
   update: (key: keyof ConsultationData, value: string) => void
   onNext: () => void
+  veterinarians: VeterinarianOption[]
+  veterinarianLocked?: boolean
 }
 
 function formatAppointmentDate(date: string) {
@@ -16,16 +19,22 @@ function formatAppointmentDate(date: string) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${date}T12:00:00`))
 }
 
-export function IdentificationStep({ data, appointments, selectedAppointmentId, onSelectAppointment, update, onNext }: IdentificationStepProps) {
+export function IdentificationStep({ data, appointments, selectedAppointmentId, onSelectAppointment, update, onNext, veterinarians, veterinarianLocked = false }: IdentificationStepProps) {
   const [appointmentQuery, setAppointmentQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
-  const complete = data.dogName && data.age && data.breed && data.tutorName && data.veterinarian
+  const complete = data.dogName && data.age && data.breed && data.tutorName && data.veterinarianId
   const normalizedQuery = appointmentQuery.trim().toLocaleLowerCase('pt-BR')
   const filteredAppointments = useMemo(() => appointments.filter((item) => {
     const searchable = `${item.dogName} ${item.tutorName} ${item.date} ${formatAppointmentDate(item.date)} ${item.time} ${item.serviceType} ${item.veterinarian}`.toLocaleLowerCase('pt-BR')
     return searchable.includes(normalizedQuery)
   }).slice(0, 8), [appointments, normalizedQuery])
   const selectedAppointment = appointments.find((appointment) => appointment.id === selectedAppointmentId)
+
+  function chooseVeterinarian(medicoId: string) {
+    const vet = veterinarians.find((item) => String(item.medicoId) === medicoId)
+    update('veterinarianId', medicoId)
+    update('veterinarian', vet?.nome ?? '')
+  }
 
   function chooseAppointment(item: Appointment) {
     onSelectAppointment(item.id)
@@ -49,7 +58,12 @@ export function IdentificationStep({ data, appointments, selectedAppointmentId, 
         <label>Idade *<input value={data.age} onChange={(event) => update('age', event.target.value)} placeholder="Ex: 5 anos" /></label>
         <label>Raça *<select value={data.breed} onChange={(event) => update('breed', event.target.value)}><option value="">Selecione a raça</option><option>Labrador</option><option>Pastor Alemão</option><option>Golden Retriever</option><option>Poodle</option><option>Vira-lata</option></select></label>
         <label>Nome do Tutor *<input value={data.tutorName} onChange={(event) => update('tutorName', event.target.value)} placeholder="Ex: Maria Silva" /></label>
-        <label>Veterinário que Atendeu *<input value={data.veterinarian} onChange={(event) => update('veterinarian', event.target.value)} placeholder="Ex: Dr. Carlos Souza" /></label>
+        <label>{veterinarianLocked ? 'Professor supervisor' : 'Veterinário que Atendeu *'}
+          <select value={data.veterinarianId} onChange={(event) => chooseVeterinarian(event.target.value)} disabled={veterinarianLocked}>
+            <option value="">{veterinarians.length ? 'Selecione o veterinário' : 'Carregando veterinários...'}</option>
+            {veterinarians.map((vet) => <option key={vet.medicoId} value={String(vet.medicoId)}>{vet.nome} — CRMV {vet.crmv}</option>)}
+          </select>
+        </label>
       </div>
       <div className="consultation-next"><button className="primary-button" disabled={!complete} onClick={onNext}>Próximo: Histórico Clínico →</button></div>
     </section>

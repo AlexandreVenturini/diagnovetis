@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Appointment } from '../appointments/appointmentTypes'
 import { consultationFromAppointment } from './consultationFromAppointment'
 import { useConsultas } from '../../hooks/useConsultas'
@@ -14,11 +14,24 @@ import { validateExam, type ExamDraft } from './examTypes'
 import { PhysicalExamStep } from './steps/PhysicalExamStep'
 import { useAppointments } from '../../hooks/useAppointments'
 import type { Dog } from '../dogs/dogTypes'
+import type { UserRole } from '../auth/LoginPage'
+import { SupervisionGate } from './SupervisionGate'
+import { cancelarLiberacao, listarVeterinarios } from './supervision'
+import type { Liberacao, VeterinarianOption } from './supervision'
 
+type ClinicalCareModuleProps = { dogs: Dog[]; initialAppointment?: Appointment; role?: UserRole; userEmail?: string }
 
-type ClinicalCareModuleProps = { dogs: Dog[]; initialAppointment?: Appointment }
+function applyVeterinarian(data: ConsultationData, veterinarians: VeterinarianOption[], liberacao: Liberacao | null, userEmail?: string): ConsultationData {
+  if (liberacao) return { ...data, veterinarian: liberacao.supervisor.nome, veterinarianId: String(liberacao.supervisor.medicoId) }
+  if (data.veterinarianId && veterinarians.some((vet) => String(vet.medicoId) === data.veterinarianId)) return data
+  const normalize = (value: string) => value.trim().toLocaleLowerCase('pt-BR')
+  const vet = (data.veterinarian && veterinarians.find((item) => normalize(item.nome) === normalize(data.veterinarian)))
+    || (userEmail && veterinarians.find((item) => normalize(item.email) === normalize(userEmail)))
+  return vet ? { ...data, veterinarian: vet.nome, veterinarianId: String(vet.medicoId) } : { ...data, veterinarianId: '' }
+}
 
-export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareModuleProps) {
+export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinarian', userEmail }: ClinicalCareModuleProps) {
+  const isStudent = role === 'attendant'
   const [step, setStep] = useState<ConsultationStep>(1)
   const [data, setData] = useState<ConsultationData>(() => initialAppointment ? consultationFromAppointment(initialAppointment, dogs) : EMPTY_CONSULTATION)
   const [exams, setExams] = useState<ExamDraft[]>([])
@@ -29,6 +42,33 @@ export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareMod
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(initialAppointment?.id ?? null)
   const { salvarConsulta } = useConsultas()
   const { appointments, updateAppointment } = useAppointments()
+  const [veterinarians, setVeterinarians] = useState<VeterinarianOption[]>([])
+  const [liberacao, setLiberacao] = useState<Liberacao | null>(null)
+
+  useEffect(() => {
+    let active = true
+    listarVeterinarios()
+      .then((vets) => {
+        if (!active) return
+        setVeterinarians(vets)
+        setData((current) => applyVeterinarian(current, vets, null, userEmail))
+      })
+      .catch(() => { if (active) setMessage('Não foi possível carregar a lista de veterinários.') })
+    return () => { active = false }
+  }, [userEmail])
+
+  function handleLiberado(nova: Liberacao) {
+    setLiberacao(nova)
+    setData((current) => applyVeterinarian(current, veterinarians, nova, userEmail))
+    setMessage('')
+  }
+
+  async function trocarLiberacao() {
+    if (!liberacao || saving) return
+    if (!window.confirm('Cancelar a liberação atual? Os dados preenchidos serão mantidos e será preciso uma nova liberação do professor.')) return
+    try { await cancelarLiberacao(liberacao.id) } catch { setMessage('Não foi possível cancelar a liberação anterior.') }
+    setLiberacao(null)
+  }
 
   const availableAppointments = appointments
     .filter((item) => !['completed', 'cancelled', 'no-show'].includes(item.status))
@@ -40,7 +80,7 @@ export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareMod
     const appointment = appointments.find((item) => item.id === id)
     if (!appointment) return
     setExams([])
-    setData(current => consultationFromAppointment(appointment, dogs, current))
+    setData(current => applyVeterinarian(consultationFromAppointment(appointment, dogs, current), veterinarians, liberacao, userEmail))
     setMessage('Dados do agendamento carregados com sucesso.')
   }
 
@@ -52,7 +92,11 @@ export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareMod
 
   async function saveRecord() {
     if (saveLock.current || completed) return
-    if (![data.dogName, data.tutorName, data.veterinarian].every((value) => value.trim())) {
+    if (isStudent && !liberacao) {
+      setMessage('O atendimento precisa da liberação do professor supervisor.')
+      return
+    }
+    if (![data.dogName, data.tutorName, data.veterinarianId].every((value) => value.trim())) {
       setMessage('Preencha a identificação do paciente antes de finalizar.')
       setStep(1)
       return
@@ -63,7 +107,7 @@ export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareMod
     setSaving(true)
     setMessage('')
     try {
-      const resultado = await salvarConsulta(data, null, exams)
+      const resultado = await salvarConsulta(data, null, exams, isStudent ? liberacao?.id ?? null : null)
       if (!resultado.sucesso || resultado.id === undefined) {
         setMessage(resultado.erro ?? 'Não foi possível salvar o atendimento. Os dados preenchidos foram mantidos.')
         return
@@ -88,7 +132,8 @@ export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareMod
   function startNew() {
     setCompleted(null)
     setExams([])
-    setData(EMPTY_CONSULTATION)
+    setLiberacao(null)
+    setData(applyVeterinarian(EMPTY_CONSULTATION, veterinarians, null, userEmail))
     setSelectedAppointmentId(null)
     setStep(1)
     setMessage('')
@@ -104,11 +149,20 @@ export function ClinicalCareModule({ dogs, initialAppointment }: ClinicalCareMod
     </div>
     {message && <p className="consultation-message" role="status">{message}</p>}
   </section>
+  if (isStudent && !liberacao) return <SupervisionGate onLiberado={handleLiberado} />
   return (
     <section className="clinical-care-module">
+      {liberacao && <aside className="profile-notice">
+        <span>✔</span>
+        <p>
+          <strong>Atendimento liberado por {liberacao.supervisor.nome}</strong>
+          {liberacao.participantes.length > 0 && <> · Participantes: {liberacao.participantes.map((p) => p.nome).join(', ')}</>}
+          {' '}<button type="button" className="text-back-button" onClick={() => void trocarLiberacao()} disabled={saving}>Trocar liberação</button>
+        </p>
+      </aside>}
       <fieldset className="consultation-edit-fields" disabled={saving}>
       <ConsultationHeader currentStep={step} onStepChange={setStep} />
-      {step === 1 && <IdentificationStep data={data} appointments={availableAppointments} selectedAppointmentId={selectedAppointmentId} onSelectAppointment={selectAppointment} update={update} onNext={() => setStep(2)} />}
+      {step === 1 && <IdentificationStep data={data} appointments={availableAppointments} selectedAppointmentId={selectedAppointmentId} onSelectAppointment={selectAppointment} update={update} onNext={() => setStep(2)} veterinarians={veterinarians} veterinarianLocked={isStudent} />}
       {step === 2 && <ClinicalHistoryStep data={data} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
       {step === 3 && <PhysicalExamStep data={data} update={update} onBack={() => setStep(2)} onNext={() => setStep(4)} />}
       {step === 4 && <ComplementaryExamsStep exams={exams} onChange={setExams} onBack={() => setStep(3)} onNext={() => setStep(5)} />}

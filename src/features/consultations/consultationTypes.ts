@@ -6,6 +6,7 @@ export type ConsultationData = {
   breed: string
   tutorName: string
   veterinarian: string
+  veterinarianId: string
   patientId?: string
   weight?: string
   mainComplaint: string
@@ -38,7 +39,7 @@ export type ConsultationData = {
 }
 
 export const EMPTY_CONSULTATION: ConsultationData = {
-  dogName: '', age: '', breed: '', tutorName: '', veterinarian: '',
+  dogName: '', age: '', breed: '', tutorName: '', veterinarian: '', veterinarianId: '',
   mainComplaint: '', history: '',
   mucosa: '', capillaryRefill: '', heartRate: '', respiratoryRate: '',
   temperature: '', hydration: 'Normal', consciousness: 'Alerta',

@@ -3,6 +3,8 @@ import { Icon } from '../../components/common/Icon'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { AdminPanel } from '../admin/AdminPanel'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
+import type { Appointment } from '../appointments/appointmentTypes'
+import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
 import { DogDetails } from '../dogs/DogDetails'
 import { DogForm } from '../dogs/DogForm'
 import { DogList } from '../dogs/DogList'
@@ -15,7 +17,7 @@ type AttendantDashboardProps = {
   user: { email: string; name: string; isAdmin: boolean } | null
 }
 
-type AttendantModule = 'dashboard' | 'dogs' | 'appointments'
+type AttendantModule = 'dashboard' | 'dogs' | 'appointments' | 'consultations'
 
 type AppointmentEntry = { screen: 'list' | 'create'; key: number }
 
@@ -35,6 +37,11 @@ const NAV_ITEMS: { id: AttendantModule; label: string; icon: React.ReactNode }[]
     label: 'Agendamento',
     icon: <Icon><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 3v4m10-4v4M3 10h18" /></Icon>,
   },
+  {
+    id: 'consultations',
+    label: 'Atendimento',
+    icon: <Icon><path d="M9 3h6v4H9zM5 5h4m6 0h4v16H5V5" /><path d="M12 11v6m-3-3h6" /></Icon>,
+  },
 ]
 
 export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) {
@@ -43,13 +50,25 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
   const [screen, setScreen] = useState<DogScreen>('list')
   const [appointmentEntry, setAppointmentEntry] = useState<AppointmentEntry>({ screen: 'list', key: 0 })
   const [selected, setSelected] = useState<Dog | null>(null)
+  const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
+  const [careKey, setCareKey] = useState(0)
 
   const { dogs, createDog, createTutor, updateDog, removeDog } = useDogs()
 
   function selectModule(module: AttendantModule) {
+    if (module === 'consultations' && activeModule !== 'consultations') {
+      setCareAppointment(undefined)
+      setCareKey((prev) => prev + 1)
+    }
     setActiveModule(module)
     if (module === 'dogs') setScreen('list')
     if (module === 'appointments') setAppointmentEntry((prev) => ({ screen: 'list', key: prev.key + 1 }))
+  }
+
+  function startCare(appointment: Appointment) {
+    setCareAppointment(appointment)
+    setCareKey((prev) => prev + 1)
+    setActiveModule('consultations')
   }
 
   function openNewDog() {
@@ -121,13 +140,13 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
               {icon}{label}
             </button>
           ))}
-          <span>Área administrativa · Cadastro e agenda</span>
+          <span>Cadastro, agenda e atendimento supervisionado</span>
         </nav>
 
         {activeModule !== 'dashboard' && (
           <aside className="attendant-notice">
             <span>▣</span>
-            <p><strong>Perfil Atendente:</strong> Você tem acesso ao cadastro de pets e agendamento de consultas</p>
+            <p><strong>Perfil Estudante:</strong> Você tem acesso ao cadastro de pets, agendamentos e atendimentos com liberação do professor</p>
           </aside>
         )}
 
@@ -164,7 +183,11 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
         )}
 
         {activeModule === 'appointments' && (
-          <AppointmentsModule dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} />
+          <AppointmentsModule dogs={dogs} key={appointmentEntry.key} initialScreen={appointmentEntry.screen} onStartCare={startCare} />
+        )}
+
+        {activeModule === 'consultations' && (
+          <ClinicalCareModule key={careKey} dogs={dogs} initialAppointment={careAppointment} role="attendant" userEmail={user?.email} />
         )}
       </main>
     </div>
