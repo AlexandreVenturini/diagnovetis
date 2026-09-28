@@ -4,14 +4,15 @@ import { PetService } from '../../services/PetService'
 import { ConsultaService } from '../../services/ConsultaService'
 import { PatientList } from './PatientList'
 import { PatientDetails } from './PatientDetails'
-import { RecordCreateForm } from './RecordCreateForm'
+import { RetificationEditor } from './RetificationEditor'
 import type { ClinicalRecord, PatientRecord, RecordKind } from './recordTypes'
 import type { Exame } from '../../models/Exame'
+import type { UserRole } from '../auth/LoginPage'
 
 const petService = new PetService()
 const consultaService = new ConsultaService()
 
-type Screen = 'list' | 'details' | 'create'
+type Screen = 'list' | 'details' | 'retify'
 
 async function fetchPatients(): Promise<PatientRecord[]> {
   const pets = await petService.listarPets()
@@ -43,6 +44,9 @@ async function fetchPatients(): Promise<PatientRecord[]> {
         validatedBy: c.supervisorNome || c.responsavel.nome,
         exameFisico: c.exameFisico,
         alta: c.alta,
+        versao: c.versao,
+        retificadoEm: c.retificadoEm,
+        retificadoPorNome: c.retificadoPorNome,
       }))
 
       const e = pet.tutor.endereco
@@ -70,12 +74,15 @@ async function fetchPatients(): Promise<PatientRecord[]> {
   )
 }
 
-export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
+export function RecordsModule({ initialPetId, role = 'veterinarian' }: { initialPetId?: number; role?: UserRole }) {
   const [patients, setPatients] = useState<PatientRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [screen, setScreen] = useState<Screen>(initialPetId ? 'details' : 'list')
   const [selectedId, setSelectedId] = useState<number | null>(initialPetId ?? null)
   const [query, setQuery] = useState('')
+  const [retifyId, setRetifyId] = useState<number | null>(null)
+  const [detailsNotice, setDetailsNotice] = useState('')
+  const [detailsKey, setDetailsKey] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -100,23 +107,22 @@ export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
   )
 
   function openPatient(patient: PatientRecord) {
+    setRetifyId(null)
+    setDetailsNotice('')
     setSelectedId(patient.id)
     setScreen('details')
   }
 
-  function handleRecordSave(record: ClinicalRecord, weight: string) {
-    if (!selected) return
-    setPatients((prev) =>
-      prev.map((p) =>
-        p.id === selected.id
-          ? {
-              ...p,
-              records: [record, ...p.records],
-              weights: weight ? [...p.weights, { date: record.date, weight: Number(weight) }] : p.weights,
-            }
-          : p
-      )
-    )
+  function openRetification(recordId: number) {
+    setRetifyId(recordId)
+    setDetailsNotice('')
+    setScreen('retify')
+  }
+
+  async function handleRetified(message: string) {
+    await load()
+    setDetailsNotice(message)
+    setDetailsKey((prev) => prev + 1)
     setScreen('details')
   }
 
@@ -137,8 +143,6 @@ export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
     )
   }
 
-  const nextId = Math.max(0, ...patients.flatMap((p) => p.records.map((r) => r.id))) + 1
-
   if (loading) {
     return <section className="records-module"><div className="empty-appointments">Carregando prontuários...</div></section>
   }
@@ -149,7 +153,7 @@ export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
         <div className="records-heading">
           <div>
             <h2>Prontuários Clínicos</h2>
-            <p>Consulte o histórico completo dos pacientes.</p>
+            <p>{role === 'attendant' ? 'Consulte o histórico completo dos pacientes. Correções em atendimentos precisam da autorização de um professor.' : 'Consulte o histórico completo dos pacientes.'}</p>
           </div>
           <div className="records-stat">
             <strong>{patients.length}</strong>
@@ -173,12 +177,12 @@ export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
 
   if (!selected) return null
 
-  if (screen === 'create') {
+  if (screen === 'retify' && retifyId !== null) {
     return (
-      <RecordCreateForm
-        selected={selected}
-        nextId={nextId}
-        onSave={handleRecordSave}
+      <RetificationEditor
+        consultaId={retifyId}
+        role={role}
+        onDone={(message) => { void handleRetified(message) }}
         onCancel={() => setScreen('details')}
       />
     )
@@ -186,10 +190,14 @@ export function RecordsModule({ initialPetId }: { initialPetId?: number }) {
 
   return (
     <PatientDetails
+      key={detailsKey}
       selected={selected}
-      onBack={() => setScreen('list')}
-      onCreate={() => setScreen('create')}
+      onBack={() => { setDetailsNotice(''); setScreen('list') }}
       onExamSaved={handleExamSaved}
+      onRetify={openRetification}
+      canEditExams={role === 'veterinarian'}
+      initialRecordId={retifyId ?? undefined}
+      initialNotice={detailsNotice}
     />
   )
 }

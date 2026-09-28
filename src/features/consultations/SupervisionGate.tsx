@@ -7,13 +7,16 @@ import type { Liberacao, StudentOption, VeterinarianOption } from './supervision
 
 type SupervisionGateProps = {
   onLiberado: (liberacao: Liberacao) => void
+  consultaId?: number
+  onCancel?: () => void
 }
 
 type PedidoAguardando = { id: string; supervisor: VeterinarianOption; participantes: StudentOption[]; enviadoEm: number }
 
 const optionCardStyle = { border: '1px solid #e5e7eb', borderRadius: '10px', padding: '1rem', display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' }
 
-export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
+export function SupervisionGate({ onLiberado, consultaId, onCancel }: SupervisionGateProps) {
+  const retificacao = consultaId !== undefined
   const [veterinarians, setVeterinarians] = useState<VeterinarianOption[]>([])
   const [students, setStudents] = useState<StudentOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -92,7 +95,7 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
     setSending(true)
     setMessage('')
     try {
-      const id = await liberarAtendimento(supervisor.profileId, password, participants)
+      const id = await liberarAtendimento(supervisor.profileId, password, retificacao ? [] : participants, consultaId ?? null)
       setPassword('')
       if (!id) { setMessage('Senha incorreta. Peça ao professor para digitar novamente.'); return }
       onLiberado({ id, supervisor, participantes: selectedStudents })
@@ -111,7 +114,7 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
     setSending(true)
     setMessage('')
     try {
-      const id = await solicitarLiberacao(supervisor.profileId, participants)
+      const id = await solicitarLiberacao(supervisor.profileId, retificacao ? [] : participants, consultaId ?? null)
       setAguardando({ id, supervisor, participantes: selectedStudents, enviadoEm: Date.now() })
     } catch {
       setMessage('Não foi possível enviar o pedido ao professor. Tente novamente.')
@@ -131,10 +134,10 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
   if (aguardando) {
     return (
       <section className="consultation-panel content-card">
-        <h2>Aguardando aprovação</h2>
+        <h2>{retificacao ? 'Aguardando aprovação da retificação' : 'Aguardando aprovação'}</h2>
         <p>O pedido foi enviado para <strong>{aguardando.supervisor.nome}</strong>. Ele aparece no sino no topo da tela do professor, que pode aprovar pelo celular ou computador.</p>
         {aguardando.participantes.length > 0 && <p>Participantes: {aguardando.participantes.map((p) => p.nome).join(', ')}</p>}
-        <p style={{ color: '#6b7280' }}>Esta tela abre o atendimento sozinha assim que o professor aprovar. O pedido expira em 30 minutos.</p>
+        <p style={{ color: '#6b7280' }}>Esta tela abre {retificacao ? 'a retificação' : 'o atendimento'} sozinha assim que o professor aprovar. O pedido expira em 30 minutos.</p>
         <div className="consultation-next">
           <button className="secondary-button" onClick={() => void cancelarPedido()}>Cancelar pedido</button>
         </div>
@@ -144,8 +147,10 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
 
   return (
     <section className="consultation-panel content-card">
-      <h2>Liberação do atendimento</h2>
-      <p>Antes de começar, escolha o professor responsável pela supervisão e os colegas que vão participar. Depois, o professor libera o atendimento de uma das duas formas abaixo.</p>
+      <h2>{retificacao ? `Liberação da retificação do atendimento nº ${consultaId}` : 'Liberação do atendimento'}</h2>
+      <p>{retificacao
+        ? 'Alterações feitas por estudantes em atendimentos finalizados precisam da autorização de um professor. Escolha o professor, que libera a retificação de uma das duas formas abaixo.'
+        : 'Antes de começar, escolha o professor responsável pela supervisão e os colegas que vão participar. Depois, o professor libera o atendimento de uma das duas formas abaixo.'}</p>
 
       <div className="consultation-form-grid">
         <label>Professor supervisor *
@@ -156,7 +161,7 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
         </label>
       </div>
 
-      <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.75rem 1rem', margin: '1rem 0' }} disabled={sending}>
+      {!retificacao && <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.75rem 1rem', margin: '1rem 0' }} disabled={sending}>
         <legend style={{ padding: '0 0.35rem', fontWeight: 600 }}>Alunos participantes ({participants.length})</legend>
         {students.length === 0 ? (
           <p style={{ margin: 0, color: '#6b7280' }}>Nenhum outro estudante cadastrado.</p>
@@ -174,9 +179,9 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
             </div>
           </>
         )}
-      </fieldset>
+      </fieldset>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+      <div style={{ display: 'grid', marginTop: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
         <div style={optionCardStyle}>
           <strong>Professor presente</strong>
           <div className="consultation-form-grid" style={{ gridTemplateColumns: '1fr' }}>
@@ -209,6 +214,7 @@ export function SupervisionGate({ onLiberado }: SupervisionGateProps) {
       </div>
 
       {message && <p className="consultation-message" role="status">{message}</p>}
+      {onCancel && <div className="consultation-next"><button className="secondary-button" onClick={onCancel} disabled={sending}>Voltar</button></div>}
     </section>
   )
 }

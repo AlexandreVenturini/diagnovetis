@@ -53,6 +53,9 @@ export type ClinicalRecord = {
   validatedBy: string
   exameFisico?: ExameFisicoRecord
   alta?: AltaRecord
+  versao?: number
+  retificadoEm?: Date | null
+  retificadoPorNome?: string
 }
 
 export type PatientRecord = {

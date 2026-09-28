@@ -20,7 +20,7 @@ interface MedicamentoRow { id: number; nome_comercial: string; principio_ativo: 
 interface MedicamentoReceitadoRow { quantidade: number; dose: string; vezes_ao_dia: number; duracao_dias: number; observacao: string; medicamentos: MedicamentoRow; }
 interface ReceitaRow { id: number; medicamentos_receitados: MedicamentoReceitadoRow[]; }
 interface ParticipanteRow { profile_id: string; papel: ParticipanteConsulta["papel"]; nome: string; }
-interface ConsultaRow { supervisor_id?: string | null; liberacao_id?: string | null; conduta?: string; prescricao?: Consulta["prescricao"]; id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
+interface ConsultaRow { versao?: number; retificado_em?: string | null; retificado_por_nome?: string | null; supervisor_id?: string | null; liberacao_id?: string | null; conduta?: string; prescricao?: Consulta["prescricao"]; id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
 
 async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
     const pet = await petService.buscarPorId(row.pet_id);
@@ -108,6 +108,9 @@ async function carregarConsulta(row: ConsultaRow): Promise<Consulta | null> {
     consulta.participantes = participantes.map(p => ({ nome: p.nome, papel: p.papel }));
     consulta.supervisorNome = participantes.find(p => p.profile_id === row.supervisor_id)?.nome ?? '';
     consulta.liberacaoId = row.liberacao_id ?? null;
+    consulta.versao = row.versao ?? 1;
+    consulta.retificadoEm = row.retificado_em ? new Date(row.retificado_em) : null;
+    consulta.retificadoPorNome = row.retificado_por_nome ?? '';
     return consulta;
 }
 

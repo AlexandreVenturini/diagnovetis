@@ -10,7 +10,7 @@ function formatHora(iso: string) {
 function notificarNavegador(pedido: PedidoLiberacao) {
   if (!('Notification' in window) || Notification.permission !== 'granted' || !document.hidden) return
   try {
-    new Notification('DiagnoVetis: pedido de liberação', { body: `${pedido.alunoNome} pediu liberação para um atendimento.` })
+    new Notification('DiagnoVetis: pedido de liberação', { body: pedido.tipo === 'retificacao' ? `${pedido.alunoNome} pediu para retificar o atendimento nº ${pedido.consultaAlvo}.` : `${pedido.alunoNome} pediu liberação para um atendimento.` })
   } catch {
     return
   }
@@ -116,6 +116,9 @@ export function SupervisionRequestsBell() {
           <div style={{ display: 'grid', gap: '0.5rem', maxHeight: '320px', overflowY: 'auto' }}>
             {pedidos.map((pedido) => (
               <div key={pedido.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.6rem 0.75rem' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: pedido.tipo === 'retificacao' ? '#854d0e' : '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {pedido.tipo === 'retificacao' ? `Retificação do atendimento nº ${pedido.consultaAlvo}${pedido.paciente ? ` · ${pedido.paciente}` : ''}` : 'Novo atendimento'}
+                </div>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{pedido.alunoNome || 'Estudante'}</div>
                 <div style={{ fontSize: '0.78rem', color: '#6b7280' }}>
                   {pedido.alunoMatricula && <>Matrícula {pedido.alunoMatricula} · </>}Pedido às {formatHora(pedido.criadaEm)}

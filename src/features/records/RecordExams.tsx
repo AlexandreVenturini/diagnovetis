@@ -8,7 +8,7 @@ import type { ClinicalRecord } from './recordTypes'
 
 const service = new ExameService()
 const formatDate = (date: Date | null) => date ? date.toLocaleDateString('pt-BR') : 'Não informada'
-export function RecordExams({ records, onSaved }: { records: ClinicalRecord[]; onSaved: (exam: Exame) => void }) {
+export function RecordExams({ records, onSaved, canEdit = true }: { records: ClinicalRecord[]; onSaved: (exam: Exame) => void; canEdit?: boolean }) {
   const [editing, setEditing] = useState<{ exam: Exame; draft: ExamDraft } | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -29,7 +29,7 @@ export function RecordExams({ records, onSaved }: { records: ClinicalRecord[]; o
       <p><b>Resultado:</b> {exam.resultado || (exam.status === 'cancelado' ? 'Exame cancelado' : 'Aguardando resultado')}</p><p><b>Interpretação clínica:</b> {exam.interpretacao || 'Não informada'}</p>
       <p><b>Laudo do exame:</b> {exam.laudo || 'Não informado'}</p>
       {exam.laudoAnexo && <ExamReportAttachment attachment={exam.laudoAnexo} />}
-      {editing?.exam.id === exam.id ? <fieldset className="exam-result-editor exam-no-print" disabled={saving || editing.draft.laudoCarregando}><legend>Atualizar acompanhamento / resultado</legend><ExamFields resultOnly value={editing.draft} onChange={draft => setEditing({ ...editing, draft })} /><div className="form-actions"><button type="button" className="primary-button" onClick={() => void save()}>{saving ? 'Salvando…' : 'Salvar exame'}</button><button type="button" className="secondary-button" onClick={() => { setEditing(null); setMessage('') }}>Cancelar edição</button></div></fieldset> : <button type="button" className="secondary-button exam-no-print" disabled={saving} onClick={() => { setEditing({ exam, draft: examToDraft(exam) }); setMessage('') }}>Atualizar status / resultado</button>}
+      {editing?.exam.id === exam.id ? <fieldset className="exam-result-editor exam-no-print" disabled={saving || editing.draft.laudoCarregando}><legend>Atualizar acompanhamento / resultado</legend><ExamFields resultOnly value={editing.draft} onChange={draft => setEditing({ ...editing, draft })} /><div className="form-actions"><button type="button" className="primary-button" onClick={() => void save()}>{saving ? 'Salvando…' : 'Salvar exame'}</button><button type="button" className="secondary-button" onClick={() => { setEditing(null); setMessage('') }}>Cancelar edição</button></div></fieldset> : canEdit && <button type="button" className="secondary-button exam-no-print" disabled={saving} onClick={() => { setEditing({ exam, draft: examToDraft(exam) }); setMessage('') }}>Atualizar status / resultado</button>}
     </article>)}</section>)}
     {message && <p role="status" className="consultation-message exam-no-print">{message}</p>}
   </div>

@@ -149,7 +149,7 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
         )}
         {activeModule === 'consultations' && <ClinicalCareModule dogs={dogs} initialAppointment={careAppointment} role="veterinarian" userEmail={user?.email} />}
         {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={openRecord} />}
-        {activeModule === 'records' && <RecordsModule initialPetId={recordPetId} />}
+        {activeModule === 'records' && <RecordsModule initialPetId={recordPetId} role="veterinarian" />}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
         {activeModule === 'medications' && <MedicationsModule />}
       </main>

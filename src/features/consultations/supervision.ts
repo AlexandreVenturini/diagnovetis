@@ -19,8 +19,8 @@ export async function listarEstudantes(): Promise<StudentOption[]> {
   return ((data ?? []) as StudentRow[]).map((row) => ({ profileId: row.profile_id, nome: row.nome, matricula: row.matricula ?? '' }))
 }
 
-export async function liberarAtendimento(supervisorId: string, senha: string, participantes: string[]): Promise<string | null> {
-  const { data, error } = await supabase.rpc('liberar_atendimento', { p_supervisor: supervisorId, p_senha: senha, p_participantes: participantes })
+export async function liberarAtendimento(supervisorId: string, senha: string, participantes: string[], consultaId: number | null = null): Promise<string | null> {
+  const { data, error } = await supabase.rpc('liberar_atendimento', { p_supervisor: supervisorId, p_senha: senha, p_participantes: participantes, p_consulta: consultaId })
   if (error) throw new Error(error.message)
   return (data as string | null) ?? null
 }
@@ -31,14 +31,14 @@ export async function cancelarLiberacao(liberacaoId: string): Promise<void> {
 }
 
 export type LiberacaoStatus = 'pendente' | 'aberta' | 'recusada' | 'finalizada' | 'cancelada'
-export type PedidoLiberacao = { id: string; alunoNome: string; alunoMatricula: string; participantes: string[]; criadaEm: string }
+export type PedidoLiberacao = { id: string; alunoNome: string; alunoMatricula: string; participantes: string[]; criadaEm: string; tipo: 'atendimento' | 'retificacao'; consultaAlvo: number | null; paciente: string }
 
-type PedidoRow = { id: string; aluno_nome: string; aluno_matricula: string | null; participantes: string[] | null; criada_em: string }
+type PedidoRow = { id: string; aluno_nome: string; aluno_matricula: string | null; participantes: string[] | null; criada_em: string; tipo: 'atendimento' | 'retificacao' | null; consulta_alvo: number | null; paciente: string | null }
 
 export const LIBERACAO_EXPIRA_MS = 30 * 60 * 1000
 
-export async function solicitarLiberacao(supervisorId: string, participantes: string[]): Promise<string> {
-  const { data, error } = await supabase.rpc('solicitar_liberacao', { p_supervisor: supervisorId, p_participantes: participantes })
+export async function solicitarLiberacao(supervisorId: string, participantes: string[], consultaId: number | null = null): Promise<string> {
+  const { data, error } = await supabase.rpc('solicitar_liberacao', { p_supervisor: supervisorId, p_participantes: participantes, p_consulta: consultaId })
   if (error) throw new Error(error.message)
   return data as string
 }
@@ -59,6 +59,7 @@ export async function listarPedidosPendentes(): Promise<PedidoLiberacao[]> {
   if (error) throw new Error(error.message)
   return ((data ?? []) as PedidoRow[]).map((row) => ({
     id: row.id, alunoNome: row.aluno_nome, alunoMatricula: row.aluno_matricula ?? '', participantes: row.participantes ?? [], criadaEm: row.criada_em,
+    tipo: row.tipo ?? 'atendimento', consultaAlvo: row.consulta_alvo, paciente: row.paciente ?? '',
   }))
 }
 

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { RecordExams } from './RecordExams'
+import { RecordVersions } from './RecordVersions'
 import { PatientPrescriptions } from '../prescriptions/PatientPrescriptions'
 import { exportPatientRecord } from './recordReport'
 import { generatePrescription } from '../consultations/prescriptionReport'
@@ -13,19 +14,22 @@ function formatDate(date: string) {
 type PatientDetailsProps = {
   selected: PatientRecord
   onBack: () => void
-  onCreate: () => void
   onExamSaved: (exam: Parameters<React.ComponentProps<typeof RecordExams>['onSaved']>[0]) => void
+  onRetify: (recordId: number) => void
+  canEditExams: boolean
+  initialRecordId?: number
+  initialNotice?: string
 }
 
-export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: PatientDetailsProps) {
+export function PatientDetails({ selected, onBack, onExamSaved, onRetify, canEditExams, initialRecordId, initialNotice = '' }: PatientDetailsProps) {
   const formRef = useRef<HTMLFormElement>(null)
-  const [notice, setNotice] = useState('')
-  const [vaccinationRows, setVaccinationRows] = useState(1)
-  const [treatmentRows, setTreatmentRows] = useState(1)
-  const [evolutionRows, setEvolutionRows] = useState(0)
+  const [notice, setNotice] = useState(initialNotice)
+  const [showVersions, setShowVersions] = useState(false)
 
   const latestWeight = selected.weights.at(-1)?.weight
-  const latestRecord = [...selected.records].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)[0]
+  const sortedRecords = [...selected.records].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+  const [recordId, setRecordId] = useState<number | undefined>(initialRecordId ?? sortedRecords[0]?.id)
+  const latestRecord = sortedRecords.find((record) => record.id === recordId) ?? sortedRecords[0]
   const emptyRecord: ClinicalRecord = {
     id: 0, kind: 'Consulta', date: '', veterinarian: '', crmv: '',
     students: [], description: '', diagnosis: '', conduct: '',
@@ -64,11 +68,48 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
         </div>
         <div className="record-header-actions">
           <button className="outline-button" onClick={exportPdf}>⇩ Exportar PDF</button>
-          <button className="primary-button" onClick={onCreate}>+ Adicionar registro</button>
         </div>
       </div>
 
       {notice && <p className="record-notice" role="status">{notice}</p>}
+
+      <section className="content-card" style={{ padding: '1rem 1.25rem', marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        {sortedRecords.length === 0 ? (
+          <p style={{ margin: 0 }}>Nenhum atendimento registrado para este paciente.</p>
+        ) : (
+          <>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontWeight: 600, fontSize: '0.85rem', minWidth: 'min(100%, 320px)' }}>
+              Atendimento exibido no prontuário
+              <select
+                value={latestRecord?.id ?? ''}
+                onChange={(event) => { setRecordId(Number(event.target.value)); setShowVersions(false) }}
+                style={{ height: '40px', padding: '0 12px', border: '1px solid #d1d1d1', borderRadius: '9px', fontSize: '14px', fontWeight: 400 }}
+              >
+                {sortedRecords.map((record) => (
+                  <option key={record.id} value={record.id}>
+                    Nº {record.id} · {formatDate(record.date)} · {record.veterinarian}{(record.versao ?? 1) > 1 ? ' · retificado' : ''}
+                  </option>
+                ))}
+              </select>
+              {latestRecord && (latestRecord.versao ?? 1) > 1 && (
+                <small style={{ fontWeight: 400, color: '#854d0e' }}>
+                  Retificado{latestRecord.retificadoPorNome ? ` por ${latestRecord.retificadoPorNome}` : ''}{latestRecord.retificadoEm ? ` em ${latestRecord.retificadoEm.toLocaleDateString('pt-BR')}` : ''} · versão {latestRecord.versao}
+                </small>
+              )}
+            </label>
+            {latestRecord && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button className="outline-button" type="button" onClick={() => setShowVersions((value) => !value)}>
+                  {showVersions ? 'Ocultar histórico' : 'Histórico de retificações'}
+                </button>
+                <button className="primary-button" type="button" onClick={() => onRetify(latestRecord.id)}>Editar/Retificar atendimento</button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {showVersions && latestRecord && <RecordVersions consultaId={latestRecord.id} onClose={() => setShowVersions(false)} />}
 
       <PatientPrescriptions petId={selected.id} />
 
@@ -98,7 +139,7 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
             <h3>Ficha de Prontuário Animal</h3>
             <p>Registro Clínico Veterinário · IFES Campus Santa Teresa</p>
           </div>
-          <label>Nº do prontuário<input defaultValue={String(selected.id).padStart(4, '0')} /></label>
+          <label>Nº do prontuário<input readOnly defaultValue={String(selected.id).padStart(4, '0')} /></label>
         </header>
 
         <div className="animal-record-grid">
@@ -137,23 +178,15 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
             </div>
           </Section>
 
-          <Section
-            number="4"
-            title="Vacinação e prevenção"
-            className="half"
-            onAddRow={() => setVaccinationRows((n) => n + 1)}
-            onRemoveRow={vaccinationRows > 1 ? () => setVaccinationRows((n) => Math.max(1, n - 1)) : undefined}
-          >
+          <Section number="4" title="Vacinação e prevenção" className="half">
             <table>
               <thead><tr><th>Vacina/procedimento</th><th>Data</th><th>Dose</th><th>Próxima dose</th></tr></thead>
               <tbody>
                 {selected.vaccines.map((vaccine, i) => {
                   const [name, dateVal = ''] = vaccine.split(' - ')
-                  return <tr key={`${vaccine}-${i}`}><EditableCells values={[name, dateVal, '', '']} /></tr>
+                  return <tr key={`${vaccine}-${i}`}><ReadOnlyCells values={[name, dateVal, '', '']} /></tr>
                 })}
-                {Array.from({ length: vaccinationRows }, (_, i) => (
-                  <tr key={`vacina-extra-${i}`}><EditableCells count={4} /></tr>
-                ))}
+                {selected.vaccines.length === 0 && <tr><ReadOnlyCells values={['Nenhum registro', '', '', '']} /></tr>}
               </tbody>
             </table>
             <div className="paper-fields single compact">
@@ -192,8 +225,8 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
             </div>
           </Section>
 
-          <Section number="6" title="Exames Complementares" className="full">
-            <RecordExams key={selected.id} records={selected.records} onSaved={onExamSaved} />
+          <Section number="6" title="Exames Complementares" className="full" editable>
+            <RecordExams key={selected.id} records={selected.records} onSaved={onExamSaved} canEdit={canEditExams} />
           </Section>
 
           <Section number="7" title="Diagnóstico" className="third">
@@ -204,22 +237,14 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
             </div>
           </Section>
 
-          <Section
-            number="8"
-            title="Tratamento"
-            className="third"
-            onAddRow={() => setTreatmentRows((n) => n + 1)}
-            onRemoveRow={treatmentRows > 1 ? () => setTreatmentRows((n) => Math.max(1, n - 1)) : undefined}
-          >
+          <Section number="8" title="Tratamento" className="third">
             <table>
               <thead><tr><th>Medicamento</th><th>Dose</th><th>Frequência</th></tr></thead>
               <tbody>
                 {display.prescriptions.map((item, i) => (
-                  <tr key={`${item}-${i}`}><EditableCells values={[item, '', '']} /></tr>
+                  <tr key={`${item}-${i}`}><ReadOnlyCells values={[item, '', '']} /></tr>
                 ))}
-                {Array.from({ length: treatmentRows }, (_, i) => (
-                  <tr key={`tratamento-extra-${i}`}><EditableCells count={3} /></tr>
-                ))}
+                {display.prescriptions.length === 0 && <tr><ReadOnlyCells values={['Nenhum medicamento registrado', '', '']} /></tr>}
               </tbody>
             </table>
             <div className="paper-fields single compact">
@@ -228,13 +253,7 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
             </div>
           </Section>
 
-          <Section
-            number="9"
-            title="Evolução clínica"
-            className="two-thirds"
-            onAddRow={() => setEvolutionRows((n) => n + 1)}
-            onRemoveRow={evolutionRows > 0 ? () => setEvolutionRows((n) => Math.max(0, n - 1)) : undefined}
-          >
+          <Section number="9" title="Evolução clínica" className="two-thirds">
             <table>
               <thead><tr><th>Data</th><th>Evolução/observações</th><th>Procedimentos</th><th>Responsável</th></tr></thead>
               <tbody>
@@ -242,12 +261,9 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
                   .sort((a, b) => b.date.localeCompare(a.date))
                   .map((record) => (
                     <tr key={record.id}>
-                      <EditableCells values={[formatDate(record.date), record.description, record.kind, record.veterinarian]} />
+                      <ReadOnlyCells values={[formatDate(record.date), record.description, record.kind, record.veterinarian]} />
                     </tr>
                   ))}
-                {Array.from({ length: evolutionRows }, (_, i) => (
-                  <tr key={`evolucao-extra-${i}`}><EditableCells count={4} /></tr>
-                ))}
               </tbody>
             </table>
           </Section>
@@ -287,8 +303,8 @@ export function PatientDetails({ selected, onBack, onCreate, onExamSaved }: Pati
   )
 }
 
-function EditableCells({ values, count }: { values?: string[]; count?: number }) {
-  const cells = values ?? Array.from({ length: count ?? 0 }, () => '')
+function ReadOnlyCells({ values }: { values: string[] }) {
+  const cells = values
   return (
     <>
       {cells.map((value, i) => (
@@ -299,28 +315,21 @@ function EditableCells({ values, count }: { values?: string[]; count?: number })
 }
 
 function Section({
-  number, title, className, children, onAddRow, onRemoveRow,
+  number, title, className, children, editable = false,
 }: {
   number: string
   title: string
   className: string
   children: ReactNode
-  onAddRow?: () => void
-  onRemoveRow?: () => void
+  editable?: boolean
 }) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <fieldset className={`paper-section ${className}${collapsed ? ' collapsed' : ''}`}>
+    <fieldset className={`paper-section ${className}${collapsed ? ' collapsed' : ''}${editable ? '' : ' paper-readonly'}`} disabled={!editable}>
       <legend>
         <span><b>{number}.</b> {title}</span>
         <span className="paper-section-actions">
-          {onRemoveRow && !collapsed && (
-            <button type="button" className="remove-table-row" aria-label={`Remover última linha em ${title}`} onClick={onRemoveRow}>×</button>
-          )}
-          {onAddRow && !collapsed && (
-            <button type="button" className="add-table-row" aria-label={`Adicionar linha em ${title}`} onClick={onAddRow}>＋</button>
-          )}
           <button
             type="button"
             className="collapse-section"

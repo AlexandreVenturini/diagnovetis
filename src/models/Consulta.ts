@@ -59,6 +59,9 @@ export class Consulta {
     participantes: ParticipanteConsulta[] = [];
     supervisorNome = '';
     liberacaoId: string | null = null;
+    versao = 1;
+    retificadoEm: Date | null = null;
+    retificadoPorNome = '';
 
     constructor(
         id: number,
