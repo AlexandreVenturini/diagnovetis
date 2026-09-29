@@ -32,7 +32,7 @@ export function AppointmentForm({ onSave, onCancel, error, dogs }: AppointmentFo
 
   const normalizedDogQuery = dogQuery.trim().toLocaleLowerCase('pt-BR')
   const normalizedTutorQuery = tutorQuery.trim().toLocaleLowerCase('pt-BR')
-  const dogResults = dogs.filter((dog) => (!normalizedDogQuery || `${dog.name} ${dog.breed}`.toLocaleLowerCase('pt-BR').includes(normalizedDogQuery)) && (!normalizedTutorQuery || dog.tutor.toLocaleLowerCase('pt-BR').includes(normalizedTutorQuery))).slice(0, 6)
+  const dogResults = dogs.filter((dog) => !dog.deceasedAt && (!normalizedDogQuery || `${dog.name} ${dog.breed}`.toLocaleLowerCase('pt-BR').includes(normalizedDogQuery)) && (!normalizedTutorQuery || dog.tutor.toLocaleLowerCase('pt-BR').includes(normalizedTutorQuery))).slice(0, 6)
   const tutors = [...new Map(dogs.map((dog) => [dog.tutor.trim().toLocaleLowerCase('pt-BR'), { name: dog.tutor, contact: dog.contact }])).values()]
   const tutorResults = tutors.filter((tutor) => !normalizedTutorQuery || `${tutor.name} ${tutor.contact}`.toLocaleLowerCase('pt-BR').includes(normalizedTutorQuery)).slice(0, 6)
 

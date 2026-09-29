@@ -9,6 +9,7 @@ export type Dog = {
   contact: string
   history: string
   createdAt?: string
+  deceasedAt?: string
 }
 
 export type DogFormData = Omit<Dog, 'id'>

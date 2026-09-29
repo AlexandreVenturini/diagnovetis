@@ -20,7 +20,7 @@ function formatHora(iso: string) {
 function notificarNavegador(pedido: PedidoLiberacao) {
   if (!('Notification' in window) || Notification.permission !== 'granted' || !document.hidden) return
   try {
-    new Notification('DiagnoVetis: pedido de liberação', { body: pedido.tipo === 'retificacao' ? `${pedido.alunoNome} pediu para retificar o atendimento nº ${pedido.consultaAlvo}.` : pedido.tipo === 'receita' ? `${pedido.alunoNome} enviou uma receita para aprovação.` : `${pedido.alunoNome} pediu liberação para um atendimento.` })
+    new Notification('DiagnoVetis: pedido de liberação', { body: pedido.tipo === 'retificacao' ? `${pedido.alunoNome} pediu para retificar o atendimento nº ${pedido.consultaAlvo}.` : pedido.tipo === 'receita' ? `${pedido.alunoNome} enviou uma receita para aprovação.` : pedido.tipo === 'obito' ? `${pedido.alunoNome} enviou um registro de óbito para aprovação.` : `${pedido.alunoNome} pediu liberação para um atendimento.` })
   } catch {
     return
   }
@@ -71,7 +71,7 @@ export function SupervisionRequestsBell() {
   }, [open])
 
   function pedirRecusa(pedido: PedidoLiberacao) {
-    if (pedido.tipo === 'receita') {
+    if (pedido.tipo === 'receita' || pedido.tipo === 'obito') {
       setRecusa({ id: pedido.id, motivo: '' })
       setMessage('')
       return
@@ -80,8 +80,8 @@ export function SupervisionRequestsBell() {
   }
 
   async function responder(pedido: PedidoLiberacao, aprovar: boolean, motivo: string | null = null) {
-    if (!aprovar && pedido.tipo === 'receita' && !motivo?.trim()) {
-      setMessage('Informe o motivo da recusa para o estudante corrigir a receita.')
+    if (!aprovar && (pedido.tipo === 'receita' || pedido.tipo === 'obito') && !motivo?.trim()) {
+      setMessage('Informe o motivo da recusa para o estudante corrigir.')
       return
     }
     setBusyId(pedido.id)
@@ -143,10 +143,11 @@ export function SupervisionRequestsBell() {
           <div style={{ display: 'grid', gap: '0.5rem', maxHeight: '320px', overflowY: 'auto' }}>
             {pedidos.map((pedido) => (
               <div key={pedido.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.6rem 0.75rem' }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: pedido.tipo === 'retificacao' ? '#854d0e' : pedido.tipo === 'receita' ? '#1d4ed8' : '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: pedido.tipo === 'retificacao' ? '#854d0e' : pedido.tipo === 'receita' ? '#1d4ed8' : pedido.tipo === 'obito' ? '#111827' : '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {pedido.tipo === 'retificacao'
                     ? `Retificação do atendimento nº ${pedido.consultaAlvo}${pedido.paciente ? ` · ${pedido.paciente}` : ''}`
-                    : pedido.tipo === 'receita' ? `Receita para aprovar${pedido.paciente ? ` · ${pedido.paciente}` : ''}` : 'Novo atendimento'}
+                    : pedido.tipo === 'receita' ? `Receita para aprovar${pedido.paciente ? ` · ${pedido.paciente}` : ''}`
+                    : pedido.tipo === 'obito' ? `Registro de óbito${pedido.paciente ? ` · ${pedido.paciente}` : ''}` : 'Novo atendimento'}
                 </div>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{pedido.alunoNome || 'Estudante'}</div>
                 <div style={{ fontSize: '0.78rem', color: '#6b7280' }}>
@@ -168,6 +169,16 @@ export function SupervisionRequestsBell() {
                     >Ver receita completa ⤢</button>
                   </div>
                 )}
+                {pedido.obito && (
+                  <div style={{ fontSize: '0.78rem', color: '#374151', marginTop: '0.35rem', background: '#f9fafb', borderRadius: '8px', padding: '0.4rem 0.55rem', display: 'grid', gap: '0.15rem' }}>
+                    <div><b>Data e hora:</b> {new Date(pedido.obito.data_hora).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</div>
+                    <div><b>Circunstâncias:</b> {pedido.obito.circunstancias}</div>
+                    {pedido.obito.causa_provavel && <div><b>Causa provável:</b> {pedido.obito.causa_provavel}</div>}
+                    <div><b>Eutanásia:</b> {pedido.obito.eutanasia ? 'Sim' : 'Não'} · <b>Reanimação:</b> {pedido.obito.houve_reanimacao ? 'Sim' : 'Não'} · <b>Necropsia:</b> {pedido.obito.necropsia ? 'Sim' : 'Não'}</div>
+                    <div><b>Responsável comunicado:</b> {pedido.obito.comunicado_responsavel ? `Sim${pedido.obito.comunicacao_detalhes ? ` — ${pedido.obito.comunicacao_detalhes}` : ''}` : 'Não'}</div>
+                    <div><b>Destinação do corpo:</b> {pedido.obito.destino_corpo}</div>
+                  </div>
+                )}
                 {pedido.participantes.length > 0 && (
                   <div style={{ fontSize: '0.78rem', color: '#4b5563', marginTop: '0.2rem' }}>Participantes: {pedido.participantes.join(', ')}</div>
                 )}
@@ -185,7 +196,7 @@ export function SupervisionRequestsBell() {
                     onClick={() => void responder(pedido, true)}
                     disabled={busyId === pedido.id}
                     style={{ flex: 1, padding: '0.4rem', background: 'var(--green, #2d6a4f)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
-                  >{pedido.tipo === 'receita' ? 'Aprovar e emitir' : 'Aprovar'}</button>
+                  >{pedido.tipo === 'receita' ? 'Aprovar e emitir' : pedido.tipo === 'obito' ? 'Aprovar e registrar' : 'Aprovar'}</button>
                   <button
                     onClick={() => pedirRecusa(pedido)}
                     disabled={busyId === pedido.id}

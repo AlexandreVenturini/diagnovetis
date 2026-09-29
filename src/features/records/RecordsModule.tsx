@@ -9,6 +9,8 @@ import type { PatientSummary } from './PatientList'
 import { PatientDetails } from './PatientDetails'
 import { summarizePatients, type SummaryItem } from './patientSummaries'
 import { RetificationEditor } from './RetificationEditor'
+import { DeathForm } from './DeathForm'
+import { buscarObito } from './death'
 import type { ClinicalRecord, PatientRecord, RecordKind } from './recordTypes'
 import type { Exame } from '../../models/Exame'
 import type { UserRole } from '../auth/LoginPage'
@@ -20,7 +22,7 @@ import { periodNoun, periodRange, type DateRange } from '../common/period'
 const petService = new PetService()
 const consultaService = new ConsultaService()
 
-type Screen = 'list' | 'details' | 'retify'
+type Screen = 'list' | 'details' | 'retify' | 'death'
 
 function petInfo(pet: Pet): SummaryItem['pet'] {
   return { id: pet.id, dogName: pet.nome, tutorName: pet.tutor.nome, breed: pet.raca, weight: pet.peso }
@@ -97,11 +99,11 @@ function buildPatientRecord(pet: Pet, consultas: Consulta[]): PatientRecord {
 }
 
 async function fetchPatient(petId: number): Promise<PatientRecord | null> {
-  const [pets, consultas] = await Promise.all([petService.listarPorIds([petId]), consultaService.listarPorPet(petId)])
-  return pets[0] ? buildPatientRecord(pets[0], consultas) : null
+  const [pets, consultas, death] = await Promise.all([petService.listarPorIds([petId]), consultaService.listarPorPet(petId), buscarObito(petId)])
+  return pets[0] ? { ...buildPatientRecord(pets[0], consultas), death } : null
 }
 
-export function RecordsModule({ initialPetId, role = 'veterinarian' }: { initialPetId?: number; role?: UserRole }) {
+export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }: { initialPetId?: number; role?: UserRole; userEmail?: string }) {
   const [screen, setScreen] = useState<Screen>(initialPetId ? 'details' : 'list')
   const [selectedId, setSelectedId] = useState<number | null>(initialPetId ?? null)
   const [selected, setSelected] = useState<PatientRecord | null>(null)
@@ -226,6 +228,21 @@ export function RecordsModule({ initialPetId, role = 'veterinarian' }: { initial
     )
   }
 
+  if (screen === 'death') {
+    return (
+      <DeathForm
+        petId={selected.id}
+        dogName={selected.dogName}
+        role={role}
+        userEmail={userEmail}
+        records={selected.records}
+        existing={selected.death}
+        onDone={(message) => { void handleRetified(message) }}
+        onCancel={() => setScreen('details')}
+      />
+    )
+  }
+
   if (screen === 'retify' && retifyId !== null) {
     return (
       <RetificationEditor
@@ -244,7 +261,10 @@ export function RecordsModule({ initialPetId, role = 'veterinarian' }: { initial
       onBack={() => { setDetailsNotice(''); setScreen('list') }}
       onExamSaved={handleExamSaved}
       onRetify={openRetification}
+      onRegisterDeath={() => { setDetailsNotice(''); setScreen('death') }}
+      onRetifyDeath={() => { setDetailsNotice(''); setScreen('death') }}
       canEditExams={role === 'veterinarian'}
+      canRetifyDeath={role === 'veterinarian'}
       initialRecordId={retifyId ?? undefined}
       initialNotice={detailsNotice}
     />

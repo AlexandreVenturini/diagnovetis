@@ -19,7 +19,7 @@ import { SupervisionGate } from './SupervisionGate'
 import { cancelarLiberacao, listarVeterinarios } from './supervision'
 import type { Liberacao, VeterinarianOption } from './supervision'
 
-type ClinicalCareModuleProps = { dogs: Dog[]; initialAppointment?: Appointment; role?: UserRole; userEmail?: string }
+type ClinicalCareModuleProps = { dogs: Dog[]; initialAppointment?: Appointment; role?: UserRole; userEmail?: string; onOpenRecord?: (petId: number) => void }
 
 function applyVeterinarian(data: ConsultationData, veterinarians: VeterinarianOption[], liberacao: Liberacao | null, userEmail?: string): ConsultationData {
   if (liberacao) return { ...data, veterinarian: liberacao.supervisor.nome, veterinarianId: String(liberacao.supervisor.medicoId) }
@@ -30,7 +30,7 @@ function applyVeterinarian(data: ConsultationData, veterinarians: VeterinarianOp
   return vet ? { ...data, veterinarian: vet.nome, veterinarianId: String(vet.medicoId) } : { ...data, veterinarianId: '' }
 }
 
-export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinarian', userEmail }: ClinicalCareModuleProps) {
+export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinarian', userEmail, onOpenRecord }: ClinicalCareModuleProps) {
   const isStudent = role === 'attendant'
   const [step, setStep] = useState<ConsultationStep>(1)
   const [data, setData] = useState<ConsultationData>(() => initialAppointment ? consultationFromAppointment(initialAppointment, dogs) : EMPTY_CONSULTATION)
@@ -38,7 +38,7 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const saveLock = useRef(false)
-  const [completed, setCompleted] = useState<{ data: ConsultationData; exams: ExamDraft[]; id: number } | null>(null)
+  const [completed, setCompleted] = useState<{ data: ConsultationData; exams: ExamDraft[]; id: number; petId?: number } | null>(null)
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(initialAppointment?.id ?? null)
   const { salvarConsulta } = useConsultas()
   const { appointments, updateAppointment } = useAppointments()
@@ -112,7 +112,7 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
         setMessage(resultado.erro ?? 'Não foi possível salvar o atendimento. Os dados preenchidos foram mantidos.')
         return
       }
-      setCompleted({ data: { ...data }, exams: structuredClone(exams), id: resultado.id })
+      setCompleted({ data: { ...data }, exams: structuredClone(exams), id: resultado.id, petId: resultado.petId })
       setMessage('Atendimento finalizado e salvo no prontuário.')
       if (selectedAppointmentId !== null) {
         try {
@@ -142,7 +142,11 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
   if (completed) return <section className="consultation-panel content-card">
     <h2>Atendimento finalizado</h2>
     <p>Atendimento nº {completed.id} de <strong>{completed.data.dogName}</strong> salvo no prontuário.</p>
-    <p>Para emitir uma receita, acesse a aba Receituário.</p>
+    {completed.data.dischargeCondition === 'Óbito' ? <aside className="profile-notice" style={{ borderLeft: '5px solid #1f2937' }}>
+      <span>✝</span>
+      <p><strong>Condição na alta: óbito.</strong> Registre o óbito completo no prontuário do animal: data e hora, circunstâncias, causa provável, eutanásia, necropsia e destinação do corpo.
+        {onOpenRecord && completed.petId !== undefined && <> <button type="button" className="text-back-button" onClick={() => onOpenRecord(completed.petId!)}>Abrir prontuário para registrar o óbito →</button></>}</p>
+    </aside> : <p>Para emitir uma receita, acesse a aba Receituário.</p>}
     <div className="form-actions">
       <button className="secondary-button" onClick={() => setMessage(generateConsultationReport(completed.data, completed.exams) ? 'Relatório clínico aberto.' : 'O navegador bloqueou o relatório. Permita novas janelas e tente novamente.')}>Gerar relatório clínico</button>
       <button className="secondary-button" disabled={saving} onClick={startNew}>Novo atendimento</button>

@@ -13,6 +13,7 @@ export class Pet {
     private _sexo: string;
     private _historico: string;
     criadoEm: string | null = null;
+    obitoEm: string | null = null;
 
     constructor(
         id: number,

@@ -24,6 +24,7 @@ function petToDog(pet: Pet): Dog {
         contact: pet.tutor.telefone,
         history: pet.historico,
         createdAt: pet.criadoEm ? dateInput(new Date(pet.criadoEm)) : '',
+        deceasedAt: pet.obitoEm ? dateInput(new Date(pet.obitoEm)) : '',
     }
 }
 

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { RecordExams } from './RecordExams'
 import { RecordVersions } from './RecordVersions'
+import { DeathSection } from './DeathSection'
 import { PatientPrescriptions } from '../prescriptions/PatientPrescriptions'
 import { exportPatientRecord } from './recordReport'
 import { generatePrescription } from '../consultations/prescriptionReport'
@@ -16,12 +17,15 @@ type PatientDetailsProps = {
   onBack: () => void
   onExamSaved: (exam: Parameters<React.ComponentProps<typeof RecordExams>['onSaved']>[0]) => void
   onRetify: (recordId: number) => void
+  onRegisterDeath: () => void
+  onRetifyDeath: () => void
   canEditExams: boolean
+  canRetifyDeath: boolean
   initialRecordId?: number
   initialNotice?: string
 }
 
-export function PatientDetails({ selected, onBack, onExamSaved, onRetify, canEditExams, initialRecordId, initialNotice = '' }: PatientDetailsProps) {
+export function PatientDetails({ selected, onBack, onExamSaved, onRetify, onRegisterDeath, onRetifyDeath, canEditExams, canRetifyDeath, initialRecordId, initialNotice = '' }: PatientDetailsProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const [notice, setNotice] = useState(initialNotice)
   const [showVersions, setShowVersions] = useState(false)
@@ -63,11 +67,12 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, canEdi
       <div className="records-heading record-detail-heading">
         <div>
           <button className="text-back-button" onClick={onBack}>‹ Prontuários</button>
-          <h2>{selected.dogName}</h2>
+          <h2>{selected.dogName}{selected.death && <span style={{ marginLeft: '0.6rem', fontSize: '0.8rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px', background: '#1f2937', color: '#fff', verticalAlign: 'middle' }}>Óbito em {new Date(selected.death.dataHora).toLocaleDateString('pt-BR')}</span>}</h2>
           <p>Tutor: {selected.tutorName} · {selected.breed} · {selected.age}</p>
         </div>
         <div className="record-header-actions">
           <button className="outline-button" onClick={exportPdf}>⇩ Exportar PDF</button>
+          {!selected.death && <button className="secondary-button" onClick={onRegisterDeath}>Registrar óbito</button>}
         </div>
       </div>
 
@@ -110,6 +115,8 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, canEdi
       </section>
 
       {showVersions && latestRecord && <RecordVersions consultaId={latestRecord.id} onClose={() => setShowVersions(false)} />}
+
+      {selected.death && <DeathSection death={selected.death} canRetify={canRetifyDeath} onRetify={onRetifyDeath} />}
 
       <PatientPrescriptions petId={selected.id} />
 

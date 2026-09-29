@@ -5,7 +5,7 @@ import { filterAnimals } from './filterAnimals'
 
 export function AnimalSearch({ dogs, selected, onSelect }: { dogs: Dog[]; selected?: Dog; onSelect: (dog: Dog | null) => void }) {
   const [query, setQuery] = useState('')
-  const matches = filterAnimals(dogs, query)
+  const matches = filterAnimals(dogs.filter(dog => !dog.deceasedAt), query)
   return <div className="rx-animal-search">
     {selected ? <div className="rx-selected-animal"><div><strong>{selected.name}</strong><span>Tutor: {selected.tutor} · #{selected.id}</span></div><button type="button" className="secondary-button" onClick={() => { setQuery(''); onSelect(null) }}>Trocar animal</button></div> : <>
       <label>Buscar animal<input type="search" autoComplete="off" value={query} onChange={event => setQuery(event.target.value)} placeholder="Nome do animal, tutor ou identificação" aria-describedby="rx-animal-help" /></label>

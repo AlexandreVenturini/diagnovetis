@@ -214,6 +214,7 @@ export class ConsultaService {
             ? await supabase.rpc('salvar_consulta_com_exames', { p_consulta: consultaRow, p_exames: consulta.exames.map(exameToRow) })
             : await supabase.from('consultas').insert(consultaRow);
         if (error) {
+            if (error.message.includes('óbito')) throw new Error('Este animal tem óbito registrado; não é possível registrar novos atendimentos para ele.');
             if (error.message.includes('liberação')) throw new Error('A liberação do professor não é mais válida. Peça uma nova liberação para salvar o atendimento. Os dados foram mantidos.');
             if (consulta.exames.length) throw new Error('Não foi possível confirmar a gravação da consulta com exames. Confira a conexão e a migração de exames complementares. Os dados foram mantidos.');
             if (consulta.prescricao && error.message.includes('prescricao')) {

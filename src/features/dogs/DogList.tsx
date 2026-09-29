@@ -44,7 +44,7 @@ export function DogList({ dogs, onCreate, onEdit, onDetails }: DogListProps) {
         {visibleDogs.map((dog) => (
           <article className="dog-card" key={dog.id}>
             <div className="dog-card-heading">
-              <h3>{dog.name}</h3>
+              <h3>{dog.name}{dog.deceasedAt && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#1f2937', color: '#fff', verticalAlign: 'middle' }}>Óbito</span>}</h3>
               <div className="card-actions">
                 <button aria-label={`Ver detalhes de ${dog.name}`} onClick={() => onDetails(dog)}>
                   <Icon><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></Icon>

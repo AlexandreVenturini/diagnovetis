@@ -1,5 +1,6 @@
 import type { Exame } from '../../models/Exame'
 import type { PrescricaoSalva } from '../../models/Prescricao'
+import type { DeathRecord } from './death'
 
 export type RecordKind = 'Consulta' | 'Vacina' | 'Exame' | 'Tratamento' | 'Retorno'
 export type RecordValidation = 'draft' | 'pending' | 'validated'
@@ -60,6 +61,7 @@ export type ClinicalRecord = {
 
 export type PatientRecord = {
   id: number
+  death?: DeathRecord | null
   dogName: string
   tutorName: string
   tutorCpf: string

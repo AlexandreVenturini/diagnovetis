@@ -35,7 +35,7 @@ async function resolverPet(nomeCao: string, nomeTutor: string) {
 }
 
 export function useConsultas() {
-    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null, exams: ExamDraft[] = [], liberacaoId: string | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number }> {
+    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null, exams: ExamDraft[] = [], liberacaoId: string | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number; petId?: number }> {
       try {
         if (prescricao) {
             const error = validatePrescription(data, prescricao.prescription)
@@ -96,7 +96,7 @@ export function useConsultas() {
             consulta.prescricao = prescricao
             consulta.liberacaoId = liberacaoId
             await consultaService.adicionarConsulta(consulta)
-            return { sucesso: true, id: consulta.id }
+            return { sucesso: true, id: consulta.id, petId: pet.id }
         } catch (e) {
             return { sucesso: false, erro: (e as Error).message }
         }

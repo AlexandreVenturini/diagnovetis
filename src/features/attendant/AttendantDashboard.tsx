@@ -208,12 +208,12 @@ export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) 
         )}
 
         {activeModule === 'consultations' && (
-          <ClinicalCareModule key={careKey} dogs={dogs} initialAppointment={careAppointment} role="attendant" userEmail={user?.email} />
+          <ClinicalCareModule key={careKey} dogs={dogs} initialAppointment={careAppointment} role="attendant" userEmail={user?.email} onOpenRecord={openRecord} />
         )}
 
         {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={openRecord} role="attendant" />}
 
-        {activeModule === 'records' && <RecordsModule key={recordsKey} initialPetId={recordPetId} role="attendant" />}
+        {activeModule === 'records' && <RecordsModule key={recordsKey} initialPetId={recordPetId} role="attendant" userEmail={user?.email} />}
       </main>
     </div>
   )
