@@ -41,23 +41,9 @@ export function RecordVersions({ consultaId, onClose }: { consultaId: number; on
   }, [consultaId])
 
   return (
-    <section
-      className="content-card"
-      style={{ padding: '1.25rem', marginBottom: '1rem' }}
-      aria-labelledby="record-versions-title"
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <h3 id="record-versions-title" style={{ margin: 0 }}>
-          Histórico de retificações · Atendimento nº {consultaId}
-        </h3>
+    <section className="content-card history-card" aria-labelledby="record-versions-title">
+      <div className="history-card-header">
+        <h3 id="record-versions-title">Histórico de retificações · Atendimento nº {consultaId}</h3>
         <button className="outline-button" type="button" onClick={onClose}>
           Fechar histórico
         </button>
@@ -65,16 +51,13 @@ export function RecordVersions({ consultaId, onClose }: { consultaId: number; on
       {error && <p className="consultation-message">{error}</p>}
       {!error && !retificacoes && <p>Carregando histórico...</p>}
       {retificacoes?.length === 0 && <p>Este atendimento nunca foi retificado.</p>}
-      <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.75rem' }}>
+      <div className="history-list">
         {retificacoes?.map((ret) => (
-          <article
-            key={ret.versao}
-            style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.85rem 1rem' }}
-          >
+          <article key={ret.versao} className="history-entry">
             <strong>
               Versão {ret.versao} → {ret.versao + 1}
             </strong>
-            <p style={{ margin: '0.25rem 0', fontSize: '0.875rem', color: '#4b5563' }}>
+            <p className="history-entry-meta">
               {formatDateTime(ret.alteradoEm)} · Retificado por <b>{ret.alteradoPorNome || '—'}</b>
               {ret.aprovadoPorNome && ret.aprovadoPorNome !== ret.alteradoPorNome && (
                 <>
@@ -83,29 +66,25 @@ export function RecordVersions({ consultaId, onClose }: { consultaId: number; on
                 </>
               )}
             </p>
-            <p style={{ margin: '0.25rem 0', fontSize: '0.875rem' }}>
+            <p className="history-entry-reason">
               <b>Motivo:</b> {ret.motivo}
             </p>
             {ret.alteracoes.length > 0 && (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+              <div className="history-diff-wrapper">
+                <table className="history-diff">
                   <thead>
-                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{ padding: '0.35rem' }}>Campo</th>
-                      <th style={{ padding: '0.35rem' }}>Antes</th>
-                      <th style={{ padding: '0.35rem' }}>Depois</th>
+                    <tr>
+                      <th>Campo</th>
+                      <th>Antes</th>
+                      <th>Depois</th>
                     </tr>
                   </thead>
                   <tbody>
                     {ret.alteracoes.map((alt) => (
-                      <tr key={alt.campo} style={{ borderBottom: '1px solid #f3f4f6', verticalAlign: 'top' }}>
-                        <td style={{ padding: '0.35rem', fontWeight: 600 }}>{alt.rotulo}</td>
-                        <td style={{ padding: '0.35rem', color: '#991b1b', whiteSpace: 'pre-wrap' }}>
-                          {alt.antes || '—'}
-                        </td>
-                        <td style={{ padding: '0.35rem', color: '#166534', whiteSpace: 'pre-wrap' }}>
-                          {alt.depois || '—'}
-                        </td>
+                      <tr key={alt.campo}>
+                        <td className="history-diff-field">{alt.rotulo}</td>
+                        <td className="history-diff-before">{alt.antes || '—'}</td>
+                        <td className="history-diff-after">{alt.depois || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

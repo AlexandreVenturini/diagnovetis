@@ -225,7 +225,7 @@ export function RecordsModule({
         >
           <label className="agenda-search">
             <span>Buscar paciente</span>
-            <span className="record-search" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span className="record-search record-search--inline">
               <Icon>
                 <circle cx="11" cy="11" r="7" />
                 <path d="m16 16 5 5" />

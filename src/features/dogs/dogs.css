@@ -1,0 +1,190 @@
+.dog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.dog-card {
+  min-height: 173px;
+  padding: 22px;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 3px 5px rgb(0 0 0 / 17%);
+}
+
+.dog-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dog-card h3 {
+  margin: 0;
+  color: var(--green-dark);
+  font-size: 18px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.card-actions button {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+}
+
+.card-actions button:first-child {
+  color: var(--teal);
+}
+
+.dog-card p {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.dog-card .breed {
+  margin-top: 7px;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
+.dog-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 17px 14px;
+  margin-top: 25px;
+}
+
+.dog-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dog-form input,
+.dog-form select,
+.dog-form textarea {
+  width: 100%;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  background: #f5f5f5;
+  color: #191919;
+  outline: 0;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.dog-form input,
+.dog-form select {
+  height: 36px;
+  padding: 0 14px;
+}
+
+.dog-form textarea {
+  min-height: 82px;
+  padding: 11px 14px;
+  resize: vertical;
+}
+
+.dog-form input:focus,
+.dog-form select:focus,
+.dog-form textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgb(40 118 66 / 10%);
+}
+
+.tutor-form-notice {
+  padding: 14px 16px;
+  border: 1px solid #e3c67b;
+  border-radius: 9px;
+  background: #fff8e7;
+  color: #634b10;
+}
+
+.tutor-form-notice p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.address-heading {
+  padding-bottom: 7px;
+  border-bottom: 1px solid #dfe4e0;
+  color: var(--green-dark);
+}
+
+.form-error {
+  margin: 0;
+  color: #a42b2b;
+  font-size: 12px;
+}
+
+.details-card {
+  padding: 20px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 70px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+}
+
+.detail-item span {
+  color: #555;
+}
+
+.detail-item strong {
+  font-weight: 500;
+}
+
+.detail-history {
+  grid-column: 1/-1;
+}
+
+@media (max-width: 900px) {
+  .dog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-history {
+    grid-column: auto;
+  }
+}
+
+.dog-age-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dog-death-pill {
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  vertical-align: middle;
+}
+
+.details-actions {
+  display: flex;
+  gap: 0.5rem;
+}

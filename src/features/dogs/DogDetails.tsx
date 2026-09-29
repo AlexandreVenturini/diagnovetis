@@ -21,7 +21,7 @@ export function DogDetails({ dog, onBack, onRemove }: DogDetailsProps) {
     <section className="content-card details-card">
       <div className="section-heading">
         <h2>Detalhes do Cão</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="details-actions">
           {onRemove && (
             <button className="secondary-button" onClick={onRemove}>
               Remover

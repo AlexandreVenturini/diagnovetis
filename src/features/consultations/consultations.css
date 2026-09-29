@@ -1,0 +1,487 @@
+.appointment-import {
+  margin-bottom: 22px;
+  padding: 17px;
+  border: 1px solid #a9cbb4;
+  border-radius: 10px;
+  background: #f2f8f4;
+}
+
+.appointment-import > div:first-child strong {
+  color: var(--green-dark);
+  font-size: 13px;
+}
+
+.appointment-import > div:first-child p {
+  margin: 5px 0 14px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.appointment-import > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #303830;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.appointment-import select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #bccac0;
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #222;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.appointment-import select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgb(40 118 66 / 10%);
+}
+
+.imported-appointment-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.imported-appointment-summary span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 7px;
+  background: #fff;
+  color: #333;
+  font-size: 10px;
+}
+
+.imported-appointment-summary b {
+  color: var(--green-dark);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.consultation-appointment-search {
+  position: relative;
+}
+
+.consultation-appointment-search > input {
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid #bccac0;
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #222;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.consultation-appointment-search > input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgb(40 118 66 / 10%);
+}
+
+.consultation-appointment-results {
+  position: absolute;
+  z-index: 25;
+  top: 70px;
+  right: 0;
+  left: 0;
+  max-height: 290px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid #c3cec6;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 25px rgb(0 0 0 / 17%);
+}
+
+.consultation-appointment-results > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #fff;
+  color: #222;
+  text-align: left;
+}
+
+.consultation-appointment-results > button:hover {
+  background: #edf6f0;
+}
+
+.consultation-appointment-results span,
+.consultation-appointment-results time {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.consultation-appointment-results strong {
+  color: var(--green-dark);
+  font-size: 12px;
+}
+
+.consultation-appointment-results small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.consultation-appointment-results time {
+  flex: 0 0 auto;
+  color: #4f5a52;
+  font-size: 10px;
+  font-style: normal;
+  text-align: right;
+}
+
+.consultation-appointment-results time b {
+  color: var(--green-dark);
+  font-size: 10px;
+}
+
+.consultation-appointment-results > p {
+  margin: 0;
+  padding: 16px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.selected-appointment-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.selected-appointment-heading strong {
+  color: var(--green-dark);
+  font-size: 11px;
+}
+
+.selected-appointment-heading button {
+  padding: 4px 7px;
+  border: 0;
+  background: transparent;
+  color: #a43a34;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.consultation-next {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.mucosa-options {
+  margin: 0 0 24px;
+  padding: 0;
+  border: 0;
+}
+
+.mucosa-options legend {
+  margin-bottom: 13px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mucosa-options > div {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 11px;
+}
+
+.mucosa-options button {
+  min-height: 47px;
+  border: 1px solid #d1d1d1;
+  border-radius: 9px;
+  background: #fff;
+  color: #333;
+  font-weight: 600;
+}
+
+.mucosa-options button.selected {
+  border-color: var(--green);
+  background: #e5efe8;
+  color: var(--green-dark);
+}
+
+.exam-grid {
+  gap: 18px 15px;
+}
+
+.consultation-search {
+  position: relative;
+}
+
+.consultation-search .ui-icon {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  width: 20px;
+  height: 20px;
+  color: #555;
+}
+
+.consultation-search input {
+  padding-left: 41px;
+}
+
+.consultation-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 21px;
+}
+
+.consultation-actions button {
+  min-height: 45px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  font-weight: 700;
+}
+
+.record-button {
+  background: #058495;
+}
+
+.record-button:hover {
+  background: #066f7c;
+}
+
+@media (max-width: 900px) {
+  .mucosa-options > div {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .consultation-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .mucosa-options > div {
+    grid-template-columns: 1fr;
+  }
+
+  .imported-appointment-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media print {
+  .topbar,
+  .user-row,
+  .main-nav,
+  .consultation-actions {
+    display: none !important;
+  }
+}
+
+.prescription-editor {
+  margin-top: 20px;
+}
+
+.prescription-editor > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.prescription-editor fieldset {
+  min-width: 0;
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid #d4dfd7;
+  border-radius: 10px;
+}
+
+.prescription-editor legend {
+  padding: 0 8px;
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.prescription-editor fieldset > button {
+  margin-top: 14px;
+}
+
+.prescription-editor .consultation-textareas {
+  margin: 20px 0;
+}
+
+.conditions-search .ui-icon {
+  width: 19px;
+  color: #315647;
+}
+
+.conditions-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 12px;
+}
+
+.conditions-search:focus-within {
+  outline: 2px solid #267943;
+  outline-offset: 2px;
+}
+
+.conditions-search button {
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+}
+
+.condition-row.selected {
+  background: #edf6f0;
+  border-color: transparent;
+  border-radius: 8px;
+}
+
+.condition-row:hover {
+  background: #f1f7f3;
+}
+
+.condition-row.selected .condition-view {
+  background: #e0eee5;
+}
+
+.complementary-exams-step > p {
+  color: #647268;
+  line-height: 1.5;
+}
+
+.exam-catalog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 1px solid #d5e2d9;
+  border-radius: 9px;
+  padding: 16px;
+  margin: 18px 0;
+}
+
+.exam-catalog legend,
+.exam-request legend {
+  color: #176534;
+  font-weight: 700;
+  padding-inline: 6px;
+}
+
+.exam-choice {
+  border: 1px solid #b6d3bf;
+  border-radius: 20px;
+  background: #f4faf6;
+  color: #176534;
+  padding: 10px 15px;
+  font-weight: 600;
+}
+
+.exam-choice:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exam-custom {
+  align-items: end;
+  margin: 20px 0;
+}
+
+.exam-custom button {
+  justify-self: start;
+  padding: 12px 18px;
+}
+
+.exam-request {
+  min-width: 0;
+  margin: 20px 0;
+  border: 1px solid #d5e2d9;
+  border-radius: 9px;
+  padding: 20px;
+}
+
+.exam-request > button {
+  margin-top: 16px;
+}
+
+.exam-fields textarea {
+  width: 100%;
+  min-height: 85px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid #c8ceca;
+  border-radius: 8px;
+  font: inherit;
+}
+
+@media (max-width: 620px) {
+  .exam-request,
+  .record-exam,
+  .exam-result-editor {
+    padding: 12px;
+  }
+}
+
+.exam-report-fields {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #b6d3bf;
+  border-radius: 8px;
+  background: #f4faf6;
+}
+
+.exam-report-fields legend {
+  color: #176534;
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.exam-report-fields label {
+  display: grid;
+  gap: 8px;
+}
+
+.exam-report-fields small {
+  color: #52665a;
+}
+
+.exam-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.exam-report-download {
+  color: #176534;
+  overflow-wrap: anywhere;
+}
+
+.profile-notice.profile-notice--death {
+  border-left: 5px solid #1f2937;
+}

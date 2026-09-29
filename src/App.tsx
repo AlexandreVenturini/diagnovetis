@@ -7,7 +7,6 @@ import { checkAccess } from './features/auth/profile'
 import { VeterinarianDashboard } from './features/veterinarian/VeterinarianDashboard'
 import { AttendantDashboard } from './features/attendant/AttendantDashboard'
 import { supabase } from './services/storage/supabaseClient'
-import './App.css'
 
 type AuthUser = { email: string; name: string; isAdmin: boolean }
 

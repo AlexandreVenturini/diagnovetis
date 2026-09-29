@@ -108,7 +108,7 @@ export function RetificationEditor({ consultaId, role, onDone, onCancel }: Retif
         <p>
           {data.dogName} · Tutor: {data.tutorName} · Veterinário: {data.veterinarian}
         </p>
-        <p style={{ color: '#6b7280' }}>
+        <p className="retification-hint">
           A versão atual será arquivada e continuará visível no prontuário. Exames complementares são atualizados pelo
           próprio prontuário.
         </p>

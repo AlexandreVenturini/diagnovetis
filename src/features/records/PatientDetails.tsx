@@ -74,18 +74,7 @@ export function PatientDetails({
           <h2>
             {selected.dogName}
             {selected.death && (
-              <span
-                style={{
-                  marginLeft: '0.6rem',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  padding: '0.2rem 0.6rem',
-                  borderRadius: '999px',
-                  background: '#1f2937',
-                  color: '#fff',
-                  verticalAlign: 'middle',
-                }}
-              >
+              <span className="pill pill--dark record-death-pill">
                 Óbito em {new Date(selected.death.dataHora).toLocaleDateString('pt-BR')}
               </span>
             )}
@@ -112,46 +101,18 @@ export function PatientDetails({
         </p>
       )}
 
-      <section
-        className="content-card"
-        style={{
-          padding: '1rem 1.25rem',
-          marginBottom: '1rem',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-        }}
-      >
+      <section className="content-card record-selector">
         {sortedRecords.length === 0 ? (
-          <p style={{ margin: 0 }}>Nenhum atendimento registrado para este paciente.</p>
+          <p className="record-selector-empty">Nenhum atendimento registrado para este paciente.</p>
         ) : (
           <>
-            <label
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.35rem',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                minWidth: 'min(100%, 320px)',
-              }}
-            >
+            <label className="record-selector-field">
               Atendimento exibido no prontuário
               <select
                 value={latestRecord?.id ?? ''}
                 onChange={(event) => {
                   setRecordId(Number(event.target.value))
                   setShowVersions(false)
-                }}
-                style={{
-                  height: '40px',
-                  padding: '0 12px',
-                  border: '1px solid #d1d1d1',
-                  borderRadius: '9px',
-                  fontSize: '14px',
-                  fontWeight: 400,
                 }}
               >
                 {sortedRecords.map((record) => (
@@ -162,7 +123,7 @@ export function PatientDetails({
                 ))}
               </select>
               {latestRecord && (latestRecord.versao ?? 1) > 1 && (
-                <small style={{ fontWeight: 400, color: '#854d0e' }}>
+                <small className="record-selector-retified">
                   Retificado{latestRecord.retificadoPorNome ? ` por ${latestRecord.retificadoPorNome}` : ''}
                   {latestRecord.retificadoEm ? ` em ${latestRecord.retificadoEm.toLocaleDateString('pt-BR')}` : ''} ·
                   versão {latestRecord.versao}
@@ -170,7 +131,7 @@ export function PatientDetails({
               )}
             </label>
             {latestRecord && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div className="record-selector-actions">
                 <button className="outline-button" type="button" onClick={() => setShowVersions((value) => !value)}>
                   {showVersions ? 'Ocultar histórico' : 'Histórico de retificações'}
                 </button>

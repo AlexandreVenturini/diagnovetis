@@ -27,15 +27,6 @@ type PedidoAguardando = {
   enviadoEm: number
 }
 
-const optionCardStyle = {
-  border: '1px solid #e5e7eb',
-  borderRadius: '10px',
-  padding: '1rem',
-  display: 'flex',
-  flexDirection: 'column' as const,
-  gap: '0.75rem',
-}
-
 export function SupervisionGate({
   onLiberado,
   consultaId,
@@ -238,7 +229,7 @@ export function SupervisionGate({
         {aguardando.participantes.length > 0 && (
           <p>Participantes: {aguardando.participantes.map((p) => p.nome).join(', ')}</p>
         )}
-        <p style={{ color: '#6b7280' }}>
+        <p className="supervision-hint">
           Esta tela {paraObito ? 'conclui o registro' : paraReceita ? 'emite a receita' : `abre ${alvo}`} sozinha assim
           que o professor aprovar. O pedido expira em 30 minutos.
         </p>
@@ -294,68 +285,41 @@ export function SupervisionGate({
       </div>
 
       {!semParticipantes && (
-        <fieldset
-          style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.75rem 1rem', margin: '1rem 0' }}
-          disabled={sending}
-        >
-          <legend style={{ padding: '0 0.35rem', fontWeight: 600 }}>
-            Alunos participantes ({participants.length})
-          </legend>
+        <fieldset className="supervision-participants" disabled={sending}>
+          <legend>Alunos participantes ({participants.length})</legend>
           {students.length === 0 ? (
-            <p style={{ margin: 0, color: '#6b7280' }}>Nenhum outro estudante cadastrado.</p>
+            <p className="supervision-muted">Nenhum outro estudante cadastrado.</p>
           ) : (
             <>
               <input
                 value={studentQuery}
                 onChange={(event) => setStudentQuery(event.target.value)}
                 placeholder="Buscar por nome ou matrícula"
-                style={{
-                  width: '100%',
-                  height: '40px',
-                  padding: '0 15px',
-                  marginBottom: '0.5rem',
-                  border: '1px solid #d1d1d1',
-                  borderRadius: '9px',
-                  fontSize: '14px',
-                  outline: 0,
-                }}
+                className="supervision-search"
               />
-              <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'grid', gap: '0.35rem' }}>
+              <div className="supervision-student-list">
                 {filteredStudents.map((student) => (
-                  <label
-                    key={student.profileId}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 400 }}
-                  >
+                  <label key={student.profileId} className="supervision-student">
                     <input
                       type="checkbox"
                       checked={participants.includes(student.profileId)}
                       onChange={() => toggleParticipant(student.profileId)}
-                      style={{ width: 'auto' }}
                     />
                     {student.nome}
-                    {student.matricula && <small style={{ color: '#6b7280' }}>· {student.matricula}</small>}
+                    {student.matricula && <small>· {student.matricula}</small>}
                   </label>
                 ))}
-                {filteredStudents.length === 0 && (
-                  <p style={{ margin: 0, color: '#6b7280' }}>Nenhum estudante encontrado.</p>
-                )}
+                {filteredStudents.length === 0 && <p className="supervision-muted">Nenhum estudante encontrado.</p>}
               </div>
             </>
           )}
         </fieldset>
       )}
 
-      <div
-        style={{
-          display: 'grid',
-          marginTop: '1rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1rem',
-        }}
-      >
-        <div style={optionCardStyle}>
+      <div className="supervision-options">
+        <div className="supervision-option">
           <strong>Professor presente</strong>
-          <div className="consultation-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+          <div className="consultation-form-grid supervision-single-column">
             <label>
               Senha do professor supervisor
               <input
@@ -370,7 +334,7 @@ export function SupervisionGate({
                 placeholder="O professor digita a própria senha aqui"
                 disabled={sending}
               />
-              <small style={{ fontWeight: 400, color: '#6b7280' }}>
+              <small className="supervision-field-help">
                 É a mesma senha que o professor usa para entrar no DiagnoVetis. Você continua logado na sua conta.
               </small>
             </label>
@@ -380,21 +344,16 @@ export function SupervisionGate({
           </button>
         </div>
 
-        <div style={optionCardStyle}>
+        <div className="supervision-option">
           <strong>Professor em outro lugar</strong>
-          <p style={{ margin: 0, color: '#4b5563' }}>
+          <p className="supervision-option-text">
             {paraObito
               ? 'Envia o registro para a conta do professor. Ele confere os dados e aprova pelo sino no topo da tela, no celular ou computador.'
               : paraReceita
                 ? 'Envia a receita para a conta do professor. Ele revisa os medicamentos e aprova pelo sino no topo da tela, no celular ou computador.'
                 : 'Envia um pedido para a conta do professor. Ele aprova pelo sino no topo da tela, no celular ou computador, sem precisar digitar a senha aqui.'}
           </p>
-          <button
-            className="secondary-button"
-            onClick={() => void enviarPedido()}
-            disabled={sending}
-            style={{ marginTop: 'auto' }}
-          >
+          <button className="secondary-button" onClick={() => void enviarPedido()} disabled={sending}>
             Enviar pedido ao professor
           </button>
         </div>

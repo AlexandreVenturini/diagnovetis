@@ -141,15 +141,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             <h1 id="register-title">DiagnoVetis</h1>
             <p className="brand-subtitle">Cadastro realizado!</p>
           </header>
-          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <p style={{ marginBottom: '0.75rem' }}>
+          <div className="register-success">
+            <p>
               Enviamos um e-mail de confirmação para <strong>{email}</strong>.<br />
               Acesse o link no e-mail para confirmar seu endereço.
             </p>
-            <p style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-              Não encontrou? Verifique também a caixa de spam ou lixo eletrônico.
-            </p>
-            <p style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>
+            <p className="register-success-note">Não encontrou? Verifique também a caixa de spam ou lixo eletrônico.</p>
+            <p className="register-success-note register-success-note--last">
               Depois da confirmação, seu cadastro ainda precisa ser aprovado por um administrador para liberar o acesso.
             </p>
             <button className="submit-button" onClick={onBack}>
@@ -173,31 +171,17 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
         <form className="login-form" onSubmit={submit}>
           <label>Perfil de acesso</label>
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            {(['veterinarian', 'attendant'] as const).map((r) => {
-              const active = role === r
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRole(r)}
-                  style={{
-                    flex: 1,
-                    padding: '0.65rem 0.5rem',
-                    borderRadius: '8px',
-                    border: `2px solid ${active ? 'var(--color-primary, #2563eb)' : '#9ca3af'}`,
-                    background: active ? 'var(--color-primary, #2563eb)' : 'transparent',
-                    color: active ? '#ffffff' : 'var(--color-text, #111827)',
-                    cursor: 'pointer',
-                    fontWeight: active ? 600 : 400,
-                    fontSize: '0.875rem',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {r === 'veterinarian' ? '🩺 Veterinário(a)' : '📚 Estudante'}
-                </button>
-              )
-            })}
+          <div className="role-options">
+            {(['veterinarian', 'attendant'] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={`role-option${role === r ? ' active' : ''}`}
+                onClick={() => setRole(r)}
+              >
+                {r === 'veterinarian' ? '🩺 Veterinário(a)' : '📚 Estudante'}
+              </button>
+            ))}
           </div>
 
           <label htmlFor="reg-name">Nome completo</label>
@@ -270,19 +254,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           {role === 'veterinarian' && (
             <>
               <label htmlFor="reg-crmv">CRMV</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="crmv-fields">
                 <select
                   id="reg-crmv-uf"
+                  className="crmv-uf"
                   aria-label="UF do CRMV"
                   value={crmvUf}
                   onChange={(e) => setCrmvUf(e.target.value)}
-                  style={{
-                    padding: '0 0.5rem',
-                    borderRadius: '8px',
-                    border: '1px solid #d1d5db',
-                    background: 'transparent',
-                    color: 'inherit',
-                  }}
                 >
                   {UFS.map((uf) => (
                     <option key={uf} value={uf}>
@@ -290,7 +268,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                     </option>
                   ))}
                 </select>
-                <div className="input-wrap" style={{ flex: 1 }}>
+                <div className="input-wrap crmv-number">
                   <Icon>
                     <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
                     <rect x="9" y="3" width="6" height="4" rx="1" />
@@ -341,17 +319,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         </form>
 
         <footer>
-          <button
-            type="button"
-            onClick={onBack}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--color-primary)',
-              fontSize: '0.875rem',
-            }}
-          >
+          <button type="button" className="auth-link" onClick={onBack}>
             ← Já tenho uma conta
           </button>
         </footer>

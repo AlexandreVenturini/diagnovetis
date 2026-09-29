@@ -31,31 +31,17 @@ export function DeathSection({ death, canRetify, onRetify }: DeathSectionProps) 
 
   const field = (label: string, value: string) => (
     <div>
-      <dt style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 600 }}>{label}</dt>
-      <dd style={{ margin: '0.1rem 0 0', whiteSpace: 'pre-wrap' }}>{value || '—'}</dd>
+      <dt>{label}</dt>
+      <dd>{value || '—'}</dd>
     </div>
   )
 
   return (
-    <section
-      className="content-card"
-      style={{ padding: '1rem 1.25rem', marginBottom: '1rem', borderLeft: '5px solid #1f2937' }}
-      aria-labelledby="death-title"
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: '1rem',
-          flexWrap: 'wrap',
-        }}
-      >
+    <section className="content-card death-card" aria-labelledby="death-title">
+      <div className="death-card-header">
         <div>
-          <h3 id="death-title" style={{ margin: 0 }}>
-            Registro de óbito
-          </h3>
-          <p style={{ margin: '0.25rem 0 0', color: '#4b5563', fontSize: '0.875rem' }}>
+          <h3 id="death-title">Registro de óbito</h3>
+          <p className="death-card-meta">
             Registrado por {death.registradoPorNome || '—'}
             {death.aprovadoPorNome && death.aprovadoPorNome !== death.registradoPorNome && (
               <> · aprovado por {death.aprovadoPorNome}</>
@@ -65,7 +51,7 @@ export function DeathSection({ death, canRetify, onRetify }: DeathSectionProps) 
               <>
                 {' '}
                 ·{' '}
-                <span style={{ color: '#854d0e' }}>
+                <span className="death-card-retified">
                   retificado{death.retificadoPorNome ? ` por ${death.retificadoPorNome}` : ''}
                   {death.retificadoEm ? ` em ${formatDateTime(death.retificadoEm)}` : ''} (versão {death.versao})
                 </span>
@@ -73,7 +59,7 @@ export function DeathSection({ death, canRetify, onRetify }: DeathSectionProps) 
             )}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="death-card-actions">
           <button type="button" className="outline-button" onClick={() => void toggleVersions()}>
             {showVersions ? 'Ocultar histórico' : 'Histórico de retificações'}
           </button>
@@ -85,14 +71,7 @@ export function DeathSection({ death, canRetify, onRetify }: DeathSectionProps) 
         </div>
       </div>
 
-      <dl
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '0.75rem 1.25rem',
-          margin: '1rem 0 0',
-        }}
-      >
+      <dl className="death-fields death-fields--grid">
         {field('Data e hora', formatDateTime(death.dataHora))}
         {field('Profissional responsável', death.medicoResponsavelNome)}
         {field('Eutanásia', yesNo(death.eutanasia))}
@@ -107,32 +86,29 @@ export function DeathSection({ death, canRetify, onRetify }: DeathSectionProps) 
         )}
         {death.consultaId && field('Atendimento relacionado', `Nº ${death.consultaId}`)}
       </dl>
-      <dl style={{ display: 'grid', gap: '0.75rem', margin: '0.75rem 0 0' }}>
+      <dl className="death-fields">
         {field('Circunstâncias', death.circunstancias)}
         {field('Causa provável', death.causaProvavel)}
       </dl>
 
       {showVersions && (
-        <div style={{ marginTop: '1rem', display: 'grid', gap: '0.6rem' }}>
+        <div className="history-list">
           {error && <p className="consultation-message">{error}</p>}
           {!error && !versions && <p>Carregando histórico...</p>}
           {versions?.length === 0 && <p>Este registro nunca foi retificado.</p>}
           {versions?.map((version) => (
-            <article
-              key={version.versao}
-              style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem 1rem' }}
-            >
+            <article key={version.versao} className="history-entry">
               <strong>
                 Versão {version.versao} → {version.versao + 1}
               </strong>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.85rem', color: '#4b5563' }}>
+              <p className="history-entry-meta">
                 {formatDateTime(version.alteradoEm)} · por {version.alteradoPorNome || '—'} · Motivo: {version.motivo}
               </p>
-              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.1rem', fontSize: '0.85rem' }}>
+              <ul className="history-changes">
                 {version.alteracoes.map((alt) => (
                   <li key={alt.rotulo}>
-                    <b>{alt.rotulo}:</b> <span style={{ color: '#991b1b' }}>{alt.antes}</span> →{' '}
-                    <span style={{ color: '#166534' }}>{alt.depois}</span>
+                    <b>{alt.rotulo}:</b> <span className="history-diff-before">{alt.antes}</span> →{' '}
+                    <span className="history-diff-after">{alt.depois}</span>
                   </li>
                 ))}
               </ul>

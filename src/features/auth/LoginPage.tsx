@@ -111,18 +111,7 @@ export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProp
         <footer>
           <p>Sistema de Gerenciamento de Atendimento Veterinário</p>
           <p>IFES - Instituto Federal do Espírito Santo</p>
-          <button
-            type="button"
-            onClick={onRegister}
-            style={{
-              marginTop: '0.75rem',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--color-primary)',
-              fontSize: '0.875rem',
-            }}
-          >
+          <button type="button" className="auth-link auth-link--spaced" onClick={onRegister}>
             Criar nova conta
           </button>
         </footer>

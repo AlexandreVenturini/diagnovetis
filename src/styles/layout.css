@@ -1,0 +1,245 @@
+.ui-icon {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-mark {
+  position: relative;
+  width: 81px;
+  height: 81px;
+  margin: 0 auto 19px;
+  border-radius: 50%;
+  background: var(--green);
+  flex: 0 0 auto;
+}
+
+.dot {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.dot-top {
+  width: 12px;
+  height: 12px;
+  top: 18px;
+  left: 32px;
+}
+
+.dot-left {
+  width: 22px;
+  height: 17px;
+  top: 35px;
+  left: 18px;
+  transform: rotate(18deg);
+}
+
+.dot-center {
+  width: 19px;
+  height: 24px;
+  top: 40px;
+  left: 29px;
+  transform: rotate(-23deg);
+}
+
+.dot-right {
+  width: 13px;
+  height: 13px;
+  top: 41px;
+  right: 17px;
+}
+
+.auth-loading {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  background: var(--page);
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.topbar {
+  height: 85px;
+  background: var(--green);
+  color: #fff;
+}
+
+.header-brand {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.header-brand .brand-mark {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  background: transparent;
+}
+
+.header-brand .dot-top {
+  width: 8px;
+  height: 8px;
+  top: 0;
+  left: 12px;
+}
+
+.header-brand .dot-left {
+  width: 11px;
+  height: 9px;
+  top: 11px;
+  left: 1px;
+}
+
+.header-brand .dot-center {
+  width: 12px;
+  height: 15px;
+  top: 14px;
+  left: 9px;
+}
+
+.header-brand .dot-right {
+  width: 8px;
+  height: 8px;
+  top: 11px;
+  right: 1px;
+}
+
+.header-brand strong {
+  display: block;
+  font-size: 23px;
+  line-height: 1.1;
+}
+
+.header-brand span {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.main-nav {
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px;
+  overflow-x: auto;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 3px 6px rgb(0 0 0 / 14%);
+}
+
+.main-nav button {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 16px;
+  white-space: nowrap;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #303030;
+  font-weight: 600;
+}
+
+.main-nav button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .main-nav {
+    border-radius: 8px;
+  }
+
+  .main-nav button {
+    padding-inline: 12px;
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar {
+    height: 76px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .main-nav button {
+    padding-inline: 12px;
+    gap: 7px;
+    font-size: 12px;
+  }
+}
+
+.topbar--app {
+  position: relative;
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 1.25rem;
+}
+
+.topbar-inner .header-brand {
+  flex: 1;
+  margin-inline: 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-action {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.35rem 0.6rem;
+  border: 1.5px solid rgb(255 255 255 / 40%);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 15%);
+  color: #fff;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.header-action:hover {
+  background: rgb(255 255 255 / 28%);
+}
+
+.header-action-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.header-action-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}

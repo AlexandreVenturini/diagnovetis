@@ -35,20 +35,12 @@ function YesNo({
   disabled?: boolean
 }) {
   return (
-    <fieldset style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: '0.35rem' }} disabled={disabled}>
-      <legend style={{ fontSize: '13px', fontWeight: 600, padding: 0, marginBottom: '0.35rem' }}>{label}</legend>
-      <div style={{ display: 'flex', gap: '1rem' }}>
+    <fieldset className="yes-no" disabled={disabled}>
+      <legend>{label}</legend>
+      <div className="yes-no-options">
         {[true, false].map((option) => (
-          <label
-            key={String(option)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 400, fontSize: '14px' }}
-          >
-            <input
-              type="radio"
-              checked={value === option}
-              onChange={() => onChange(option)}
-              style={{ width: 'auto', height: 'auto' }}
-            />
+          <label key={String(option)}>
+            <input type="radio" checked={value === option} onChange={() => onChange(option)} />
             {option ? 'Sim' : 'Não'}
           </label>
         ))}
@@ -199,7 +191,7 @@ export function DeathForm({ petId, dogName, role, userEmail, records, existing, 
         </p>
       )}
 
-      <fieldset className="consultation-panel content-card" disabled={saving} style={{ display: 'grid', gap: '1rem' }}>
+      <fieldset className="consultation-panel content-card death-form" disabled={saving}>
         <div className="consultation-form-grid">
           <label>
             Data e hora do óbito *

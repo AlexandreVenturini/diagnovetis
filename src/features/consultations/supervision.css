@@ -1,0 +1,387 @@
+.supervision-hint {
+  color: #6b7280;
+}
+
+.supervision-participants {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.supervision-participants legend {
+  padding: 0 0.35rem;
+  font-weight: 600;
+}
+
+.supervision-muted {
+  margin: 0;
+  color: #6b7280;
+}
+
+.supervision-search {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 0.5rem;
+  padding: 0 15px;
+  border: 1px solid #d1d1d1;
+  border-radius: 9px;
+  outline: 0;
+  font-size: 14px;
+}
+
+.supervision-student-list {
+  display: grid;
+  gap: 0.35rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.supervision-student {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+
+.supervision-student input {
+  width: auto;
+}
+
+.supervision-student small {
+  color: #6b7280;
+}
+
+.supervision-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.supervision-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.supervision-option > .secondary-button {
+  margin-top: auto;
+}
+
+.supervision-option-text {
+  margin: 0;
+  color: #4b5563;
+}
+
+.consultation-form-grid.supervision-single-column {
+  grid-template-columns: 1fr;
+}
+
+.supervision-field-help {
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.bell {
+  position: relative;
+}
+
+.bell-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: min(340px, calc(100vw - 32px));
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 18%);
+}
+
+.bell-title {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.bell-empty {
+  margin: 0.25rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.bell-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.bell-request {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.bell-request-type {
+  color: #166534;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bell-request-type--retificacao {
+  color: #854d0e;
+}
+
+.bell-request-type--receita {
+  color: #1d4ed8;
+}
+
+.bell-request-type--obito {
+  color: #111827;
+}
+
+.bell-request-student {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.bell-request-meta {
+  color: #6b7280;
+  font-size: 0.78rem;
+}
+
+.bell-request-details {
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0.78rem;
+}
+
+.bell-request-details--grid {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.bell-request-items {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.bell-request-note {
+  margin-top: 0.25rem;
+}
+
+.bell-view-button {
+  width: 100%;
+  margin-top: 0.45rem;
+  padding: 0.35rem;
+  border: 1.5px solid #93c5fd;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.bell-request-participants {
+  margin-top: 0.2rem;
+  color: #4b5563;
+  font-size: 0.78rem;
+}
+
+.bell-request-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.bell-button {
+  flex: 1;
+  padding: 0.4rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.bell-button--approve {
+  border: none;
+  background: var(--green);
+  color: #fff;
+}
+
+.bell-button--reject {
+  border: 1.5px solid #dc2626;
+  background: #fff;
+  color: #dc2626;
+}
+
+.bell-error {
+  margin: 0.5rem 0 0;
+  color: #991b1b;
+  font-size: 0.8rem;
+}
+
+.bell-error--modal {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.bell-alerts-button {
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.4rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.bell-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 45%);
+}
+
+.bell-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(100%, 900px);
+  max-height: calc(100vh - 32px);
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 20px 55px rgb(0 0 0 / 25%);
+}
+
+.bell-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bell-modal-header h3 {
+  margin: 0;
+}
+
+.bell-modal-header p {
+  margin: 0.25rem 0 0;
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.bell-modal-close {
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.bell-modal-preview {
+  width: 100%;
+  height: 65vh;
+  border: 1px solid #d6e3da;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.bell-modal-items {
+  margin: 0;
+}
+
+.bell-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.bell-modal-button {
+  padding: 0.5rem 1rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+}
+
+.bell-modal-button--reject {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.bell-modal-button--approve {
+  border: none;
+  background: var(--green);
+  color: #fff;
+}
+
+.refusal-form {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.refusal-form label {
+  display: grid;
+  gap: 0.25rem;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.refusal-form textarea {
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.refusal-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.refusal-button {
+  padding: 0.4rem 0.8rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.refusal-button--confirm {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+}
+
+.refusal-button--confirm:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

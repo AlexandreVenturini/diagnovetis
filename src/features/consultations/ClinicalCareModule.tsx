@@ -196,7 +196,7 @@ export function ClinicalCareModule({
           Atendimento nº {completed.id} de <strong>{completed.data.dogName}</strong> salvo no prontuário.
         </p>
         {completed.data.dischargeCondition === 'Óbito' ? (
-          <aside className="profile-notice" style={{ borderLeft: '5px solid #1f2937' }}>
+          <aside className="profile-notice profile-notice--death">
             <span>✝</span>
             <p>
               <strong>Condição na alta: óbito.</strong> Registre o óbito completo no prontuário do animal: data e hora,

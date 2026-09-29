@@ -64,22 +64,7 @@ export function DogList({ dogs, onCreate, onEdit, onDetails }: DogListProps) {
             <div className="dog-card-heading">
               <h3>
                 {dog.name}
-                {dog.deceasedAt && (
-                  <span
-                    style={{
-                      marginLeft: '0.5rem',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: '999px',
-                      background: '#1f2937',
-                      color: '#fff',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    Óbito
-                  </span>
-                )}
+                {dog.deceasedAt && <span className="pill pill--dark dog-death-pill">Óbito</span>}
               </h3>
               <div className="card-actions">
                 <button aria-label={`Ver detalhes de ${dog.name}`} onClick={() => onDetails(dog)}>

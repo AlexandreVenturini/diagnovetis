@@ -1,0 +1,15 @@
+@import './tokens.css';
+@import './base.css';
+@import './layout.css';
+@import './components.css';
+@import '../features/auth/auth.css';
+@import '../features/dashboard/dashboard.css';
+@import '../features/dogs/dogs.css';
+@import '../features/appointments/appointments.css';
+@import '../features/records/records.css';
+@import '../features/zoonoses/zoonoses.css';
+@import '../features/medications/medications.css';
+@import '../features/consultations/consultations.css';
+@import '../features/consultations/supervision.css';
+@import '../features/prescriptions/prescriptions.css';
+@import '../features/admin/admin.css';
