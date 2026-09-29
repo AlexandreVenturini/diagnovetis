@@ -34,19 +34,39 @@ export function PhysicalExamStep({ data, update, onBack, onNext }: PhysicalExamS
       <div className="consultation-form-grid exam-grid">
         <label>
           TPC — segundos
-          <input value={data.capillaryRefill} onChange={(e) => update('capillaryRefill', e.target.value)} placeholder="Normal: &lt; 2s" />
+          <input
+            value={data.capillaryRefill}
+            onChange={(e) => update('capillaryRefill', e.target.value)}
+            placeholder="Normal: &lt; 2s"
+          />
         </label>
         <label>
           Frequência Cardíaca (bpm)
-          <input type="number" value={data.heartRate} onChange={(e) => update('heartRate', e.target.value)} placeholder="Normal: 60–140 bpm" />
+          <input
+            type="number"
+            value={data.heartRate}
+            onChange={(e) => update('heartRate', e.target.value)}
+            placeholder="Normal: 60–140 bpm"
+          />
         </label>
         <label>
           Frequência Respiratória (mpm)
-          <input type="number" value={data.respiratoryRate} onChange={(e) => update('respiratoryRate', e.target.value)} placeholder="Normal: 10–30 mpm" />
+          <input
+            type="number"
+            value={data.respiratoryRate}
+            onChange={(e) => update('respiratoryRate', e.target.value)}
+            placeholder="Normal: 10–30 mpm"
+          />
         </label>
         <label>
           Temperatura (°C)
-          <input type="number" step="0.1" value={data.temperature} onChange={(e) => update('temperature', e.target.value)} placeholder="Normal: 37.5–39.2°C" />
+          <input
+            type="number"
+            step="0.1"
+            value={data.temperature}
+            onChange={(e) => update('temperature', e.target.value)}
+            placeholder="Normal: 37.5–39.2°C"
+          />
         </label>
         <label>
           Hidratação
@@ -72,53 +92,101 @@ export function PhysicalExamStep({ data, update, onBack, onNext }: PhysicalExamS
       <div className="consultation-form-grid exam-grid">
         <label>
           Pele e pelagem
-          <input value={data.skinAndCoat} onChange={(e) => update('skinAndCoat', e.target.value)} placeholder="Ex.: Normal, ectoparasitas, lesões..." />
+          <input
+            value={data.skinAndCoat}
+            onChange={(e) => update('skinAndCoat', e.target.value)}
+            placeholder="Ex.: Normal, ectoparasitas, lesões..."
+          />
         </label>
         <label>
           Olhos
-          <input value={data.eyes} onChange={(e) => update('eyes', e.target.value)} placeholder="Ex.: Sem alterações, secreção..." />
+          <input
+            value={data.eyes}
+            onChange={(e) => update('eyes', e.target.value)}
+            placeholder="Ex.: Sem alterações, secreção..."
+          />
         </label>
         <label>
           Ouvidos
-          <input value={data.ears} onChange={(e) => update('ears', e.target.value)} placeholder="Ex.: Sem alterações, otite..." />
+          <input
+            value={data.ears}
+            onChange={(e) => update('ears', e.target.value)}
+            placeholder="Ex.: Sem alterações, otite..."
+          />
         </label>
         <label>
           Boca e dentes
-          <input value={data.mouthAndTeeth} onChange={(e) => update('mouthAndTeeth', e.target.value)} placeholder="Ex.: Tártaro, gengivite..." />
+          <input
+            value={data.mouthAndTeeth}
+            onChange={(e) => update('mouthAndTeeth', e.target.value)}
+            placeholder="Ex.: Tártaro, gengivite..."
+          />
         </label>
         <label>
           Sistema respiratório
-          <input value={data.respiratorySystem} onChange={(e) => update('respiratorySystem', e.target.value)} placeholder="Ex.: Sem alterações, dispneia..." />
+          <input
+            value={data.respiratorySystem}
+            onChange={(e) => update('respiratorySystem', e.target.value)}
+            placeholder="Ex.: Sem alterações, dispneia..."
+          />
         </label>
         <label>
           Sistema cardiovascular
-          <input value={data.cardiovascularSystem} onChange={(e) => update('cardiovascularSystem', e.target.value)} placeholder="Ex.: Ritmo regular, sopro..." />
+          <input
+            value={data.cardiovascularSystem}
+            onChange={(e) => update('cardiovascularSystem', e.target.value)}
+            placeholder="Ex.: Ritmo regular, sopro..."
+          />
         </label>
         <label>
           Sistema gastrointestinal
-          <input value={data.gastrointestinalSystem} onChange={(e) => update('gastrointestinalSystem', e.target.value)} placeholder="Ex.: Abdômen sem dor, diarreia..." />
+          <input
+            value={data.gastrointestinalSystem}
+            onChange={(e) => update('gastrointestinalSystem', e.target.value)}
+            placeholder="Ex.: Abdômen sem dor, diarreia..."
+          />
         </label>
         <label>
           Sistema urinário
-          <input value={data.urinarySystem} onChange={(e) => update('urinarySystem', e.target.value)} placeholder="Ex.: Sem alterações, disúria..." />
+          <input
+            value={data.urinarySystem}
+            onChange={(e) => update('urinarySystem', e.target.value)}
+            placeholder="Ex.: Sem alterações, disúria..."
+          />
         </label>
         <label>
           Sistema reprodutivo
-          <input value={data.reproductiveSystem} onChange={(e) => update('reproductiveSystem', e.target.value)} placeholder="Ex.: Sem alterações, castrado..." />
+          <input
+            value={data.reproductiveSystem}
+            onChange={(e) => update('reproductiveSystem', e.target.value)}
+            placeholder="Ex.: Sem alterações, castrado..."
+          />
         </label>
         <label>
           Sistema neurológico
-          <input value={data.neurologicalSystem} onChange={(e) => update('neurologicalSystem', e.target.value)} placeholder="Ex.: Reflexos preservados..." />
+          <input
+            value={data.neurologicalSystem}
+            onChange={(e) => update('neurologicalSystem', e.target.value)}
+            placeholder="Ex.: Reflexos preservados..."
+          />
         </label>
         <label>
           Dor
-          <input value={data.pain} onChange={(e) => update('pain', e.target.value)} placeholder="Ex.: Ausente, leve, moderada, intensa..." />
+          <input
+            value={data.pain}
+            onChange={(e) => update('pain', e.target.value)}
+            placeholder="Ex.: Ausente, leve, moderada, intensa..."
+          />
         </label>
       </div>
 
       <div className="step-navigation">
-        <button className="secondary-button" onClick={onBack}>← Voltar</button>
-        <button className="primary-button" onClick={onNext}>Próximo: Diagnóstico →</button>
+        <button className="secondary-button" onClick={onBack}>
+          ← Voltar
+        </button>
+        <button className="primary-button" onClick={onNext}>
+          Próximo: Diagnóstico →
+        </button>
       </div>
     </section>
   )

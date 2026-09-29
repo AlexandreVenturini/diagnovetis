@@ -16,9 +16,7 @@ export type Profile = {
   created_at: string
 }
 
-export type AccessResult =
-  | { ok: true; role: UserRole; profile: Profile }
-  | { ok: false; message: string }
+export type AccessResult = { ok: true; role: UserRole; profile: Profile } | { ok: false; message: string }
 
 export async function checkAccess(userId: string): Promise<AccessResult> {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle<Profile>()

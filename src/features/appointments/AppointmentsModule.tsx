@@ -7,7 +7,11 @@ import { periodRange } from '../common/period'
 import type { Appointment, AppointmentFormData, AppointmentScreen } from './appointmentTypes'
 import type { Dog } from '../dogs/dogTypes'
 
-type AppointmentsModuleProps = { initialScreen?: AppointmentScreen; dogs: Dog[]; onStartCare?: (appointment: Appointment) => void }
+type AppointmentsModuleProps = {
+  initialScreen?: AppointmentScreen
+  dogs: Dog[]
+  onStartCare?: (appointment: Appointment) => void
+}
 
 export function AppointmentsModule({ initialScreen = 'list', dogs, onStartCare }: AppointmentsModuleProps) {
   const [screen, setScreen] = useState<AppointmentScreen>(initialScreen)
@@ -15,7 +19,8 @@ export function AppointmentsModule({ initialScreen = 'list', dogs, onStartCare }
   const [period, setPeriod] = usePeriod('agenda')
   const [query, setQuery] = useState('')
   const range = query.trim() ? null : periodRange(period)
-  const { appointments, reminderAppointments, loading, hasConflict, createAppointment, updateAppointment } = useAppointments(range)
+  const { appointments, reminderAppointments, loading, hasConflict, createAppointment, updateAppointment } =
+    useAppointments(range)
 
   async function handleCreate(data: AppointmentFormData) {
     const ok = await createAppointment(data)
@@ -29,20 +34,32 @@ export function AppointmentsModule({ initialScreen = 'list', dogs, onStartCare }
   }
 
   if (screen === 'create') {
-    return <AppointmentForm dogs={dogs} onSave={handleCreate} onCancel={() => { setFormError(''); setScreen('list') }} error={formError} />
+    return (
+      <AppointmentForm
+        dogs={dogs}
+        onSave={handleCreate}
+        onCancel={() => {
+          setFormError('')
+          setScreen('list')
+        }}
+        error={formError}
+      />
+    )
   }
 
-  return <AppointmentList
-    onStartCare={onStartCare}
-    appointments={appointments}
-    onCreate={() => setScreen('create')}
-    onUpdate={updateAppointment}
-    period={period}
-    onPeriodChange={setPeriod}
-    query={query}
-    onQueryChange={setQuery}
-    reminderAppointments={reminderAppointments}
-    onCheckConflict={hasConflict}
-    loading={loading}
-  />
+  return (
+    <AppointmentList
+      onStartCare={onStartCare}
+      appointments={appointments}
+      onCreate={() => setScreen('create')}
+      onUpdate={updateAppointment}
+      period={period}
+      onPeriodChange={setPeriod}
+      query={query}
+      onQueryChange={setQuery}
+      reminderAppointments={reminderAppointments}
+      onCheckConflict={hasConflict}
+      loading={loading}
+    />
+  )
 }

@@ -8,12 +8,26 @@ import { DogList } from '../features/dogs/DogList'
 import type { Dog } from '../features/dogs/dogTypes'
 
 const item = (key: string, consultaId: number | null, date: string, petId: number, dogName: string): SummaryItem => ({
-  key, consultaId, date, veterinarian: 'Dra. Ana', pet: { id: petId, dogName, tutorName: 'Maria', breed: 'SRD', weight: '10' },
+  key,
+  consultaId,
+  date,
+  veterinarian: 'Dra. Ana',
+  pet: { id: petId, dogName, tutorName: 'Maria', breed: 'SRD', weight: '10' },
 })
 
 const appointment = (id: number, date: string): Appointment => ({
-  id, dogName: `Cão ${id}`, tutorName: 'Maria', veterinarian: 'Dra. Ana', date, time: '09:00', kind: 'scheduled',
-  serviceType: 'Consulta', notes: '', status: 'confirmed', cancellationReason: '', reminders: [],
+  id,
+  dogName: `Cão ${id}`,
+  tutorName: 'Maria',
+  veterinarian: 'Dra. Ana',
+  date,
+  time: '09:00',
+  kind: 'scheduled',
+  serviceType: 'Consulta',
+  notes: '',
+  status: 'confirmed',
+  cancellationReason: '',
+  reminders: [],
 })
 
 describe('Troca de períodos nas telas', () => {
@@ -39,17 +53,30 @@ describe('Troca de períodos nas telas', () => {
       item('p-4', null, '', 4, 'Luna'),
     ]
     expect(summarizePatients(carregados, '', periodRange({ view: 'day', date: '2026-09-28' }))).toEqual([])
-    expect(summarizePatients(carregados, '', periodRange({ view: 'day', date: '2026-09-23' })).map(p => p.dogName)).toEqual(['Jade'])
-    expect(summarizePatients(carregados, '', periodRange({ view: 'month', date: '2026-09-28' })).map(p => p.dogName)).toEqual(['Jade', 'Rex'])
-    expect(summarizePatients(carregados, '', null).map(p => p.dogName)).toEqual(['Jade', 'Rex', 'Toby'])
-    expect(summarizePatients(carregados, 'lu', null).map(p => p.dogName)).toEqual(['Luna'])
+    expect(
+      summarizePatients(carregados, '', periodRange({ view: 'day', date: '2026-09-23' })).map((p) => p.dogName),
+    ).toEqual(['Jade'])
+    expect(
+      summarizePatients(carregados, '', periodRange({ view: 'month', date: '2026-09-28' })).map((p) => p.dogName),
+    ).toEqual(['Jade', 'Rex'])
+    expect(summarizePatients(carregados, '', null).map((p) => p.dogName)).toEqual(['Jade', 'Rex', 'Toby'])
+    expect(summarizePatients(carregados, 'lu', null).map((p) => p.dogName)).toEqual(['Luna'])
   })
 
   it('agenda no Dia mostra só as consultas daquele dia', () => {
     const agenda = [appointment(1, '2026-09-03'), appointment(2, '2026-09-23'), appointment(3, '2026-09-23')]
-    const render = (view: 'day' | 'month', date: string) => renderToStaticMarkup(
-      <AppointmentList appointments={agenda} onCreate={() => {}} onUpdate={() => {}} period={{ view, date }} onPeriodChange={() => {}} query="" onQueryChange={() => {}} />
-    )
+    const render = (view: 'day' | 'month', date: string) =>
+      renderToStaticMarkup(
+        <AppointmentList
+          appointments={agenda}
+          onCreate={() => {}}
+          onUpdate={() => {}}
+          period={{ view, date }}
+          onPeriodChange={() => {}}
+          query=""
+          onQueryChange={() => {}}
+        />,
+      )
     expect(render('day', '2026-09-28')).toContain('0 resultado(s)')
     expect(render('day', '2026-09-23')).toContain('2 resultado(s)')
     expect(render('month', '2026-09-28')).toContain('3 resultado(s)')
@@ -57,11 +84,26 @@ describe('Troca de períodos nas telas', () => {
 
   it('cadastro filtra pela data de cadastro do animal', () => {
     const hoje = dateInput()
-    const dog = (id: number, createdAt: string): Dog => ({ id, name: `Cão ${id}`, breed: 'SRD', age: '2 anos', weight: '10', sex: '', tutor: 'Maria', contact: '', history: '', createdAt })
+    const dog = (id: number, createdAt: string): Dog => ({
+      id,
+      name: `Cão ${id}`,
+      breed: 'SRD',
+      age: '2 anos',
+      weight: '10',
+      sex: '',
+      tutor: 'Maria',
+      contact: '',
+      history: '',
+      createdAt,
+    })
     const dogs = [dog(1, hoje), dog(2, addDays(hoje, -400)), dog(3, addDays(hoje, -800))]
     localStorage.setItem('diagnovetis:periodo:cadastro', 'day')
-    expect(renderToStaticMarkup(<DogList dogs={dogs} onCreate={() => {}} onEdit={() => {}} onDetails={() => {}} />)).toContain('1 de 3 animal(is)')
+    expect(
+      renderToStaticMarkup(<DogList dogs={dogs} onCreate={() => {}} onEdit={() => {}} onDetails={() => {}} />),
+    ).toContain('1 de 3 animal(is)')
     localStorage.setItem('diagnovetis:periodo:cadastro', 'all')
-    expect(renderToStaticMarkup(<DogList dogs={dogs} onCreate={() => {}} onEdit={() => {}} onDetails={() => {}} />)).toContain('3 de 3 animal(is)')
+    expect(
+      renderToStaticMarkup(<DogList dogs={dogs} onCreate={() => {}} onEdit={() => {}} onDetails={() => {}} />),
+    ).toContain('3 de 3 animal(is)')
   })
 })

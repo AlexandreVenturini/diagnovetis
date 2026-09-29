@@ -57,7 +57,9 @@ function App() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') return
-      setTimeout(() => { if (active) void applySession(session?.user) }, 0)
+      setTimeout(() => {
+        if (active) void applySession(session?.user)
+      }, 0)
     })
 
     return () => {
@@ -71,7 +73,11 @@ function App() {
   }
 
   if (checkingSession) {
-    return <main className="auth-loading" role="status">Verificando sessão...</main>
+    return (
+      <main className="auth-loading" role="status">
+        Verificando sessão...
+      </main>
+    )
   }
 
   if (role === 'veterinarian') {
@@ -90,7 +96,10 @@ function App() {
     <LoginPage
       notice={notice}
       onDismissNotice={() => setNotice('')}
-      onRegister={() => { setNotice(''); setRegistering(true) }}
+      onRegister={() => {
+        setNotice('')
+        setRegistering(true)
+      }}
     />
   )
 }

@@ -1,11 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { dateInput, filterPrescriptionHistory, periodBounds, shiftPeriod, type HistoryFilters } from '../features/prescriptions/historyFilters'
+import {
+  dateInput,
+  filterPrescriptionHistory,
+  periodBounds,
+  shiftPeriod,
+  type HistoryFilters,
+} from '../features/prescriptions/historyFilters'
 import { EMPTY_CONSULTATION } from '../features/consultations/consultationTypes'
 import { emptyPrescription, emptyPrescriptionItem } from '../features/consultations/prescriptionReport'
 import type { IssuedPrescription } from '../services/PrescriptionService'
 
 const filters: HistoryFilters = { view: 'week', date: '2026-09-21', query: '', veterinarian: '', medication: '' }
-const row = (date: string, name: string, vet: string, medication: string): IssuedPrescription => ({ id: name, petId: 1, snapshot: { version: 1, issuedAt: new Date(`${date}T12:00:00`).toISOString(), patient: { ...EMPTY_CONSULTATION, dogName: name, tutorName: 'Maria', veterinarian: vet }, prescription: { ...emptyPrescription(), items: [{ ...emptyPrescriptionItem(), medication }] } } })
+const row = (date: string, name: string, vet: string, medication: string): IssuedPrescription => ({
+  id: name,
+  petId: 1,
+  snapshot: {
+    version: 1,
+    issuedAt: new Date(`${date}T12:00:00`).toISOString(),
+    patient: { ...EMPTY_CONSULTATION, dogName: name, tutorName: 'Maria', veterinarian: vet },
+    prescription: { ...emptyPrescription(), items: [{ ...emptyPrescriptionItem(), medication }] },
+  },
+})
 
 describe('Filtros do histórico de receitas', () => {
   it('considera a semana de segunda a domingo, inclusive nas mudanças de ano', () => {
@@ -19,10 +34,20 @@ describe('Filtros do histórico de receitas', () => {
     expect(shiftPeriod('2026-12-31', 'day', 1)).toBe('2027-01-01')
   })
   it('combina busca, veterinário, medicamento e período', () => {
-    const history = [row('2026-09-21', 'Rex', 'Ana', 'A'), row('2026-09-27', 'Bia', 'João', 'B'), row('2026-09-28', 'Tobi', 'Ana', 'A')]
-    expect(filterPrescriptionHistory(history, filters).map(item => item.id)).toEqual(['Rex', 'Bia'])
-    expect(filterPrescriptionHistory(history, { ...filters, query: ' MARIA ', veterinarian: 'Ana', medication: 'A' }).map(item => item.id)).toEqual(['Rex', 'Tobi'])
-    expect(filterPrescriptionHistory(history, { ...filters, veterinarian: 'Ana', medication: 'A' }).map(item => item.id)).toEqual(['Rex'])
+    const history = [
+      row('2026-09-21', 'Rex', 'Ana', 'A'),
+      row('2026-09-27', 'Bia', 'João', 'B'),
+      row('2026-09-28', 'Tobi', 'Ana', 'A'),
+    ]
+    expect(filterPrescriptionHistory(history, filters).map((item) => item.id)).toEqual(['Rex', 'Bia'])
+    expect(
+      filterPrescriptionHistory(history, { ...filters, query: ' MARIA ', veterinarian: 'Ana', medication: 'A' }).map(
+        (item) => item.id,
+      ),
+    ).toEqual(['Rex', 'Tobi'])
+    expect(
+      filterPrescriptionHistory(history, { ...filters, veterinarian: 'Ana', medication: 'A' }).map((item) => item.id),
+    ).toEqual(['Rex'])
     expect(filterPrescriptionHistory(history, { ...filters, view: 'all' }).length).toBe(3)
     expect(filterPrescriptionHistory(history, { ...filters, veterinarian: 'Ana', medication: 'B' })).toEqual([])
     expect(filterPrescriptionHistory(history, { ...filters, view: 'day' }).length).toBe(1)
@@ -31,6 +56,12 @@ describe('Filtros do histórico de receitas', () => {
   it('filtra pela data local da emissão', () => {
     const prescription = row('2026-09-21', 'Rex', 'Ana', 'A')
     prescription.snapshot.issuedAt = '2026-09-22T01:00:00Z'
-    expect(filterPrescriptionHistory([prescription], { ...filters, view: 'day', date: dateInput(new Date(prescription.snapshot.issuedAt)) })).toHaveLength(1)
+    expect(
+      filterPrescriptionHistory([prescription], {
+        ...filters,
+        view: 'day',
+        date: dateInput(new Date(prescription.snapshot.issuedAt)),
+      }),
+    ).toHaveLength(1)
   })
 })

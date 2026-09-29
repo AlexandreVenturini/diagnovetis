@@ -7,7 +7,18 @@ import { ZoonoseService } from '../services/ZoonoseService'
 
 const item = (id: number, name: string, isZoonosis: boolean) => {
   const condition = new Zoonose(id, name, 'Agente teste', 'Sinal clínico teste', 'Prevenção teste', 'alto')
-  condition.clinical = { ...structuredClone(EMPTY_CLINICAL), isZoonosis, category: 'Infecciosas', systems: ['Renal'], etiology: 'Bacteriana', ageGroups: ['Adulto'], transmission: 'Transmissão cadastrada', diagnostics: ['Exame cadastrado'], differentials: ['Diferencial cadastrado'], protocols: ['Conduta cadastrada'] }
+  condition.clinical = {
+    ...structuredClone(EMPTY_CLINICAL),
+    isZoonosis,
+    category: 'Infecciosas',
+    systems: ['Renal'],
+    etiology: 'Bacteriana',
+    ageGroups: ['Adulto'],
+    transmission: 'Transmissão cadastrada',
+    diagnostics: ['Exame cadastrado'],
+    differentials: ['Diferencial cadastrado'],
+    protocols: ['Conduta cadastrada'],
+  }
   return condition
 }
 
@@ -29,14 +40,24 @@ describe('Catálogo de condições clínicas', () => {
   })
   it('combina filtros e encontra sinais clínicos sem exigir acentos', () => {
     const rows = [zoonoseToFrontend(item(1, 'Beta', true)), zoonoseToFrontend(item(2, 'Alfa', false))]
-    expect(filterConditions(rows, { ...EMPTY_FILTERS, query: 'clinico', category: 'Infecciosas', system: 'Renal', etiology: 'Bacteriana', age: 'Adulto', zoonosis: 'no' }).map(row => row.name)).toEqual(['Alfa'])
+    expect(
+      filterConditions(rows, {
+        ...EMPTY_FILTERS,
+        query: 'clinico',
+        category: 'Infecciosas',
+        system: 'Renal',
+        etiology: 'Bacteriana',
+        age: 'Adulto',
+        zoonosis: 'no',
+      }).map((row) => row.name),
+    ).toEqual(['Alfa'])
     expect(filterConditions(rows, { ...EMPTY_FILTERS, system: 'Respiratório' })).toHaveLength(0)
     expect(filterConditions(rows, { ...EMPTY_FILTERS, query: 'agente' })).toHaveLength(2)
   })
   it('ordena sem alterar os registros originais', () => {
     const rows = [zoonoseToFrontend(item(1, 'Beta', true)), zoonoseToFrontend(item(2, 'Alfa', false))]
-    expect(filterConditions(rows, EMPTY_FILTERS).map(row => row.name)).toEqual(['Alfa', 'Beta'])
-    expect(filterConditions(rows, { ...EMPTY_FILTERS, sort: 'za' }).map(row => row.name)).toEqual(['Beta', 'Alfa'])
+    expect(filterConditions(rows, EMPTY_FILTERS).map((row) => row.name)).toEqual(['Alfa', 'Beta'])
+    expect(filterConditions(rows, { ...EMPTY_FILTERS, sort: 'za' }).map((row) => row.name)).toEqual(['Beta', 'Alfa'])
     expect(rows[0].name).toBe('Beta')
   })
 })

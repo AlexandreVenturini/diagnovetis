@@ -12,14 +12,73 @@ const fields: { key: keyof PrescriptionItem; label: string; placeholder: string 
 ]
 
 export function PrescriptionEditor({ value, onChange, hideCrmv = false }: Props) {
-  return <section className="prescription-editor consultation-panel content-card" aria-labelledby="prescription-heading">
-    <h2 id="prescription-heading">Receita do animal</h2>
-    <p>Revise a dose, a via, a frequência, a duração e a quantidade de cada medicamento antes de visualizar e emitir.</p>
-    {!hideCrmv && <div className="consultation-form-grid"><label>CRMV / UF do veterinário<input value={value.crmv} onChange={(event) => onChange({ ...value, crmv: event.target.value })} placeholder="Número e UF" /></label></div>}
-    {value.items.map((item, index) => <fieldset key={index}><legend>Medicamento {index + 1}</legend><div className="consultation-form-grid">
-      {fields.map((field) => <label key={field.key}>{field.label}<input value={item[field.key]} placeholder={field.placeholder} onChange={(event) => onChange({ ...value, items: value.items.map((current, i) => i === index ? { ...current, [field.key]: event.target.value } : current) })} /></label>)}
-    </div><button className="secondary-button" type="button" disabled={value.items.length === 1} onClick={() => onChange({ ...value, items: value.items.filter((_, i) => i !== index) })}>Remover medicamento {index + 1}</button></fieldset>)}
-    <button className="secondary-button" type="button" onClick={() => onChange({ ...value, items: [...value.items, emptyPrescriptionItem()] })}>+ Adicionar medicamento</button>
-    <div className="consultation-textareas"><label>Orientações ao tutor<textarea value={value.instructions} onChange={(event) => onChange({ ...value, instructions: event.target.value })} placeholder="Cuidados e orientações complementares" /></label></div>
-  </section>
+  return (
+    <section className="prescription-editor consultation-panel content-card" aria-labelledby="prescription-heading">
+      <h2 id="prescription-heading">Receita do animal</h2>
+      <p>
+        Revise a dose, a via, a frequência, a duração e a quantidade de cada medicamento antes de visualizar e emitir.
+      </p>
+      {!hideCrmv && (
+        <div className="consultation-form-grid">
+          <label>
+            CRMV / UF do veterinário
+            <input
+              value={value.crmv}
+              onChange={(event) => onChange({ ...value, crmv: event.target.value })}
+              placeholder="Número e UF"
+            />
+          </label>
+        </div>
+      )}
+      {value.items.map((item, index) => (
+        <fieldset key={index}>
+          <legend>Medicamento {index + 1}</legend>
+          <div className="consultation-form-grid">
+            {fields.map((field) => (
+              <label key={field.key}>
+                {field.label}
+                <input
+                  value={item[field.key]}
+                  placeholder={field.placeholder}
+                  onChange={(event) =>
+                    onChange({
+                      ...value,
+                      items: value.items.map((current, i) =>
+                        i === index ? { ...current, [field.key]: event.target.value } : current,
+                      ),
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={value.items.length === 1}
+            onClick={() => onChange({ ...value, items: value.items.filter((_, i) => i !== index) })}
+          >
+            Remover medicamento {index + 1}
+          </button>
+        </fieldset>
+      ))}
+      <button
+        className="secondary-button"
+        type="button"
+        onClick={() => onChange({ ...value, items: [...value.items, emptyPrescriptionItem()] })}
+      >
+        + Adicionar medicamento
+      </button>
+      <div className="consultation-textareas">
+        <label>
+          Orientações ao tutor
+          <textarea
+            value={value.instructions}
+            onChange={(event) => onChange({ ...value, instructions: event.target.value })}
+            placeholder="Cuidados e orientações complementares"
+          />
+        </label>
+      </div>
+    </section>
+  )
 }

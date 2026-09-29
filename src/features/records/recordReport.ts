@@ -1,5 +1,10 @@
 function escapeHtml(value: string) {
-  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;')
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
 }
 
 function printableValue(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
@@ -26,13 +31,20 @@ export function exportPatientRecord(form: HTMLFormElement, dogName: string) {
   printableForm.querySelectorAll('.paper-section').forEach((section) => {
     if (section.querySelector('table')) section.classList.add('table-section')
   })
-  const sourceControls = Array.from(form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select'))
-  const clonedControls = Array.from(printableForm.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select'))
+  const sourceControls = Array.from(
+    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select'),
+  )
+  const clonedControls = Array.from(
+    printableForm.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+      'input, textarea, select',
+    ),
+  )
   clonedControls.forEach((control, index) => control.replaceWith(printableValue(sourceControls[index] ?? control)))
 
-  printableForm.querySelectorAll('.exam-no-print').forEach(element => element.remove())
+  printableForm.querySelectorAll('.exam-no-print').forEach((element) => element.remove())
 
-  reportWindow.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prontuário - ${escapeHtml(dogName)}</title><style>
+  reportWindow.document
+    .write(`<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prontuário - ${escapeHtml(dogName)}</title><style>
 .record-exam{padding:3mm;border-bottom:1px solid #b7ccc4;break-inside:avoid}.record-exam header{display:flex;justify-content:space-between;gap:3mm}.record-exam dl{display:flex;gap:5mm}.record-exam dd{margin:0}.record-exam p{white-space:pre-wrap;overflow-wrap:anywhere}*{box-sizing:border-box}@page{size:A4 portrait;margin:8mm}html,body{margin:0;padding:0}body{background:#e8eeeb;color:#183d39;font:9px/1.3 Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .animal-record-form{width:194mm;margin:10px auto;padding:5mm;border:1.5px solid #16665f;border-radius:6px;background:#fff;box-shadow:0 4px 18px #0002}.animal-record-title{min-height:18mm;display:grid;grid-template-columns:13mm 1fr 38mm;align-items:center;gap:3mm;padding:0 2mm 3mm}.record-logo{width:11mm;height:11mm;display:grid;place-items:center;border-radius:2mm;background:#075a56;color:#fff;font-size:20px;font-weight:700;box-shadow:1.5mm 1.5mm 0 #d8eae7}.animal-record-title h3{margin:0;color:#07524e;font-size:18px;text-transform:uppercase}.animal-record-title p{margin:1mm 0 0;color:#315a57;font-size:8px}.animal-record-title label{display:flex;flex-direction:column;gap:2mm;padding:2mm;border:1px solid #2c7771;border-radius:2mm;font-size:7px;font-weight:700}.animal-record-title .printable-value{min-height:5mm}
 .animal-record-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2mm}.paper-section{min-width:0;grid-column:span 3;display:flex;flex-direction:column;margin:0;padding:3mm 2mm 2mm;border:1px solid #27756f;border-radius:1.5mm;break-inside:avoid;page-break-inside:avoid}.paper-section.third{grid-column:span 2}.paper-section.two-thirds{grid-column:span 4}.paper-section.full{grid-column:1/-1}.paper-section legend{width:calc(100% + 4mm);margin-left:-2mm;padding:1.5mm 2mm;border-bottom:1px solid #27756f;background:#edf7f5;color:#125b56;font-size:8px;font-weight:800;text-transform:uppercase}.paper-section legend b{color:#08716a}

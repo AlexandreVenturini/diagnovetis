@@ -34,18 +34,26 @@ export function RetificationEditor({ consultaId, role, onDone, onCancel }: Retif
 
   useEffect(() => {
     let active = true
-    consultaService.buscarPorId(consultaId)
+    consultaService
+      .buscarPorId(consultaId)
       .then((consulta) => {
         if (!active) return
-        if (!consulta) { setLoadError('Atendimento não encontrado.'); return }
+        if (!consulta) {
+          setLoadError('Atendimento não encontrado.')
+          return
+        }
         setData(consultaToData(consulta))
       })
-      .catch(() => { if (active) setLoadError('Não foi possível carregar o atendimento.') })
-    return () => { active = false }
+      .catch(() => {
+        if (active) setLoadError('Não foi possível carregar o atendimento.')
+      })
+    return () => {
+      active = false
+    }
   }, [consultaId])
 
   function update(key: keyof ConsultationData, value: string) {
-    setData((current) => current ? { ...current, [key]: value } : current)
+    setData((current) => (current ? { ...current, [key]: value } : current))
     setMessage('')
   }
 
@@ -56,7 +64,10 @@ export function RetificationEditor({ consultaId, role, onDone, onCancel }: Retif
 
   async function salvar() {
     if (!data || saveLock.current) return
-    if (!motivo.trim()) { setMessage('Informe o motivo da retificação.'); return }
+    if (!motivo.trim()) {
+      setMessage('Informe o motivo da retificação.')
+      return
+    }
     saveLock.current = true
     setSaving(true)
     setMessage('')
@@ -72,41 +83,86 @@ export function RetificationEditor({ consultaId, role, onDone, onCancel }: Retif
   }
 
   if (loadError) {
-    return <section className="consultation-panel content-card"><p>{loadError}</p><button className="secondary-button" onClick={onCancel}>Voltar</button></section>
+    return (
+      <section className="consultation-panel content-card">
+        <p>{loadError}</p>
+        <button className="secondary-button" onClick={onCancel}>
+          Voltar
+        </button>
+      </section>
+    )
   }
-  if (!data) return <section className="consultation-panel content-card"><p>Carregando atendimento...</p></section>
-  if (isStudent && !liberacao) return <SupervisionGate consultaId={consultaId} onLiberado={setLiberacao} onCancel={onCancel} />
+  if (!data)
+    return (
+      <section className="consultation-panel content-card">
+        <p>Carregando atendimento...</p>
+      </section>
+    )
+  if (isStudent && !liberacao)
+    return <SupervisionGate consultaId={consultaId} onLiberado={setLiberacao} onCancel={onCancel} />
 
   return (
     <section className="clinical-care-module">
       <header className="consultation-header content-card">
         <h2>Retificar atendimento nº {consultaId}</h2>
-        <p>{data.dogName} · Tutor: {data.tutorName} · Veterinário: {data.veterinarian}</p>
-        <p style={{ color: '#6b7280' }}>A versão atual será arquivada e continuará visível no prontuário. Exames complementares são atualizados pelo próprio prontuário.</p>
-        {liberacao && <p><strong>Retificação liberada por {liberacao.supervisor.nome}</strong></p>}
+        <p>
+          {data.dogName} · Tutor: {data.tutorName} · Veterinário: {data.veterinarian}
+        </p>
+        <p style={{ color: '#6b7280' }}>
+          A versão atual será arquivada e continuará visível no prontuário. Exames complementares são atualizados pelo
+          próprio prontuário.
+        </p>
+        {liberacao && (
+          <p>
+            <strong>Retificação liberada por {liberacao.supervisor.nome}</strong>
+          </p>
+        )}
         <nav className="consultation-steps" aria-label="Etapas da retificação">
           {STEPS.map((label, index) => (
-            <button key={label} className={step === index ? 'active' : ''} onClick={() => setStep(index)}>{index + 1}. {label}</button>
+            <button key={label} className={step === index ? 'active' : ''} onClick={() => setStep(index)}>
+              {index + 1}. {label}
+            </button>
           ))}
         </nav>
       </header>
 
       <fieldset className="consultation-edit-fields" disabled={saving}>
-        {step === 0 && <ClinicalHistoryStep data={data} update={update} onBack={() => void cancelar()} onNext={() => setStep(1)} />}
-        {step === 1 && <PhysicalExamStep data={data} update={update} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
+        {step === 0 && (
+          <ClinicalHistoryStep data={data} update={update} onBack={() => void cancelar()} onNext={() => setStep(1)} />
+        )}
+        {step === 1 && (
+          <PhysicalExamStep data={data} update={update} onBack={() => setStep(0)} onNext={() => setStep(2)} />
+        )}
         {step === 2 && <DiagnosisStep data={data} update={update} onBack={() => setStep(1)} />}
       </fieldset>
 
       <section className="consultation-panel content-card">
         <div className="consultation-textareas">
-          <label>Motivo da retificação *
-            <textarea value={motivo} onChange={(event) => { setMotivo(event.target.value); setMessage('') }} placeholder="Ex.: correção da temperatura registrada; inclusão do resultado do exame no diagnóstico" disabled={saving} />
+          <label>
+            Motivo da retificação *
+            <textarea
+              value={motivo}
+              onChange={(event) => {
+                setMotivo(event.target.value)
+                setMessage('')
+              }}
+              placeholder="Ex.: correção da temperatura registrada; inclusão do resultado do exame no diagnóstico"
+              disabled={saving}
+            />
           </label>
         </div>
-        {message && <p className="consultation-message" role="status">{message}</p>}
+        {message && (
+          <p className="consultation-message" role="status">
+            {message}
+          </p>
+        )}
         <div className="step-navigation">
-          <button className="secondary-button" onClick={() => void cancelar()} disabled={saving}>Cancelar</button>
-          <button className="primary-button" onClick={() => void salvar()} disabled={saving}>{saving ? 'Salvando...' : 'Salvar retificação'}</button>
+          <button className="secondary-button" onClick={() => void cancelar()} disabled={saving}>
+            Cancelar
+          </button>
+          <button className="primary-button" onClick={() => void salvar()} disabled={saving}>
+            {saving ? 'Salvando...' : 'Salvar retificação'}
+          </button>
         </div>
       </section>
     </section>

@@ -26,7 +26,14 @@ describe('Idade do cão em anos e meses', () => {
     expect(parseDogAge('')).toEqual({ years: '', months: '' })
   })
 
-  it.each([['', ''], ['-1', '0'], ['1.5', '0'], ['0', '-1'], ['0', '12'], ['0', '1.5']])('rejeita idade inválida: %s anos e %s meses', (years, months) => {
+  it.each([
+    ['', ''],
+    ['-1', '0'],
+    ['1.5', '0'],
+    ['0', '-1'],
+    ['0', '12'],
+    ['0', '1.5'],
+  ])('rejeita idade inválida: %s anos e %s meses', (years, months) => {
     expect(() => serializeDogAge(years, months)).toThrow()
   })
 })

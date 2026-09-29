@@ -3,7 +3,13 @@ import { applyDoseToPrescription } from '../features/prescriptions/applyDose'
 import { filterAnimals } from '../features/prescriptions/filterAnimals'
 import { emptyPrescription, emptyPrescriptionItem } from '../features/consultations/prescriptionReport'
 
-const prescription = { ...emptyPrescription(), items: [{ ...emptyPrescriptionItem(), medication: 'Primeiro', dose: 'Manter' }, { ...emptyPrescriptionItem(), medication: 'Segundo' }] }
+const prescription = {
+  ...emptyPrescription(),
+  items: [
+    { ...emptyPrescriptionItem(), medication: 'Primeiro', dose: 'Manter' },
+    { ...emptyPrescriptionItem(), medication: 'Segundo' },
+  ],
+}
 describe('Aplicar dose no receituário', () => {
   it('preenche somente a dose do medicamento selecionado, aceitando vírgula decimal', () => {
     const result = applyDoseToPrescription(prescription, 1, '2,5', '3', '5')
@@ -26,12 +32,15 @@ describe('Aplicar dose no receituário', () => {
   })
 })
 describe('Busca de animais', () => {
-  const dogs = [{ id: 12, name: 'Belinha', tutor: 'Márcia', breed: '', age: '', sex: '', weight: '', contact: '', history: '' }, { id: 13, name: 'Belinha', tutor: 'João', breed: '', age: '', sex: '', weight: '', contact: '', history: '' }]
+  const dogs = [
+    { id: 12, name: 'Belinha', tutor: 'Márcia', breed: '', age: '', sex: '', weight: '', contact: '', history: '' },
+    { id: 13, name: 'Belinha', tutor: 'João', breed: '', age: '', sex: '', weight: '', contact: '', history: '' },
+  ]
   it('não mostra a lista sem busca e encontra por tutor sem acento e identificação', () => {
     expect(filterAnimals(dogs, '')).toEqual([])
     expect(filterAnimals(dogs, '   ')).toEqual([])
-    expect(filterAnimals(dogs, 'marcia').map(dog => dog.id)).toEqual([12])
-    expect(filterAnimals(dogs, '#13').map(dog => dog.id)).toEqual([13])
+    expect(filterAnimals(dogs, 'marcia').map((dog) => dog.id)).toEqual([12])
+    expect(filterAnimals(dogs, '#13').map((dog) => dog.id)).toEqual([13])
     expect(filterAnimals(dogs, 'beli')).toHaveLength(2)
     expect(filterAnimals(dogs, 'inexistente')).toEqual([])
   })

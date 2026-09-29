@@ -21,9 +21,23 @@ describe('Registro de óbito', () => {
   })
 
   it('marca o animal em óbito no cadastro', () => {
-    const dog = (id: number, deceasedAt: string): Dog => ({ id, name: `Cão ${id}`, breed: 'SRD', age: '2 anos', weight: '10', sex: '', tutor: 'Maria', contact: '', history: '', createdAt: '', deceasedAt })
+    const dog = (id: number, deceasedAt: string): Dog => ({
+      id,
+      name: `Cão ${id}`,
+      breed: 'SRD',
+      age: '2 anos',
+      weight: '10',
+      sex: '',
+      tutor: 'Maria',
+      contact: '',
+      history: '',
+      createdAt: '',
+      deceasedAt,
+    })
     localStorage.setItem('diagnovetis:periodo:cadastro', 'all')
-    const html = renderToStaticMarkup(<DogList dogs={[dog(1, ''), dog(2, '2026-09-28')]} onCreate={() => {}} onEdit={() => {}} onDetails={() => {}} />)
+    const html = renderToStaticMarkup(
+      <DogList dogs={[dog(1, ''), dog(2, '2026-09-28')]} onCreate={() => {}} onEdit={() => {}} onDetails={() => {}} />,
+    )
     expect(html.match(/>Óbito</g)).toHaveLength(1)
   })
 })

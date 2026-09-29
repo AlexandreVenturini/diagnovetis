@@ -30,15 +30,24 @@ function petInfo(pet: Pet): SummaryItem['pet'] {
 
 async function fetchSummaries(range: DateRange | null): Promise<SummaryItem[]> {
   const resumos = await consultaService.listarResumo(range)
-  const pets = range ? await petService.listarPorIds([...new Set(resumos.map((r) => r.petId))]) : await petService.listarPets()
+  const pets = range
+    ? await petService.listarPorIds([...new Set(resumos.map((r) => r.petId))])
+    : await petService.listarPets()
   const petsPorId = new Map(pets.map((pet) => [pet.id, pet]))
   const items: SummaryItem[] = resumos
     .filter((r) => petsPorId.has(r.petId))
-    .map((r) => ({ key: `c-${r.id}`, consultaId: r.id, date: r.date, veterinarian: r.veterinarian, pet: petInfo(petsPorId.get(r.petId)!) }))
+    .map((r) => ({
+      key: `c-${r.id}`,
+      consultaId: r.id,
+      date: r.date,
+      veterinarian: r.veterinarian,
+      pet: petInfo(petsPorId.get(r.petId)!),
+    }))
   if (!range) {
     const comAtendimento = new Set(resumos.map((r) => r.petId))
     for (const pet of pets) {
-      if (!comAtendimento.has(pet.id)) items.push({ key: `p-${pet.id}`, consultaId: null, date: '', veterinarian: '', pet: petInfo(pet) })
+      if (!comAtendimento.has(pet.id))
+        items.push({ key: `p-${pet.id}`, consultaId: null, date: '', veterinarian: '', pet: petInfo(pet) })
     }
   }
   return items
@@ -79,19 +88,29 @@ function buildPatientRecord(pet: Pet, consultas: Consulta[]): PatientRecord {
     allergies: [],
     previousDiseases: pet.historico ? [pet.historico] : [],
     vaccines: [],
-    weights: pet.peso
-      ? [{ date: new Date().toISOString().slice(0, 10), weight: parseFloat(pet.peso) || 0 }]
-      : [],
+    weights: pet.peso ? [{ date: new Date().toISOString().slice(0, 10), weight: parseFloat(pet.peso) || 0 }] : [],
     records,
   }
 }
 
 async function fetchPatient(petId: number): Promise<PatientRecord | null> {
-  const [pets, consultas, death] = await Promise.all([petService.listarPorIds([petId]), consultaService.listarPorPet(petId), buscarObito(petId)])
+  const [pets, consultas, death] = await Promise.all([
+    petService.listarPorIds([petId]),
+    consultaService.listarPorPet(petId),
+    buscarObito(petId),
+  ])
   return pets[0] ? { ...buildPatientRecord(pets[0], consultas), death } : null
 }
 
-export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }: { initialPetId?: number; role?: UserRole; userEmail?: string }) {
+export function RecordsModule({
+  initialPetId,
+  role = 'veterinarian',
+  userEmail,
+}: {
+  initialPetId?: number
+  role?: UserRole
+  userEmail?: string
+}) {
   const [screen, setScreen] = useState<Screen>(initialPetId ? 'details' : 'list')
   const [selectedId, setSelectedId] = useState<number | null>(initialPetId ?? null)
   const [selected, setSelected] = useState<PatientRecord | null>(null)
@@ -132,9 +151,15 @@ export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }
         setSelected(patient)
         setDetailError(patient ? '' : 'Paciente não encontrado.')
       })
-      .catch(() => { if (active) setDetailError('Não foi possível carregar o prontuário.') })
-      .finally(() => { if (active) setDetailLoading(false) })
-    return () => { active = false }
+      .catch(() => {
+        if (active) setDetailError('Não foi possível carregar o prontuário.')
+      })
+      .finally(() => {
+        if (active) setDetailLoading(false)
+      })
+    return () => {
+      active = false
+    }
   }, [initialPetId])
 
   function openPatient(patient: PatientSummary) {
@@ -147,14 +172,17 @@ export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }
   }
 
   function handleExamSaved(exam: Exame) {
-    setSelected((current) => current && {
-      ...current,
-      records: current.records.map((r) =>
-        r.id === exam.consultaId
-          ? { ...r, complementaryExams: r.complementaryExams?.map((e) => (e.id === exam.id ? exam : e)) }
-          : r
-      ),
-    })
+    setSelected(
+      (current) =>
+        current && {
+          ...current,
+          records: current.records.map((r) =>
+            r.id === exam.consultaId
+              ? { ...r, complementaryExams: r.complementaryExams?.map((e) => (e.id === exam.id ? exam : e)) }
+              : r,
+          ),
+        },
+    )
   }
 
   function openRetification(recordId: number) {
@@ -177,7 +205,11 @@ export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }
         <div className="records-heading">
           <div>
             <h2>Prontuários Clínicos</h2>
-            <p>{role === 'attendant' ? 'Consulte o histórico completo dos pacientes. Correções em atendimentos precisam da autorização de um professor.' : 'Consulte o histórico completo dos pacientes.'}</p>
+            <p>
+              {role === 'attendant'
+                ? 'Consulte o histórico completo dos pacientes. Correções em atendimentos precisam da autorização de um professor.'
+                : 'Consulte o histórico completo dos pacientes.'}
+            </p>
           </div>
           <div className="records-stat">
             <strong>{patients.length}</strong>
@@ -185,33 +217,55 @@ export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }
           </div>
         </div>
 
-        <PeriodFilter label="Período dos atendimentos" value={period} onChange={setPeriod} searching={Boolean(normalizedQuery)}>
+        <PeriodFilter
+          label="Período dos atendimentos"
+          value={period}
+          onChange={setPeriod}
+          searching={Boolean(normalizedQuery)}
+        >
           <label className="agenda-search">
             <span>Buscar paciente</span>
             <span className="record-search" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Icon><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5" /></Icon>
+              <Icon>
+                <circle cx="11" cy="11" r="7" />
+                <path d="m16 16 5 5" />
+              </Icon>
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nome do animal ou tutor" />
             </span>
           </label>
         </PeriodFilter>
 
         {summaries.error && <div className="empty-appointments">{summaries.error}</div>}
-        {summaries.loading
-          ? <div className="empty-appointments">Carregando prontuários...</div>
-          : <PatientList patients={patients} emptyText={normalizedQuery ? 'Nenhum paciente encontrado com esse nome.' : 'Nenhum paciente atendido neste período.'} onSelect={openPatient} />}
+        {summaries.loading ? (
+          <div className="empty-appointments">Carregando prontuários...</div>
+        ) : (
+          <PatientList
+            patients={patients}
+            emptyText={
+              normalizedQuery ? 'Nenhum paciente encontrado com esse nome.' : 'Nenhum paciente atendido neste período.'
+            }
+            onSelect={openPatient}
+          />
+        )}
       </section>
     )
   }
 
   if (detailLoading) {
-    return <section className="records-module"><div className="empty-appointments">Carregando prontuário...</div></section>
+    return (
+      <section className="records-module">
+        <div className="empty-appointments">Carregando prontuário...</div>
+      </section>
+    )
   }
 
   if (!selected) {
     return (
       <section className="records-module">
         <div className="empty-appointments">{detailError || 'Paciente não encontrado.'}</div>
-        <button className="text-back-button" onClick={() => setScreen('list')}>‹ Prontuários</button>
+        <button className="text-back-button" onClick={() => setScreen('list')}>
+          ‹ Prontuários
+        </button>
       </section>
     )
   }
@@ -225,7 +279,9 @@ export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }
         userEmail={userEmail}
         records={selected.records}
         existing={selected.death}
-        onDone={(message) => { void handleRetified(message) }}
+        onDone={(message) => {
+          void handleRetified(message)
+        }}
         onCancel={() => setScreen('details')}
       />
     )
@@ -236,7 +292,9 @@ export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }
       <RetificationEditor
         consultaId={retifyId}
         role={role}
-        onDone={(message) => { void handleRetified(message) }}
+        onDone={(message) => {
+          void handleRetified(message)
+        }}
         onCancel={() => setScreen('details')}
       />
     )
@@ -246,11 +304,20 @@ export function RecordsModule({ initialPetId, role = 'veterinarian', userEmail }
     <PatientDetails
       key={detailsKey}
       selected={selected}
-      onBack={() => { setDetailsNotice(''); setScreen('list') }}
+      onBack={() => {
+        setDetailsNotice('')
+        setScreen('list')
+      }}
       onExamSaved={handleExamSaved}
       onRetify={openRetification}
-      onRegisterDeath={() => { setDetailsNotice(''); setScreen('death') }}
-      onRetifyDeath={() => { setDetailsNotice(''); setScreen('death') }}
+      onRegisterDeath={() => {
+        setDetailsNotice('')
+        setScreen('death')
+      }}
+      onRetifyDeath={() => {
+        setDetailsNotice('')
+        setScreen('death')
+      }}
       canEditExams={role === 'veterinarian'}
       canRetifyDeath={role === 'veterinarian'}
       initialRecordId={retifyId ?? undefined}

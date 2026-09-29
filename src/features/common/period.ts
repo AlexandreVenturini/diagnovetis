@@ -10,7 +10,8 @@ export const PERIOD_VIEWS: { view: PeriodView; label: string }[] = [
   { view: 'all', label: 'Tudo' },
 ]
 
-export const dateInput = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+export const dateInput = (date = new Date()) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 const parse = (date: string) => new Date(`${date}T12:00:00`)
 
 export function addDays(date: string, amount: number) {
@@ -21,7 +22,7 @@ export function addDays(date: string, amount: number) {
 
 export function periodBounds(date: string, view: Exclude<PeriodView, 'all'>): DateRange {
   const start = parse(date)
-  if (view === 'week') start.setDate(start.getDate() - (start.getDay() + 6) % 7)
+  if (view === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7))
   if (view === 'month') start.setDate(1)
   if (view === 'year') start.setMonth(0, 1)
   const end = new Date(start)
@@ -45,7 +46,8 @@ export function shiftPeriod(date: string, view: PeriodView, amount: number) {
 }
 
 export function periodLabel(date: string, view: PeriodView) {
-  const format = (value: string, options: Intl.DateTimeFormatOptions) => parse(value).toLocaleDateString('pt-BR', options)
+  const format = (value: string, options: Intl.DateTimeFormatOptions) =>
+    parse(value).toLocaleDateString('pt-BR', options)
   if (view === 'all') return 'Todo o período'
   if (view === 'day') return format(date, { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
   if (view === 'month') return format(date, { month: 'long', year: 'numeric' })
@@ -107,5 +109,7 @@ export function rangesToFetch(cache: RangeCache, range: DateRange | null): (Date
 }
 
 export function markLoaded(cache: RangeCache, range: DateRange | null): RangeCache {
-  return range === null ? { all: true, ranges: cache.ranges } : { all: cache.all, ranges: mergeRanges([...cache.ranges, range]) }
+  return range === null
+    ? { all: true, ranges: cache.ranges }
+    : { all: cache.all, ranges: mergeRanges([...cache.ranges, range]) }
 }

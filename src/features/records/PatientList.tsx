@@ -42,7 +42,9 @@ export function PatientList({ patients, onSelect, emptyText = 'Nenhum prontuári
               <div>
                 <small>Último atendimento</small>
                 <strong>Consulta</strong>
-                <span>{formatDate(patient.latest.date)} · {patient.latest.veterinarian}</span>
+                <span>
+                  {formatDate(patient.latest.date)} · {patient.latest.veterinarian}
+                </span>
               </div>
             </div>
           ) : (
@@ -53,9 +55,7 @@ export function PatientList({ patients, onSelect, emptyText = 'Nenhum prontuári
         </button>
       ))}
 
-      {patients.length === 0 && (
-        <div className="empty-appointments">{emptyText}</div>
-      )}
+      {patients.length === 0 && <div className="empty-appointments">{emptyText}</div>}
     </div>
   )
 }

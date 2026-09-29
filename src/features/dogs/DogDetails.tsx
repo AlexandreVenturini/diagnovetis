@@ -8,7 +8,12 @@ type DogDetailsProps = {
 }
 
 function DetailItem({ label, value }: { label: string; value: string }) {
-  return <div className="detail-item"><span>{label}</span><strong>{value}</strong></div>
+  return (
+    <div className="detail-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  )
 }
 
 export function DogDetails({ dog, onBack, onRemove }: DogDetailsProps) {
@@ -17,8 +22,14 @@ export function DogDetails({ dog, onBack, onRemove }: DogDetailsProps) {
       <div className="section-heading">
         <h2>Detalhes do Cão</h2>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {onRemove && <button className="secondary-button" onClick={onRemove}>Remover</button>}
-          <button className="secondary-button" onClick={onBack}>Voltar</button>
+          {onRemove && (
+            <button className="secondary-button" onClick={onRemove}>
+              Remover
+            </button>
+          )}
+          <button className="secondary-button" onClick={onBack}>
+            Voltar
+          </button>
         </div>
       </div>
       <div className="details-grid">

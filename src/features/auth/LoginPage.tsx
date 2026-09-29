@@ -31,7 +31,9 @@ export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProp
     setMessage('')
     onDismissNotice()
     if (!isSupabaseConfigured) {
-      setMessage('Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ou VITE_SUPABASE_KEY) no arquivo .env.local e reinicie o servidor local.')
+      setMessage(
+        'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ou VITE_SUPABASE_KEY) no arquivo .env.local e reinicie o servidor local.',
+      )
       return
     }
     setLoading(true)
@@ -64,18 +66,46 @@ export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProp
         <form className="login-form" onSubmit={submit}>
           <label htmlFor="email">E-mail</label>
           <div className="input-wrap">
-            <Icon><circle cx="12" cy="8" r="3.25" /><path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20" /></Icon>
-            <input id="email" type="email" autoComplete="email" placeholder="seu.email@ifes.edu.br" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            <Icon>
+              <circle cx="12" cy="8" r="3.25" />
+              <path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20" />
+            </Icon>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="seu.email@ifes.edu.br"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
           </div>
 
           <label htmlFor="password">Senha</label>
           <div className="input-wrap">
-            <Icon><rect x="4.5" y="10" width="15" height="10.5" rx="1.5" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></Icon>
-            <input id="password" type="password" autoComplete="current-password" placeholder="Digite sua senha" value={password} onChange={(event) => setPassword(event.target.value)} required />
+            <Icon>
+              <rect x="4.5" y="10" width="15" height="10.5" rx="1.5" />
+              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            </Icon>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Digite sua senha"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
           </div>
 
-          {(message || notice) && <p className="form-message error" role="status">{message || notice}</p>}
-          <button className="submit-button" type="submit" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
+          {(message || notice) && (
+            <p className="form-message error" role="status">
+              {message || notice}
+            </p>
+          )}
+          <button className="submit-button" type="submit" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
         </form>
 
         <footer>
@@ -84,7 +114,14 @@ export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProp
           <button
             type="button"
             onClick={onRegister}
-            style={{ marginTop: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '0.875rem' }}
+            style={{
+              marginTop: '0.75rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-primary)',
+              fontSize: '0.875rem',
+            }}
           >
             Criar nova conta
           </button>

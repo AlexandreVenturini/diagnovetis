@@ -50,7 +50,9 @@ export function useRangeData<T>(
         setLoadedKey(requestKey)
       })
 
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [rangeKey, requestKey, merge])
 
   const refresh = useCallback(async () => {

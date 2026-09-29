@@ -18,9 +18,19 @@ export type ClinicalMetadata = {
 }
 
 export const EMPTY_CLINICAL: ClinicalMetadata = {
-  category: '', conditionType: 'Doença', systems: [], etiology: '', ageGroups: [],
-  isZoonosis: true, transmission: '', diagnostics: [], differentials: [], protocols: [],
-  alert: '', hosts: ['Cães'], prevalence: 'Média',
+  category: '',
+  conditionType: 'Doença',
+  systems: [],
+  etiology: '',
+  ageGroups: [],
+  isZoonosis: true,
+  transmission: '',
+  diagnostics: [],
+  differentials: [],
+  protocols: [],
+  alert: '',
+  hosts: ['Cães'],
+  prevalence: 'Média',
 }
 
 export type Zoonosis = {

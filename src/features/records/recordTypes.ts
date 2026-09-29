@@ -68,4 +68,3 @@ export type PatientRecord = {
   weights: WeightEntry[]
   records: ClinicalRecord[]
 }
-

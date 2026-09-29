@@ -5,7 +5,35 @@ import { Icon } from '../../components/common/Icon'
 import { supabase } from '../../services/storage/supabaseClient'
 import type { UserRole } from './LoginPage'
 
-const UFS = ['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO']
+const UFS = [
+  'AC',
+  'AL',
+  'AM',
+  'AP',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MG',
+  'MS',
+  'MT',
+  'PA',
+  'PB',
+  'PE',
+  'PI',
+  'PR',
+  'RJ',
+  'RN',
+  'RO',
+  'RR',
+  'RS',
+  'SC',
+  'SE',
+  'SP',
+  'TO',
+]
 
 type RegisterPageProps = {
   onBack: () => void
@@ -25,7 +53,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   const [loading, setLoading] = useState(false)
 
   function formatMatricula(value: string) {
-    return value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20)
+    return value
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 20)
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -54,7 +85,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
     setLoading(true)
 
-    const { data: emUso, error: checkError } = await supabase.rpc('cadastro_disponivel', { p_crmv: crmv ?? null, p_matricula: matriculaFinal ?? null })
+    const { data: emUso, error: checkError } = await supabase.rpc('cadastro_disponivel', {
+      p_crmv: crmv ?? null,
+      p_matricula: matriculaFinal ?? null,
+    })
     if (checkError) {
       setLoading(false)
       setMessage('Não foi possível verificar os dados do cadastro. Tente novamente.')
@@ -83,9 +117,11 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     setLoading(false)
 
     if (error) {
-      setMessage(error.message.includes('Database error')
-        ? 'Não foi possível criar a conta. Verifique se o CRMV ou a matrícula já estão em uso.'
-        : error.message)
+      setMessage(
+        error.message.includes('Database error')
+          ? 'Não foi possível criar a conta. Verifique se o CRMV ou a matrícula já estão em uso.'
+          : error.message,
+      )
       return
     }
 
@@ -116,7 +152,9 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             <p style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>
               Depois da confirmação, seu cadastro ainda precisa ser aprovado por um administrador para liberar o acesso.
             </p>
-            <button className="submit-button" onClick={onBack}>Voltar para o login</button>
+            <button className="submit-button" onClick={onBack}>
+              Voltar para o login
+            </button>
           </div>
         </section>
       </main>
@@ -164,7 +202,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
           <label htmlFor="reg-name">Nome completo</label>
           <div className="input-wrap">
-            <Icon><circle cx="12" cy="8" r="3.25" /><path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20" /></Icon>
+            <Icon>
+              <circle cx="12" cy="8" r="3.25" />
+              <path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20" />
+            </Icon>
             <input
               id="reg-name"
               type="text"
@@ -177,7 +218,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
           <label htmlFor="reg-email">E-mail</label>
           <div className="input-wrap">
-            <Icon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Icon>
+            <Icon>
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="m3 7 9 6 9-6" />
+            </Icon>
             <input
               id="reg-email"
               type="email"
@@ -191,7 +235,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
           <label htmlFor="reg-password">Senha</label>
           <div className="input-wrap">
-            <Icon><rect x="4.5" y="10" width="15" height="10.5" rx="1.5" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></Icon>
+            <Icon>
+              <rect x="4.5" y="10" width="15" height="10.5" rx="1.5" />
+              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            </Icon>
             <input
               id="reg-password"
               type="password"
@@ -205,7 +252,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
           <label htmlFor="reg-confirm">Confirmar senha</label>
           <div className="input-wrap">
-            <Icon><rect x="4.5" y="10" width="15" height="10.5" rx="1.5" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></Icon>
+            <Icon>
+              <rect x="4.5" y="10" width="15" height="10.5" rx="1.5" />
+              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            </Icon>
             <input
               id="reg-confirm"
               type="password"
@@ -226,12 +276,25 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                   aria-label="UF do CRMV"
                   value={crmvUf}
                   onChange={(e) => setCrmvUf(e.target.value)}
-                  style={{ padding: '0 0.5rem', borderRadius: '8px', border: '1px solid #d1d5db', background: 'transparent', color: 'inherit' }}
+                  style={{
+                    padding: '0 0.5rem',
+                    borderRadius: '8px',
+                    border: '1px solid #d1d5db',
+                    background: 'transparent',
+                    color: 'inherit',
+                  }}
                 >
-                  {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+                  {UFS.map((uf) => (
+                    <option key={uf} value={uf}>
+                      {uf}
+                    </option>
+                  ))}
                 </select>
                 <div className="input-wrap" style={{ flex: 1 }}>
-                  <Icon><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /></Icon>
+                  <Icon>
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                    <rect x="9" y="3" width="6" height="4" rx="1" />
+                  </Icon>
                   <input
                     id="reg-crmv"
                     type="text"
@@ -250,7 +313,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             <>
               <label htmlFor="reg-matricula">Matrícula</label>
               <div className="input-wrap">
-                <Icon><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h6M7 13h10" /></Icon>
+                <Icon>
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <path d="M7 9h6M7 13h10" />
+                </Icon>
                 <input
                   id="reg-matricula"
                   type="text"
@@ -263,7 +329,11 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             </>
           )}
 
-          {message && <p className="form-message error" role="status">{message}</p>}
+          {message && (
+            <p className="form-message error" role="status">
+              {message}
+            </p>
+          )}
 
           <button className="submit-button" type="submit" disabled={loading}>
             {loading ? 'Cadastrando...' : 'Criar conta'}
@@ -274,7 +344,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           <button
             type="button"
             onClick={onBack}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '0.875rem' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-primary)',
+              fontSize: '0.875rem',
+            }}
           >
             ← Já tenho uma conta
           </button>

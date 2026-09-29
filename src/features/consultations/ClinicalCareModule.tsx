@@ -19,26 +19,54 @@ import { SupervisionGate } from './SupervisionGate'
 import { cancelarLiberacao, listarVeterinarios } from './supervision'
 import type { Liberacao, VeterinarianOption } from './supervision'
 
-type ClinicalCareModuleProps = { dogs: Dog[]; initialAppointment?: Appointment; role?: UserRole; userEmail?: string; onOpenRecord?: (petId: number) => void }
-
-function applyVeterinarian(data: ConsultationData, veterinarians: VeterinarianOption[], liberacao: Liberacao | null, userEmail?: string): ConsultationData {
-  if (liberacao) return { ...data, veterinarian: liberacao.supervisor.nome, veterinarianId: String(liberacao.supervisor.medicoId) }
-  if (data.veterinarianId && veterinarians.some((vet) => String(vet.medicoId) === data.veterinarianId)) return data
-  const normalize = (value: string) => value.trim().toLocaleLowerCase('pt-BR')
-  const vet = (data.veterinarian && veterinarians.find((item) => normalize(item.nome) === normalize(data.veterinarian)))
-    || (userEmail && veterinarians.find((item) => normalize(item.email) === normalize(userEmail)))
-  return vet ? { ...data, veterinarian: vet.nome, veterinarianId: String(vet.medicoId) } : { ...data, veterinarianId: '' }
+type ClinicalCareModuleProps = {
+  dogs: Dog[]
+  initialAppointment?: Appointment
+  role?: UserRole
+  userEmail?: string
+  onOpenRecord?: (petId: number) => void
 }
 
-export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinarian', userEmail, onOpenRecord }: ClinicalCareModuleProps) {
+function applyVeterinarian(
+  data: ConsultationData,
+  veterinarians: VeterinarianOption[],
+  liberacao: Liberacao | null,
+  userEmail?: string,
+): ConsultationData {
+  if (liberacao)
+    return { ...data, veterinarian: liberacao.supervisor.nome, veterinarianId: String(liberacao.supervisor.medicoId) }
+  if (data.veterinarianId && veterinarians.some((vet) => String(vet.medicoId) === data.veterinarianId)) return data
+  const normalize = (value: string) => value.trim().toLocaleLowerCase('pt-BR')
+  const vet =
+    (data.veterinarian && veterinarians.find((item) => normalize(item.nome) === normalize(data.veterinarian))) ||
+    (userEmail && veterinarians.find((item) => normalize(item.email) === normalize(userEmail)))
+  return vet
+    ? { ...data, veterinarian: vet.nome, veterinarianId: String(vet.medicoId) }
+    : { ...data, veterinarianId: '' }
+}
+
+export function ClinicalCareModule({
+  dogs,
+  initialAppointment,
+  role = 'veterinarian',
+  userEmail,
+  onOpenRecord,
+}: ClinicalCareModuleProps) {
   const isStudent = role === 'attendant'
   const [step, setStep] = useState<ConsultationStep>(1)
-  const [data, setData] = useState<ConsultationData>(() => initialAppointment ? consultationFromAppointment(initialAppointment, dogs) : EMPTY_CONSULTATION)
+  const [data, setData] = useState<ConsultationData>(() =>
+    initialAppointment ? consultationFromAppointment(initialAppointment, dogs) : EMPTY_CONSULTATION,
+  )
   const [exams, setExams] = useState<ExamDraft[]>([])
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const saveLock = useRef(false)
-  const [completed, setCompleted] = useState<{ data: ConsultationData; exams: ExamDraft[]; id: number; petId?: number } | null>(null)
+  const [completed, setCompleted] = useState<{
+    data: ConsultationData
+    exams: ExamDraft[]
+    id: number
+    petId?: number
+  } | null>(null)
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(initialAppointment?.id ?? null)
   const { salvarConsulta } = useConsultas()
   const { appointments, updateAppointment } = useAppointments()
@@ -53,8 +81,12 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
         setVeterinarians(vets)
         setData((current) => applyVeterinarian(current, vets, null, userEmail))
       })
-      .catch(() => { if (active) setMessage('Não foi possível carregar a lista de veterinários.') })
-    return () => { active = false }
+      .catch(() => {
+        if (active) setMessage('Não foi possível carregar a lista de veterinários.')
+      })
+    return () => {
+      active = false
+    }
   }, [userEmail])
 
   function handleLiberado(nova: Liberacao) {
@@ -65,8 +97,17 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
 
   async function trocarLiberacao() {
     if (!liberacao || saving) return
-    if (!window.confirm('Cancelar a liberação atual? Os dados preenchidos serão mantidos e será preciso uma nova liberação do professor.')) return
-    try { await cancelarLiberacao(liberacao.id) } catch { setMessage('Não foi possível cancelar a liberação anterior.') }
+    if (
+      !window.confirm(
+        'Cancelar a liberação atual? Os dados preenchidos serão mantidos e será preciso uma nova liberação do professor.',
+      )
+    )
+      return
+    try {
+      await cancelarLiberacao(liberacao.id)
+    } catch {
+      setMessage('Não foi possível cancelar a liberação anterior.')
+    }
     setLiberacao(null)
   }
 
@@ -80,7 +121,9 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
     const appointment = appointments.find((item) => item.id === id)
     if (!appointment) return
     setExams([])
-    setData(current => applyVeterinarian(consultationFromAppointment(appointment, dogs, current), veterinarians, liberacao, userEmail))
+    setData((current) =>
+      applyVeterinarian(consultationFromAppointment(appointment, dogs, current), veterinarians, liberacao, userEmail),
+    )
     setMessage('Dados do agendamento carregados com sucesso.')
   }
 
@@ -102,12 +145,16 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
       return
     }
     const examError = exams.map(validateExam).find(Boolean)
-    if (examError) { setMessage(examError); setStep(4); return }
+    if (examError) {
+      setMessage(examError)
+      setStep(4)
+      return
+    }
     saveLock.current = true
     setSaving(true)
     setMessage('')
     try {
-      const resultado = await salvarConsulta(data, exams, isStudent ? liberacao?.id ?? null : null)
+      const resultado = await salvarConsulta(data, exams, isStudent ? (liberacao?.id ?? null) : null)
       if (!resultado.sucesso || resultado.id === undefined) {
         setMessage(resultado.erro ?? 'Não foi possível salvar o atendimento. Os dados preenchidos foram mantidos.')
         return
@@ -117,9 +164,11 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
       if (selectedAppointmentId !== null) {
         try {
           const updated = await updateAppointment(selectedAppointmentId, { status: 'completed' })
-          if (!updated) setMessage('Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.')
+          if (!updated)
+            setMessage('Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.')
+        } catch {
+          setMessage('Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.')
         }
-        catch { setMessage('Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.') }
       }
     } catch {
       setMessage('Não foi possível finalizar o atendimento. Verifique a conexão e tente novamente.')
@@ -139,43 +188,112 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
     setMessage('')
   }
 
-  if (completed) return <section className="consultation-panel content-card">
-    <h2>Atendimento finalizado</h2>
-    <p>Atendimento nº {completed.id} de <strong>{completed.data.dogName}</strong> salvo no prontuário.</p>
-    {completed.data.dischargeCondition === 'Óbito' ? <aside className="profile-notice" style={{ borderLeft: '5px solid #1f2937' }}>
-      <span>✝</span>
-      <p><strong>Condição na alta: óbito.</strong> Registre o óbito completo no prontuário do animal: data e hora, circunstâncias, causa provável, eutanásia, necropsia e destinação do corpo.
-        {onOpenRecord && completed.petId !== undefined && <> <button type="button" className="text-back-button" onClick={() => onOpenRecord(completed.petId!)}>Abrir prontuário para registrar o óbito →</button></>}</p>
-    </aside> : <p>Para emitir uma receita, acesse a aba Receituário.</p>}
-    <div className="form-actions">
-      <button className="secondary-button" onClick={() => setMessage(generateConsultationReport(completed.data, completed.exams) ? 'Relatório clínico aberto.' : 'O navegador bloqueou o relatório. Permita novas janelas e tente novamente.')}>Gerar relatório clínico</button>
-      <button className="secondary-button" disabled={saving} onClick={startNew}>Novo atendimento</button>
-    </div>
-    {message && <p className="consultation-message" role="status">{message}</p>}
-  </section>
+  if (completed)
+    return (
+      <section className="consultation-panel content-card">
+        <h2>Atendimento finalizado</h2>
+        <p>
+          Atendimento nº {completed.id} de <strong>{completed.data.dogName}</strong> salvo no prontuário.
+        </p>
+        {completed.data.dischargeCondition === 'Óbito' ? (
+          <aside className="profile-notice" style={{ borderLeft: '5px solid #1f2937' }}>
+            <span>✝</span>
+            <p>
+              <strong>Condição na alta: óbito.</strong> Registre o óbito completo no prontuário do animal: data e hora,
+              circunstâncias, causa provável, eutanásia, necropsia e destinação do corpo.
+              {onOpenRecord && completed.petId !== undefined && (
+                <>
+                  {' '}
+                  <button type="button" className="text-back-button" onClick={() => onOpenRecord(completed.petId!)}>
+                    Abrir prontuário para registrar o óbito →
+                  </button>
+                </>
+              )}
+            </p>
+          </aside>
+        ) : (
+          <p>Para emitir uma receita, acesse a aba Receituário.</p>
+        )}
+        <div className="form-actions">
+          <button
+            className="secondary-button"
+            onClick={() =>
+              setMessage(
+                generateConsultationReport(completed.data, completed.exams)
+                  ? 'Relatório clínico aberto.'
+                  : 'O navegador bloqueou o relatório. Permita novas janelas e tente novamente.',
+              )
+            }
+          >
+            Gerar relatório clínico
+          </button>
+          <button className="secondary-button" disabled={saving} onClick={startNew}>
+            Novo atendimento
+          </button>
+        </div>
+        {message && (
+          <p className="consultation-message" role="status">
+            {message}
+          </p>
+        )}
+      </section>
+    )
   if (isStudent && !liberacao) return <SupervisionGate onLiberado={handleLiberado} />
   return (
     <section className="clinical-care-module">
-      {liberacao && <aside className="profile-notice">
-        <span>✔</span>
-        <p>
-          <strong>Atendimento liberado por {liberacao.supervisor.nome}</strong>
-          {liberacao.participantes.length > 0 && <> · Participantes: {liberacao.participantes.map((p) => p.nome).join(', ')}</>}
-          {' '}<button type="button" className="text-back-button" onClick={() => void trocarLiberacao()} disabled={saving}>Trocar liberação</button>
-        </p>
-      </aside>}
+      {liberacao && (
+        <aside className="profile-notice">
+          <span>✔</span>
+          <p>
+            <strong>Atendimento liberado por {liberacao.supervisor.nome}</strong>
+            {liberacao.participantes.length > 0 && (
+              <> · Participantes: {liberacao.participantes.map((p) => p.nome).join(', ')}</>
+            )}{' '}
+            <button type="button" className="text-back-button" onClick={() => void trocarLiberacao()} disabled={saving}>
+              Trocar liberação
+            </button>
+          </p>
+        </aside>
+      )}
       <fieldset className="consultation-edit-fields" disabled={saving}>
-      <ConsultationHeader currentStep={step} onStepChange={setStep} />
-      {step === 1 && <IdentificationStep data={data} appointments={availableAppointments} selectedAppointmentId={selectedAppointmentId} onSelectAppointment={selectAppointment} update={update} onNext={() => setStep(2)} veterinarians={veterinarians} veterinarianLocked={isStudent} />}
-      {step === 2 && <ClinicalHistoryStep data={data} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
-      {step === 3 && <PhysicalExamStep data={data} update={update} onBack={() => setStep(2)} onNext={() => setStep(4)} />}
-      {step === 4 && <ComplementaryExamsStep exams={exams} onChange={setExams} onBack={() => setStep(3)} onNext={() => setStep(5)} />}
-      {step === 5 && <DiagnosisStep data={data} update={update} onBack={() => setStep(4)} />}
+        <ConsultationHeader currentStep={step} onStepChange={setStep} />
+        {step === 1 && (
+          <IdentificationStep
+            data={data}
+            appointments={availableAppointments}
+            selectedAppointmentId={selectedAppointmentId}
+            onSelectAppointment={selectAppointment}
+            update={update}
+            onNext={() => setStep(2)}
+            veterinarians={veterinarians}
+            veterinarianLocked={isStudent}
+          />
+        )}
+        {step === 2 && (
+          <ClinicalHistoryStep data={data} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} />
+        )}
+        {step === 3 && (
+          <PhysicalExamStep data={data} update={update} onBack={() => setStep(2)} onNext={() => setStep(4)} />
+        )}
+        {step === 4 && (
+          <ComplementaryExamsStep
+            exams={exams}
+            onChange={setExams}
+            onBack={() => setStep(3)}
+            onNext={() => setStep(5)}
+          />
+        )}
+        {step === 5 && <DiagnosisStep data={data} update={update} onBack={() => setStep(4)} />}
       </fieldset>
-      {message && <p className="consultation-message" role="status">{message}</p>}
+      {message && (
+        <p className="consultation-message" role="status">
+          {message}
+        </p>
+      )}
       <div className="consultation-actions">
-        <button className="record-button" disabled={saving} onClick={saveRecord}>{saving ? 'Salvando atendimento...' : 'Finalizar atendimento e salvar no prontuário'}</button>
-
+        <button className="record-button" disabled={saving} onClick={saveRecord}>
+          {saving ? 'Salvando atendimento...' : 'Finalizar atendimento e salvar no prontuário'}
+        </button>
       </div>
     </section>
   )

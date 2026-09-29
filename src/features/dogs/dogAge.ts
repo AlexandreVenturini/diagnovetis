@@ -10,7 +10,14 @@ export function parseDogAge(age: string) {
 export function serializeDogAge(years: string, months: string): string {
   const y = Number(years)
   const m = Number(months)
-  if ((!years.trim() && !months.trim()) || !Number.isSafeInteger(y) || y < 0 || !Number.isSafeInteger(m) || m < 0 || m > 11) {
+  if (
+    (!years.trim() && !months.trim()) ||
+    !Number.isSafeInteger(y) ||
+    y < 0 ||
+    !Number.isSafeInteger(m) ||
+    m < 0 ||
+    m > 11
+  ) {
     throw new Error('Informe a idade em anos inteiros e meses de 0 a 11.')
   }
   const parts: string[] = []

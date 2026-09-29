@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { inRange, mergeRanges, missingRanges, periodBounds, periodLabel, periodRange, shiftPeriod } from '../features/common/period'
+import {
+  inRange,
+  mergeRanges,
+  missingRanges,
+  periodBounds,
+  periodLabel,
+  periodRange,
+  shiftPeriod,
+} from '../features/common/period'
 
 describe('Filtro de período padrão', () => {
   it('calcula dia, semana, mês e ano', () => {
@@ -17,11 +25,16 @@ describe('Filtro de período padrão', () => {
   })
 
   it('junta intervalos vizinhos e sobrepostos', () => {
-    expect(mergeRanges([
-      { start: '2026-09-08', end: '2026-09-14' },
-      { start: '2026-09-01', end: '2026-09-07' },
+    expect(
+      mergeRanges([
+        { start: '2026-09-08', end: '2026-09-14' },
+        { start: '2026-09-01', end: '2026-09-07' },
+        { start: '2026-09-20', end: '2026-09-30' },
+      ]),
+    ).toEqual([
+      { start: '2026-09-01', end: '2026-09-14' },
       { start: '2026-09-20', end: '2026-09-30' },
-    ])).toEqual([{ start: '2026-09-01', end: '2026-09-14' }, { start: '2026-09-20', end: '2026-09-30' }])
+    ])
   })
 
   it('busca só os dias que ainda não foram carregados', () => {

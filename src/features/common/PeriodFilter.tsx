@@ -22,18 +22,53 @@ export function PeriodFilter({ value, onChange, label, searching = false, childr
             className={value.view === view ? 'active' : ''}
             aria-pressed={value.view === view}
             onClick={() => onChange({ ...value, view })}
-          >{text}</button>
+          >
+            {text}
+          </button>
         ))}
       </div>
       <div className="period-navigation">
-        {!showAll && <button type="button" aria-label="Período anterior" onClick={() => onChange({ ...value, date: shiftPeriod(value.date, value.view, -1) })}>‹</button>}
-        <strong aria-live="polite">{searching ? 'Busca em todo o período' : periodLabel(value.date, value.view)}</strong>
-        {!showAll && <button type="button" aria-label="Próximo período" onClick={() => onChange({ ...value, date: shiftPeriod(value.date, value.view, 1) })}>›</button>}
-        <button type="button" className="today-button" onClick={() => onChange({ view: showAll ? 'day' : value.view, date: dateInput() })}>Hoje</button>
+        {!showAll && (
+          <button
+            type="button"
+            aria-label="Período anterior"
+            onClick={() => onChange({ ...value, date: shiftPeriod(value.date, value.view, -1) })}
+          >
+            ‹
+          </button>
+        )}
+        <strong aria-live="polite">
+          {searching ? 'Busca em todo o período' : periodLabel(value.date, value.view)}
+        </strong>
+        {!showAll && (
+          <button
+            type="button"
+            aria-label="Próximo período"
+            onClick={() => onChange({ ...value, date: shiftPeriod(value.date, value.view, 1) })}
+          >
+            ›
+          </button>
+        )}
+        <button
+          type="button"
+          className="today-button"
+          onClick={() => onChange({ view: showAll ? 'day' : value.view, date: dateInput() })}
+        >
+          Hoje
+        </button>
       </div>
       <div className="agenda-filters">
         {children}
-        <label><span>Ir para data</span><input type="date" value={value.date} onChange={(event) => { if (event.target.value) onChange({ view: showAll ? 'day' : value.view, date: event.target.value }) }} /></label>
+        <label>
+          <span>Ir para data</span>
+          <input
+            type="date"
+            value={value.date}
+            onChange={(event) => {
+              if (event.target.value) onChange({ view: showAll ? 'day' : value.view, date: event.target.value })
+            }}
+          />
+        </label>
       </div>
     </div>
   )

@@ -92,7 +92,11 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
   if (showAdmin) {
     return (
       <div className="app-shell">
-        <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} actions={<SupervisionRequestsBell />} />
+        <AppHeader
+          isAdmin={user?.isAdmin}
+          onAdminClick={() => setShowAdmin(true)}
+          actions={<SupervisionRequestsBell />}
+        />
         <main className="shell-width dashboard-content">
           <AdminPanel onClose={() => setShowAdmin(false)} />
         </main>
@@ -102,27 +106,40 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
 
   return (
     <div className="app-shell">
-      <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} actions={<SupervisionRequestsBell />} />
+      <AppHeader
+        isAdmin={user?.isAdmin}
+        onAdminClick={() => setShowAdmin(true)}
+        actions={<SupervisionRequestsBell />}
+      />
       <main className="shell-width dashboard-content">
         <section className="user-row">
           <div className="profile-badge">
             <span>Perfil:</span>
             Médico Veterinário
           </div>
-          <button className="logout-button" onClick={onLogout}><span>↪</span> Sair</button>
+          <button className="logout-button" onClick={onLogout}>
+            <span>↪</span> Sair
+          </button>
         </section>
 
         <MainNavigation activeModule={activeModule} onSelect={openModule} />
 
         {activeModule === 'dashboard' && (
-          <DashboardHome dogs={dogs} onOpenModule={openModule} onNewDog={openNewDog} onNewAppointment={openNewAppointment} />
+          <DashboardHome
+            dogs={dogs}
+            onOpenModule={openModule}
+            onNewDog={openNewDog}
+            onNewAppointment={openNewAppointment}
+          />
         )}
 
         {activeModule === 'dogs' && (
           <>
             <aside className="profile-notice">
               <span>♧</span>
-              <p><strong>Perfil Veterinário:</strong> Acesso completo a todos os módulos do sistema</p>
+              <p>
+                <strong>Perfil Veterinário:</strong> Acesso completo a todos os módulos do sistema
+              </p>
             </aside>
             {screen === 'list' && (
               <DogList dogs={dogs} onCreate={() => setScreen('create')} onEdit={openEdit} onDetails={openDetails} />
@@ -131,7 +148,13 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
               <DogForm onSave={handleCreate} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />
             )}
             {screen === 'edit' && selected && (
-              <DogForm dog={selected} editing onSave={handleEdit} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />
+              <DogForm
+                dog={selected}
+                editing
+                onSave={handleEdit}
+                onCreateTutor={createTutor}
+                onCancel={() => setScreen('list')}
+              />
             )}
             {screen === 'details' && selected && (
               <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />
@@ -147,9 +170,19 @@ export function VeterinarianDashboard({ onLogout, user }: VeterinarianDashboardP
             onStartCare={startCare}
           />
         )}
-        {activeModule === 'consultations' && <ClinicalCareModule dogs={dogs} initialAppointment={careAppointment} role="veterinarian" userEmail={user?.email} onOpenRecord={openRecord} />}
+        {activeModule === 'consultations' && (
+          <ClinicalCareModule
+            dogs={dogs}
+            initialAppointment={careAppointment}
+            role="veterinarian"
+            userEmail={user?.email}
+            onOpenRecord={openRecord}
+          />
+        )}
         {activeModule === 'prescriptions' && <PrescriptionsModule dogs={dogs} onOpenRecord={openRecord} />}
-        {activeModule === 'records' && <RecordsModule initialPetId={recordPetId} role="veterinarian" userEmail={user?.email} />}
+        {activeModule === 'records' && (
+          <RecordsModule initialPetId={recordPetId} role="veterinarian" userEmail={user?.email} />
+        )}
         {activeModule === 'zoonoses' && <ZoonosesModule />}
         {activeModule === 'medications' && <MedicationsModule />}
       </main>

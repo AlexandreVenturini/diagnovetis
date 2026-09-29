@@ -11,9 +11,10 @@ export class PrescriptionService {
     if (petId !== undefined) query = query.eq('pet_id', petId)
     if (range) query = query.gte('created_at', rangeStartIso(range)).lte('created_at', rangeEndIso(range))
     const { data, error } = await query
-    if (error) throw new Error('Não foi possível carregar o receituário. Confira a conexão e a atualização do banco de dados.')
+    if (error)
+      throw new Error('Não foi possível carregar o receituário. Confira a conexão e a atualização do banco de dados.')
     return (data ?? [])
-      .map(row => ({ id: row.id as string, petId: row.pet_id as number, snapshot: row.snapshot as PrescricaoSalva }))
+      .map((row) => ({ id: row.id as string, petId: row.pet_id as number, snapshot: row.snapshot as PrescricaoSalva }))
       .sort((a, b) => b.snapshot.issuedAt.localeCompare(a.snapshot.issuedAt))
   }
 
@@ -23,15 +24,29 @@ export class PrescriptionService {
     return { id: data.id as string, petId: data.pet_id as number, snapshot: data.snapshot as PrescricaoSalva }
   }
 
-  async issue(id: string, petId: number, veterinarianId: number, snapshot: PrescricaoSalva): Promise<IssuedPrescription> {
+  async issue(
+    id: string,
+    petId: number,
+    veterinarianId: number,
+    snapshot: PrescricaoSalva,
+  ): Promise<IssuedPrescription> {
     const error = validatePrescription(snapshot.patient, snapshot.prescription)
     if (error) throw new Error(error)
     const weight = Number(snapshot.patient.weight?.replace(',', '.'))
     if (!Number.isFinite(weight) || weight <= 0) throw new Error('Informe um peso válido em kg.')
-    const result = await supabase.from('prescricoes').upsert({ id, pet_id: petId, veterinario_id: veterinarianId, snapshot }, { onConflict: 'id', ignoreDuplicates: true })
-    if (result.error) throw new Error('Não foi possível emitir a receita. Confira a conexão e a atualização do banco. Seus dados foram mantidos.')
+    const result = await supabase
+      .from('prescricoes')
+      .upsert(
+        { id, pet_id: petId, veterinario_id: veterinarianId, snapshot },
+        { onConflict: 'id', ignoreDuplicates: true },
+      )
+    if (result.error)
+      throw new Error(
+        'Não foi possível emitir a receita. Confira a conexão e a atualização do banco. Seus dados foram mantidos.',
+      )
     const saved = await supabase.from('prescricoes').select('*').eq('id', id).single()
-    if (saved.error || !saved.data) throw new Error('Não foi possível confirmar a emissão. Tente novamente para recuperar a mesma receita.')
+    if (saved.error || !saved.data)
+      throw new Error('Não foi possível confirmar a emissão. Tente novamente para recuperar a mesma receita.')
     return { id: saved.data.id, petId: saved.data.pet_id, snapshot: saved.data.snapshot as PrescricaoSalva }
   }
 }
