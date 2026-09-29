@@ -58,25 +58,4 @@ export class MedicamentoService {
         return todos.filter(m => m.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
-    async buscarPorPrincipioAtivo(principioAtivo: string): Promise<Medicamento[]> {
-        const todos = await this.listarMedicamentos();
-        return todos.filter(m => m.principioAtivo.toLowerCase().includes(principioAtivo.toLowerCase()));
-    }
-
-    async removerMedicamento(id: number): Promise<void> {
-        await supabase.from("medicamentos").delete().eq("id", id);
-    }
-
-    async atualizarMedicamento(medicamento: Medicamento): Promise<void> {
-        await supabase.from("medicamentos").update({
-            nome_comercial: medicamento.nome,
-            principio_ativo: medicamento.principioAtivo,
-            descricao: medicamento.descricao,
-            concentracao: medicamento.concentracao,
-            unidade_concentracao: medicamento.unidadeConcentracao,
-            forma_farmaceutica: medicamento.formaFarmaceutica,
-            via_administracao: medicamento.viaAdministracao,
-            tipo_uso: medicamento.tipo
-        }).eq("id", medicamento.id);
-    }
 }

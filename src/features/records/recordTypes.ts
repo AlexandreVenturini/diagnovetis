@@ -1,9 +1,5 @@
 import type { Exame } from '../../models/Exame'
-import type { PrescricaoSalva } from '../../models/Prescricao'
 import type { DeathRecord } from './death'
-
-export type RecordKind = 'Consulta' | 'Vacina' | 'Exame' | 'Tratamento' | 'Retorno'
-export type RecordValidation = 'draft' | 'pending' | 'validated'
 
 export type WeightEntry = { date: string; weight: number }
 
@@ -37,9 +33,7 @@ export type AltaRecord = {
 
 export type ClinicalRecord = {
   complementaryExams?: Exame[]
-  savedPrescription?: PrescricaoSalva | null
   id: number
-  kind: RecordKind
   date: string
   veterinarian: string
   crmv: string
@@ -47,10 +41,6 @@ export type ClinicalRecord = {
   description: string
   diagnosis: string
   conduct: string
-  exams: string[]
-  attachments: string[]
-  prescriptions: string[]
-  validation: RecordValidation
   validatedBy: string
   exameFisico?: ExameFisicoRecord
   alta?: AltaRecord

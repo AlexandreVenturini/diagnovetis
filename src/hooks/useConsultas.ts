@@ -6,8 +6,6 @@ import { ConsultaService } from '../services/ConsultaService'
 import { MedicoService } from '../services/MedicoService'
 import { PetService } from '../services/PetService'
 import type { ConsultationData } from '../features/consultations/consultationTypes'
-import type { PrescricaoSalva } from '../models/Prescricao'
-import { validatePrescription } from '../features/consultations/prescriptionReport'
 
 const consultaService = new ConsultaService()
 const medicoService = new MedicoService()
@@ -35,12 +33,8 @@ async function resolverPet(nomeCao: string, nomeTutor: string) {
 }
 
 export function useConsultas() {
-    async function salvarConsulta(data: ConsultationData, prescricao: PrescricaoSalva | null = null, exams: ExamDraft[] = [], liberacaoId: string | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number; petId?: number }> {
+    async function salvarConsulta(data: ConsultationData, exams: ExamDraft[] = [], liberacaoId: string | null = null): Promise<{ sucesso: boolean; erro?: string; id?: number; petId?: number }> {
       try {
-        if (prescricao) {
-            const error = validatePrescription(data, prescricao.prescription)
-            if (error) return { sucesso: false, erro: error }
-        }
         const medico = await resolverMedico(data.veterinarian, Number(data.veterinarianId) || undefined)
         if (!medico) return { sucesso: false, erro: 'Não foi possível identificar o veterinário. Selecione um veterinário da lista.' }
 
@@ -87,13 +81,10 @@ export function useConsultas() {
                     new Date()
                 ),
                 new ExameService().criarSolicitacoes(exams),
-                [],
-                [],
                 exameFisico,
                 alta
             )
             consulta.conduta = data.conduct
-            consulta.prescricao = prescricao
             consulta.liberacaoId = liberacaoId
             await consultaService.adicionarConsulta(consulta)
             return { sucesso: true, id: consulta.id, petId: pet.id }
@@ -102,13 +93,5 @@ export function useConsultas() {
         }
     }
 
-    async function listarPorPet(petId: number) {
-        return consultaService.listarPorPet(petId)
-    }
-
-    async function listarPorMedico(medicoId: number) {
-        return consultaService.listarPorMedico(medicoId)
-    }
-
-    return { salvarConsulta, listarPorPet, listarPorMedico }
+    return { salvarConsulta }
 }

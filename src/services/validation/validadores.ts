@@ -6,30 +6,11 @@ export function validarObrigatorio(valor: string, campo: string): void {
     }
 }
 
-export function validarIdObrigatorio(valor: number, campo: string): void {
-    if (!valor || valor <= 0) {
-        throw new ValidacaoError(campo, `O campo "${campo}" deve ser um número positivo.`);
-    }
-}
-
-export function validarTamanhoMinimo(valor: string, campo: string, minimo: number): void {
-    if (valor.trim().length < minimo) {
-        throw new ValidacaoError(campo, `O campo "${campo}" deve ter no mínimo ${minimo} caracteres.`);
-    }
-}
-
 export function validarEmail(email: string, campo = "email"): void {
     validarObrigatorio(email, campo);
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regex.test(email.trim())) {
         throw new ValidacaoError(campo, `O campo "${campo}" deve conter um e-mail válido.`);
-    }
-}
-
-export function validarEmailIfes(email: string, campo = "email"): void {
-    validarEmail(email, campo);
-    if (!email.trim().toLowerCase().endsWith("@ifes.edu.br")) {
-        throw new ValidacaoError(campo, `O campo "${campo}" deve ser um e-mail institucional (@ifes.edu.br).`);
     }
 }
 
@@ -46,20 +27,6 @@ export function validarCep(cep: string, campo = "cep"): void {
     const apenasDigitos = cep.replace(/\D/g, "");
     if (apenasDigitos.length !== 8) {
         throw new ValidacaoError(campo, `O campo "${campo}" deve conter 8 dígitos.`);
-    }
-}
-
-export function validarCrmv(crmv: string, campo = "crmv"): void {
-    validarObrigatorio(crmv, campo);
-    const regex = /^(\d{4,6}-[A-Z]{2}|[A-Z]{2}-\d{4,6})$/;
-    if (!regex.test(crmv.trim().toUpperCase())) {
-        throw new ValidacaoError(campo, `O campo "${campo}" deve estar no formato "12345-SP" ou "SP-12345".`);
-    }
-}
-
-export function validarPeriodo(periodo: number, campo = "periodo"): void {
-    if (!Number.isInteger(periodo) || periodo < 1 || periodo > 10) {
-        throw new ValidacaoError(campo, `O campo "${campo}" deve ser um número inteiro entre 1 e 10.`);
     }
 }
 

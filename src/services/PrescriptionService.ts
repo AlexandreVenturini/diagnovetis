@@ -7,20 +7,14 @@ export type IssuedPrescription = { id: string; petId: number; snapshot: Prescric
 
 export class PrescriptionService {
   async list(petId?: number, range: DateRange | null = null): Promise<IssuedPrescription[]> {
-    let current = supabase.from('prescricoes').select('*')
-    let legacy = supabase.from('consultas').select('id, pet_id, prescricao').not('prescricao', 'is', null)
-    if (petId !== undefined) { current = current.eq('pet_id', petId); legacy = legacy.eq('pet_id', petId) }
-    if (range) {
-      current = current.gte('created_at', rangeStartIso(range)).lte('created_at', rangeEndIso(range))
-      legacy = legacy.gte('data_consulta', rangeStartIso(range)).lte('data_consulta', rangeEndIso(range))
-    }
-    const [recent, old] = await Promise.all([current, legacy])
-    if (recent.error) throw new Error('Não foi possível carregar o receituário. Confira a conexão e a atualização do banco de dados.')
-    if (old.error) throw new Error(old.error.message)
-    return [
-      ...(recent.data ?? []).map(row => ({ id: row.id as string, petId: row.pet_id as number, snapshot: row.snapshot as PrescricaoSalva })),
-      ...(old.data ?? []).map(row => ({ id: `consulta-${row.id}`, petId: row.pet_id as number, snapshot: row.prescricao as PrescricaoSalva })),
-    ].sort((a, b) => b.snapshot.issuedAt.localeCompare(a.snapshot.issuedAt))
+    let query = supabase.from('prescricoes').select('*')
+    if (petId !== undefined) query = query.eq('pet_id', petId)
+    if (range) query = query.gte('created_at', rangeStartIso(range)).lte('created_at', rangeEndIso(range))
+    const { data, error } = await query
+    if (error) throw new Error('Não foi possível carregar o receituário. Confira a conexão e a atualização do banco de dados.')
+    return (data ?? [])
+      .map(row => ({ id: row.id as string, petId: row.pet_id as number, snapshot: row.snapshot as PrescricaoSalva }))
+      .sort((a, b) => b.snapshot.issuedAt.localeCompare(a.snapshot.issuedAt))
   }
 
   async get(id: string): Promise<IssuedPrescription> {

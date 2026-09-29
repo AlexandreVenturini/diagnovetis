@@ -55,17 +55,6 @@ describe('TutorService.buscarPorNome', () => {
     })
 })
 
-describe('TutorService.buscarPorEmail', () => {
-    it('encontra tutor pelo e-mail exato', async () => {
-        await service.adicionarTutor(novoTutor())
-        expect((await service.buscarPorEmail('ana@email.com'))?.nome).toBe('Ana Costa')
-    })
-
-    it('retorna undefined para e-mail inexistente', async () => {
-        expect(await service.buscarPorEmail('inexistente@email.com')).toBeUndefined()
-    })
-})
-
 describe('TutorService.atualizarTutor', () => {
     it('atualiza tutor existente', async () => {
         await service.adicionarTutor(novoTutor())
@@ -75,10 +64,3 @@ describe('TutorService.atualizarTutor', () => {
     })
 })
 
-describe('TutorService.removerTutor', () => {
-    it('remove tutor existente', async () => {
-        await service.adicionarTutor(novoTutor())
-        await service.removerTutor(1)
-        expect(await service.listarTutores()).toHaveLength(0)
-    })
-})

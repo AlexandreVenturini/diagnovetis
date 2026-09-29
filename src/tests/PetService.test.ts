@@ -59,27 +59,6 @@ describe('PetService.adicionarPet', () => {
     })
 })
 
-describe('PetService.listarPorTutor', () => {
-    it('lista pets de um tutor específico', async () => {
-        const tutor2 = new Tutor(2, 'Bruno', '27988880000', 'bruno@email.com', new Date(), new Endereco('Rua B', 2, 'Bairro', 'Vila Velha', 'ES', '29100100'))
-        await tutorService.adicionarTutor(tutor2)
-        await petService.adicionarPet(novoPet(tutor, 1))
-        await petService.adicionarPet(new Pet(2, 'Luna', 'Gato', 'Siamês', tutor2))
-        expect(await petService.listarPorTutor(1)).toHaveLength(1)
-        expect(await petService.listarPorTutor(2)).toHaveLength(1)
-    })
-})
-
-describe('PetService.listarPorEspecie', () => {
-    it('filtra pets pela espécie', async () => {
-        const tutor2 = new Tutor(2, 'Bruno', '27988880000', 'bruno@email.com', new Date(), new Endereco('Rua B', 2, 'Bairro', 'Vila Velha', 'ES', '29100100'))
-        await tutorService.adicionarTutor(tutor2)
-        await petService.adicionarPet(novoPet(tutor, 1))
-        await petService.adicionarPet(new Pet(2, 'Luna', 'Gato', 'Siamês', tutor2))
-        expect(await petService.listarPorEspecie('Cão')).toHaveLength(1)
-    })
-})
-
 describe('PetService.buscarPorNome', () => {
     it('encontra pet pelo nome parcial', async () => {
         await petService.adicionarPet(novoPet(tutor))

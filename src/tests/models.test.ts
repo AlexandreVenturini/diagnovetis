@@ -3,7 +3,6 @@ import { Medico } from '../models/Medico'
 import { Tutor } from '../models/Tutor'
 import { Endereco } from '../models/Endereco'
 import { Pet } from '../models/Pet'
-import { Aluno } from '../models/Aluno'
 
 function criarMedico(id = 1): Medico {
     return new Medico(id, 'Dr. Silva', '27933001234', 'silva@vet.com', 'Clínica Geral', '12345-ES')
@@ -134,27 +133,3 @@ describe('Pet', () => {
     })
 })
 
-describe('Aluno', () => {
-    it('cria aluno com os dados corretos', () => {
-        const medico = criarMedico()
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', medico)
-        expect(aluno.id).toBe(1)
-        expect(aluno.nome).toBe('Maria')
-        expect(aluno.matricula).toBe('20221001')
-        expect(aluno.periodo).toBe(3)
-        expect(aluno.curso).toBe('Medicina Veterinária')
-        expect(aluno.medicoOrientador).toBe(medico)
-    })
-
-    it('consultasParticipadas inicia vazia por padrão', () => {
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', criarMedico())
-        expect(aluno.consultasParticipadas).toHaveLength(0)
-    })
-
-    it('consultasParticipadas retorna cópia da lista (imutabilidade)', () => {
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', criarMedico())
-        const lista = aluno.consultasParticipadas
-        lista.push({} as never)
-        expect(aluno.consultasParticipadas).toHaveLength(0)
-    })
-})

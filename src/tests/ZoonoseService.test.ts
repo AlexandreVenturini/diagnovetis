@@ -59,22 +59,6 @@ describe('ZoonoseService.adicionarZoonose', () => {
     })
 })
 
-describe('ZoonoseService.listarAltoRisco', () => {
-    it('retorna apenas zoonoses de alto risco', async () => {
-        await service.adicionarZoonose(novaZoonose(1, 'alto'))
-        await service.adicionarZoonose(novaZoonose(2, 'medio'))
-        await service.adicionarZoonose(novaZoonose(3, 'baixo'))
-        const altoRisco = await service.listarAltoRisco()
-        expect(altoRisco).toHaveLength(1)
-        expect(altoRisco[0].grauRisco).toBe('alto')
-    })
-
-    it('retorna lista vazia quando não há zoonoses de alto risco', async () => {
-        await service.adicionarZoonose(novaZoonose(1, 'baixo'))
-        expect(await service.listarAltoRisco()).toHaveLength(0)
-    })
-})
-
 describe('ZoonoseService.buscarPorNome', () => {
     it('encontra zoonose pelo nome parcial', async () => {
         await service.adicionarZoonose(novaZoonose())
@@ -87,19 +71,3 @@ describe('ZoonoseService.buscarPorNome', () => {
     })
 })
 
-describe('ZoonoseService.atualizarZoonose', () => {
-    it('atualiza zoonose existente', async () => {
-        await service.adicionarZoonose(novaZoonose())
-        const atualizada = new Zoonose(1, 'Raiva', 'Lyssavirus', 'Hidrofobia', 'Vacinação', 'alto')
-        await service.atualizarZoonose(atualizada)
-        expect((await service.buscarPorId(1))?.nome).toBe('Raiva')
-    })
-})
-
-describe('ZoonoseService.removerZoonose', () => {
-    it('remove zoonose existente', async () => {
-        await service.adicionarZoonose(novaZoonose())
-        await service.removerZoonose(1)
-        expect(await service.listarZoonoses()).toHaveLength(0)
-    })
-})

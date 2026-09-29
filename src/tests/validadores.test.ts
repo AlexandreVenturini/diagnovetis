@@ -2,14 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { ValidacaoError } from '../services/validation/ValidacaoError'
 import {
     validarObrigatorio,
-    validarIdObrigatorio,
-    validarTamanhoMinimo,
     validarEmail,
-    validarEmailIfes,
     validarTelefone,
     validarCep,
-    validarCrmv,
-    validarPeriodo,
     validarData,
     validarDataFutura,
     validarPositivo,
@@ -40,30 +35,6 @@ describe('validarObrigatorio', () => {
     })
 })
 
-describe('validarIdObrigatorio', () => {
-    it('não lança erro para id positivo', () => {
-        expect(() => validarIdObrigatorio(1, 'id')).not.toThrow()
-    })
-
-    it('lança erro para zero', () => {
-        expect(() => validarIdObrigatorio(0, 'id')).toThrow(ValidacaoError)
-    })
-
-    it('lança erro para negativo', () => {
-        expect(() => validarIdObrigatorio(-5, 'id')).toThrow(ValidacaoError)
-    })
-})
-
-describe('validarTamanhoMinimo', () => {
-    it('não lança erro quando tamanho é suficiente', () => {
-        expect(() => validarTamanhoMinimo('abcde', 'campo', 3)).not.toThrow()
-    })
-
-    it('lança erro quando tamanho é insuficiente', () => {
-        expect(() => validarTamanhoMinimo('ab', 'campo', 3)).toThrow(ValidacaoError)
-    })
-})
-
 describe('validarEmail', () => {
     it('aceita e-mail válido', () => {
         expect(() => validarEmail('teste@email.com')).not.toThrow()
@@ -79,20 +50,6 @@ describe('validarEmail', () => {
 
     it('rejeita string vazia', () => {
         expect(() => validarEmail('')).toThrow(ValidacaoError)
-    })
-})
-
-describe('validarEmailIfes', () => {
-    it('aceita e-mail @ifes.edu.br', () => {
-        expect(() => validarEmailIfes('aluno@ifes.edu.br')).not.toThrow()
-    })
-
-    it('rejeita e-mail de outro domínio', () => {
-        expect(() => validarEmailIfes('aluno@gmail.com')).toThrow(ValidacaoError)
-    })
-
-    it('rejeita e-mail vazio', () => {
-        expect(() => validarEmailIfes('')).toThrow(ValidacaoError)
     })
 })
 
@@ -133,46 +90,6 @@ describe('validarCep', () => {
 
     it('rejeita string vazia', () => {
         expect(() => validarCep('')).toThrow(ValidacaoError)
-    })
-})
-
-describe('validarCrmv', () => {
-    it('aceita formato 12345-SP', () => {
-        expect(() => validarCrmv('12345-SP')).not.toThrow()
-    })
-
-    it('aceita formato SP-12345', () => {
-        expect(() => validarCrmv('SP-12345')).not.toThrow()
-    })
-
-    it('rejeita formato inválido', () => {
-        expect(() => validarCrmv('123SP')).toThrow(ValidacaoError)
-    })
-
-    it('rejeita string vazia', () => {
-        expect(() => validarCrmv('')).toThrow(ValidacaoError)
-    })
-})
-
-describe('validarPeriodo', () => {
-    it('aceita período 1', () => {
-        expect(() => validarPeriodo(1)).not.toThrow()
-    })
-
-    it('aceita período 10', () => {
-        expect(() => validarPeriodo(10)).not.toThrow()
-    })
-
-    it('rejeita período 0', () => {
-        expect(() => validarPeriodo(0)).toThrow(ValidacaoError)
-    })
-
-    it('rejeita período 11', () => {
-        expect(() => validarPeriodo(11)).toThrow(ValidacaoError)
-    })
-
-    it('rejeita número decimal', () => {
-        expect(() => validarPeriodo(1.5)).toThrow(ValidacaoError)
     })
 })
 

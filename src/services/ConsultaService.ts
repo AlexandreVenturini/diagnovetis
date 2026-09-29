@@ -1,11 +1,7 @@
-import { Aluno } from "../models/Aluno";
 import { Consulta, type ExameFisico, type Alta, type ParticipanteConsulta } from "../models/Consulta";
 import { DiagnosticoZoonose } from "../models/DiagnosticoZoonose";
 import { exameFromRow, exameToRow, type ExameRow } from "./storage/exameMapping";
 import { Medico } from "../models/Medico";
-import { Medicamento } from "../models/Medicamento";
-import { MedicamentoReceitado } from "../models/MedicamentoReceitado";
-import { Receita } from "../models/Receita";
 import { supabase } from "./storage/supabaseClient";
 import { PetService } from "./PetService";
 import { validarObrigatorio, validarDataFutura, validarIdUnico } from "./validation/validadores";
@@ -16,15 +12,8 @@ const petService = new PetService();
 export type ResumoConsulta = { id: number; petId: number; date: string; veterinarian: string };
 
 interface MedicoRow { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
-interface MedRowInAluno { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string; }
-interface AlunoRowJoined { id: number; nome: string; telefone: string; email: string; matricula: string; periodo: number; curso: string; medico_orientador_id: number; medicos?: MedRowInAluno | null; }
-interface MedicamentoRow { id: number; nome_comercial: string; principio_ativo: string; descricao: string; concentracao: number; unidade_concentracao: string; forma_farmaceutica: string; via_administracao: string; tipo_uso: string; }
-interface MedicamentoReceitadoRow { quantidade: number; dose: string; vezes_ao_dia: number; duracao_dias: number; observacao: string; medicamentos: MedicamentoRow; }
-interface ReceitaRow { id: number; medicamentos_receitados: MedicamentoReceitadoRow[]; }
 interface ParticipanteRow { profile_id: string; papel: ParticipanteConsulta["papel"]; nome: string; }
-interface ConsultaRow { versao?: number; retificado_em?: string | null; retificado_por_nome?: string | null; supervisor_id?: string | null; liberacao_id?: string | null; conduta?: string; prescricao?: Consulta["prescricao"]; id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
-
-type ConsultaAlunoRow = { consulta_id: number; alunos: AlunoRowJoined | null };
+interface ConsultaRow { versao?: number; retificado_em?: string | null; retificado_por_nome?: string | null; supervisor_id?: string | null; liberacao_id?: string | null; conduta?: string; id: number; data_consulta: string; horario: string; diagnostico: string; observacoes: string; responsavel_id: number; pet_id: number; diagnostico_zoonose_status: string; diagnostico_zoonose_observacoes: string; diagnostico_zoonose_data_confirmacao: string; medicos: MedicoRow; temperatura?: number; frequencia_cardiaca?: number; frequencia_respiratoria?: number; tpc?: string; mucosas?: string; hidratacao?: string; nivel_consciencia?: string; pele_pelagem?: string; olhos?: string; ouvidos?: string; boca_dentes?: string; sistema_respiratorio?: string; sistema_cardiovascular?: string; sistema_gastrointestinal?: string; sistema_urinario?: string; sistema_reprodutivo?: string; sistema_neurologico?: string; dor?: string; alta_data?: string; alta_condicao?: string; alta_orientacoes?: string; alta_prognostico?: string; }
 
 function agruparPorConsulta<T extends { consulta_id: number }>(rows: T[]): Map<number, T[]> {
     const mapa = new Map<number, T[]>();
@@ -36,50 +25,20 @@ function agruparPorConsulta<T extends { consulta_id: number }>(rows: T[]): Map<n
     return mapa;
 }
 
-function montarReceita(r: ReceitaRow): Receita {
-    const itens = (r.medicamentos_receitados ?? []).map((mr: MedicamentoReceitadoRow) => {
-        const med = mr.medicamentos;
-        const medicamento = new Medicamento(med.id, med.nome_comercial, med.principio_ativo, med.descricao, med.concentracao, med.unidade_concentracao, med.forma_farmaceutica, med.via_administracao, med.tipo_uso);
-        return new MedicamentoReceitado(mr.quantidade, mr.dose, mr.vezes_ao_dia, mr.duracao_dias, medicamento, mr.observacao);
-    });
-    return new Receita(r.id, itens);
-}
-
 async function carregarConsultas(rows: ConsultaRow[]): Promise<Consulta[]> {
     if (rows.length === 0) return [];
     const ids = rows.map(r => r.id);
 
-    const [pets, examesResult, receitasResult, alunosResult, participantesResult] = await Promise.all([
+    const [pets, examesResult, participantesResult] = await Promise.all([
         petService.listarPorIds([...new Set(rows.map(r => r.pet_id))]),
         supabase.from("exames").select("*").in("consulta_id", ids),
-        supabase.from("receitas").select("*, medicamentos_receitados(*, medicamentos(*))").in("consulta_id", ids),
-        supabase.from("consulta_alunos").select("consulta_id, alunos(*, medicos!medico_orientador_id(*))").in("consulta_id", ids),
         supabase.from("consulta_participantes").select("consulta_id, profile_id, papel, nome").in("consulta_id", ids),
     ]);
     if (examesResult.error) throw new Error(examesResult.error.message);
 
     const petsPorId = new Map(pets.map(p => [p.id, p]));
     const examesPorConsulta = agruparPorConsulta((examesResult.data ?? []) as (ExameRow & { consulta_id: number })[]);
-    const receitasPorConsulta = agruparPorConsulta((receitasResult.data ?? []) as (ReceitaRow & { consulta_id: number })[]);
     const participantesPorConsulta = agruparPorConsulta((participantesResult.data ?? []) as (ParticipanteRow & { consulta_id: number })[]);
-    const alunoRows = ((alunosResult.data ?? []) as unknown as ConsultaAlunoRow[])
-        .filter((ca): ca is { consulta_id: number; alunos: AlunoRowJoined } => ca.alunos != null);
-
-    const orientadoresFaltando = [...new Set(alunoRows.filter(ca => !ca.alunos.medicos).map(ca => ca.alunos.medico_orientador_id))];
-    const orientadores = new Map<number, MedRowInAluno>();
-    if (orientadoresFaltando.length > 0) {
-        const { data: medicosData } = await supabase.from("medicos").select("*").in("id", orientadoresFaltando);
-        for (const m of (medicosData ?? []) as MedRowInAluno[]) orientadores.set(m.id, m);
-    }
-    const alunosPorConsulta = new Map<number, Aluno[]>();
-    for (const ca of alunoRows) {
-        const a = ca.alunos;
-        const am = a.medicos ?? orientadores.get(a.medico_orientador_id);
-        if (!am) throw new Error(`Médico orientador do aluno ${a.id} não encontrado.`);
-        const aluno = new Aluno(a.id, a.nome, a.telefone, a.email, a.matricula, a.periodo, a.curso,
-            new Medico(am.id, am.nome, am.telefone, am.email, am.especialidade, am.crmv));
-        alunosPorConsulta.set(ca.consulta_id, [...(alunosPorConsulta.get(ca.consulta_id) ?? []), aluno]);
-    }
 
     const consultas: Consulta[] = [];
     for (const row of rows) {
@@ -89,7 +48,6 @@ async function carregarConsultas(rows: ConsultaRow[]): Promise<Consulta[]> {
         const m = row.medicos;
         const responsavel = new Medico(m.id, m.nome, m.telefone, m.email, m.especialidade, m.crmv);
         const exames = (examesPorConsulta.get(row.id) ?? []).map(exameFromRow);
-        const receitas = (receitasPorConsulta.get(row.id) ?? []).map(montarReceita);
         const participantes = participantesPorConsulta.get(row.id) ?? [];
 
         const diagnosticoZoonose = new DiagnosticoZoonose(
@@ -125,9 +83,8 @@ async function carregarConsultas(rows: ConsultaRow[]): Promise<Consulta[]> {
             prognostico: row.alta_prognostico ?? undefined,
         };
 
-        const consulta = new Consulta(row.id, new Date(row.data_consulta), row.horario, row.diagnostico, row.observacoes, responsavel, pet, diagnosticoZoonose, exames, receitas, alunosPorConsulta.get(row.id) ?? [], exameFisico, alta);
+        const consulta = new Consulta(row.id, new Date(row.data_consulta), row.horario, row.diagnostico, row.observacoes, responsavel, pet, diagnosticoZoonose, exames, exameFisico, alta);
         consulta.conduta = row.conduta ?? '';
-        consulta.prescricao = row.prescricao ?? null;
         consulta.participantes = participantes.map(p => ({ nome: p.nome, papel: p.papel }));
         consulta.supervisorNome = participantes.find(p => p.profile_id === row.supervisor_id)?.nome ?? '';
         consulta.liberacaoId = row.liberacao_id ?? null;
@@ -140,11 +97,6 @@ async function carregarConsultas(rows: ConsultaRow[]): Promise<Consulta[]> {
 }
 
 export class ConsultaService {
-    async listarConsultas(): Promise<Consulta[]> {
-        const { data, error } = await supabase.from("consultas").select("*, medicos!responsavel_id(*)");
-        if (error) throw new Error(error.message);
-        return carregarConsultas((data ?? []) as ConsultaRow[]);
-    }
 
     async listarResumo(range: DateRange | null = null): Promise<ResumoConsulta[]> {
         let query = supabase.from("consultas").select("id, pet_id, data_consulta, responsavel_id, medicos!responsavel_id(*)");
@@ -175,7 +127,6 @@ export class ConsultaService {
 
         const consultaRow = {
             id: consulta.id,
-            ...(consulta.prescricao ? { prescricao: consulta.prescricao } : {}),
             data_consulta: consulta.dataConsulta.toISOString(),
             horario: consulta.horario,
             diagnostico: consulta.diagnostico,
@@ -217,29 +168,7 @@ export class ConsultaService {
             if (error.message.includes('óbito')) throw new Error('Este animal tem óbito registrado; não é possível registrar novos atendimentos para ele.');
             if (error.message.includes('liberação')) throw new Error('A liberação do professor não é mais válida. Peça uma nova liberação para salvar o atendimento. Os dados foram mantidos.');
             if (consulta.exames.length) throw new Error('Não foi possível confirmar a gravação da consulta com exames. Confira a conexão e a migração de exames complementares. Os dados foram mantidos.');
-            if (consulta.prescricao && error.message.includes('prescricao')) {
-                throw new Error('Não foi possível salvar a receita. Verifique se a atualização do banco para receitas foi aplicada. Os dados do atendimento foram mantidos.');
-            }
             throw new Error(error.message);
-        }
-
-        for (const receita of consulta.receitas) {
-            await supabase.from("receitas").insert({ id: receita.id, consulta_id: consulta.id });
-            for (const item of receita.medicamentosReceitados) {
-                await supabase.from("medicamentos_receitados").insert({
-                    receita_id: receita.id,
-                    medicamento_id: item.medicamento.id,
-                    quantidade: item.quantidade,
-                    dose: item.dose,
-                    vezes_ao_dia: item.vezesAoDia,
-                    duracao_dias: item.duracaoDias,
-                    observacao: item.observacao
-                });
-            }
-        }
-
-        for (const aluno of consulta.alunos) {
-            await supabase.from("consulta_alunos").insert({ consulta_id: consulta.id, aluno_id: aluno.id });
         }
 
         consulta.pet.adicionarConsulta(consulta);
@@ -257,25 +186,4 @@ export class ConsultaService {
         return carregarConsultas((data ?? []) as ConsultaRow[]);
     }
 
-    async listarPorMedico(medicoId: number): Promise<Consulta[]> {
-        const { data, error } = await supabase.from("consultas").select("*, medicos!responsavel_id(*)").eq("responsavel_id", medicoId);
-        if (error) throw new Error(error.message);
-        return carregarConsultas((data ?? []) as ConsultaRow[]);
-    }
-
-    async listarPorData(data: Date): Promise<Consulta[]> {
-        const dataStr = data.toISOString().split("T")[0];
-        const todas = await this.listarConsultas();
-        return todas.filter(c => c.dataConsulta.toISOString().split("T")[0] === dataStr);
-    }
-
-    async listarPorAluno(alunoId: number): Promise<Consulta[]> {
-        const { data, error } = await supabase.from("consulta_alunos").select("consulta_id").eq("aluno_id", alunoId);
-        if (error) throw new Error(error.message);
-        const ids = (data ?? []).map((r: { consulta_id: number }) => r.consulta_id);
-        if (ids.length === 0) return [];
-        const { data: consultasData, error: consultasError } = await supabase.from("consultas").select("*, medicos!responsavel_id(*)").in("id", ids);
-        if (consultasError) throw new Error(consultasError.message);
-        return carregarConsultas((consultasData ?? []) as ConsultaRow[]);
-    }
 }

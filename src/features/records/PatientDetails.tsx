@@ -5,7 +5,6 @@ import { RecordVersions } from './RecordVersions'
 import { DeathSection } from './DeathSection'
 import { PatientPrescriptions } from '../prescriptions/PatientPrescriptions'
 import { exportPatientRecord } from './recordReport'
-import { generatePrescription } from '../consultations/prescriptionReport'
 import type { ClinicalRecord, PatientRecord } from './recordTypes'
 
 function formatDate(date: string) {
@@ -35,9 +34,9 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, onRegi
   const [recordId, setRecordId] = useState<number | undefined>(initialRecordId ?? sortedRecords[0]?.id)
   const latestRecord = sortedRecords.find((record) => record.id === recordId) ?? sortedRecords[0]
   const emptyRecord: ClinicalRecord = {
-    id: 0, kind: 'Consulta', date: '', veterinarian: '', crmv: '',
+    id: 0, date: '', veterinarian: '', crmv: '',
     students: [], description: '', diagnosis: '', conduct: '',
-    exams: [], attachments: [], prescriptions: [], validation: 'pending', validatedBy: '',
+    validatedBy: '',
   }
   const display = latestRecord ?? emptyRecord
 
@@ -48,19 +47,6 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, onRegi
       : 'O navegador bloqueou a janela do relatório.')
   }
 
-  function reprintPrescription(record: ClinicalRecord) {
-    const saved = record.savedPrescription!
-    try {
-      const opened = generatePrescription(saved.patient, saved.prescription, new Date(saved.issuedAt))
-      setNotice(opened
-        ? 'Receita original aberta para impressão ou salvamento em PDF.'
-        : 'O navegador bloqueou a receita. Permita novas janelas e tente novamente.')
-    } catch {
-      setNotice('Não foi possível gerar esta receita. Confira os dados do atendimento.')
-    }
-  }
-
-  const recordsWithPrescription = selected.records.filter((r) => r.savedPrescription)
 
   return (
     <section className="record-details-module">
@@ -120,25 +106,6 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, onRegi
 
       <PatientPrescriptions petId={selected.id} />
 
-      <section className="content-card saved-prescriptions" aria-labelledby="saved-prescriptions-title">
-        <h3 id="saved-prescriptions-title">Receitas dos atendimentos</h3>
-        {recordsWithPrescription.length > 0 ? (
-          recordsWithPrescription.map((record) => (
-            <article key={record.id}>
-              <div>
-                <strong>Atendimento nº {record.id} · {formatDate(record.date)}</strong>
-                <p>{record.savedPrescription!.patient.veterinarian}</p>
-              </div>
-              <button className="outline-button" type="button" onClick={() => reprintPrescription(record)}>
-                Reimprimir receita
-              </button>
-            </article>
-          ))
-        ) : (
-          <p>Nenhuma receita arquivada neste prontuário.</p>
-        )}
-      </section>
-
       <form className="animal-record-form" ref={formRef}>
         <header className="animal-record-title">
           <div className="record-logo">✚</div>
@@ -180,7 +147,6 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, onRegi
               <label>Histórico da doença<textarea defaultValue={display.description} /></label>
               <label>Doenças anteriores<input defaultValue={selected.previousDiseases.join(', ')} /></label>
               <label>Alergias<input defaultValue={selected.allergies.join(', ') || 'Nenhuma conhecida'} /></label>
-              <label>Medicamentos em uso<input defaultValue={display.prescriptions.join('; ')} /></label>
               <label>Observações<textarea /></label>
             </div>
           </Section>
@@ -248,10 +214,7 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, onRegi
             <table>
               <thead><tr><th>Medicamento</th><th>Dose</th><th>Frequência</th></tr></thead>
               <tbody>
-                {display.prescriptions.map((item, i) => (
-                  <tr key={`${item}-${i}`}><ReadOnlyCells values={[item, '', '']} /></tr>
-                ))}
-                {display.prescriptions.length === 0 && <tr><ReadOnlyCells values={['Nenhum medicamento registrado', '', '']} /></tr>}
+                <tr><ReadOnlyCells values={['Consulte as receitas do animal no início do prontuário', '', '']} /></tr>
               </tbody>
             </table>
             <div className="paper-fields single compact">
@@ -268,7 +231,7 @@ export function PatientDetails({ selected, onBack, onExamSaved, onRetify, onRegi
                   .sort((a, b) => b.date.localeCompare(a.date))
                   .map((record) => (
                     <tr key={record.id}>
-                      <ReadOnlyCells values={[formatDate(record.date), record.description, record.kind, record.veterinarian]} />
+                      <ReadOnlyCells values={[formatDate(record.date), record.description, 'Consulta', record.veterinarian]} />
                     </tr>
                   ))}
               </tbody>

@@ -11,7 +11,7 @@ import { summarizePatients, type SummaryItem } from './patientSummaries'
 import { RetificationEditor } from './RetificationEditor'
 import { DeathForm } from './DeathForm'
 import { buscarObito } from './death'
-import type { ClinicalRecord, PatientRecord, RecordKind } from './recordTypes'
+import type { ClinicalRecord, PatientRecord } from './recordTypes'
 import type { Exame } from '../../models/Exame'
 import type { UserRole } from '../auth/LoginPage'
 import { PeriodFilter } from '../common/PeriodFilter'
@@ -47,26 +47,14 @@ async function fetchSummaries(range: DateRange | null): Promise<SummaryItem[]> {
 function buildPatientRecord(pet: Pet, consultas: Consulta[]): PatientRecord {
   const records: ClinicalRecord[] = consultas.map((c) => ({
     id: c.id,
-    kind: 'Consulta' as RecordKind,
     date: c.dataConsulta.toISOString().slice(0, 10),
     veterinarian: c.responsavel.nome,
     crmv: (c.responsavel as { crmv?: string }).crmv ?? '',
-    students: [...c.alunos.map((a) => a.nome), ...c.participantes.filter((p) => p.papel !== 'supervisor' && p.nome !== c.supervisorNome).map((p) => p.nome)],
+    students: c.participantes.filter((p) => p.papel !== 'supervisor' && p.nome !== c.supervisorNome).map((p) => p.nome),
     description: c.observacoes ?? '',
     diagnosis: c.diagnostico ?? '',
     conduct: c.conduta,
     complementaryExams: c.exames,
-    exams: c.exames.map((e) => e.nomeExame),
-    attachments: [],
-    savedPrescription: c.prescricao,
-    prescriptions: c.prescricao
-      ? c.prescricao.prescription.items.map(
-          (item) => `${item.medication} — ${item.dose}; ${item.route}; ${item.frequency}; ${item.duration}; quantidade: ${item.quantity}`
-        )
-      : c.receitas.flatMap((r) =>
-          r.medicamentosReceitados.map((m) => `${m.medicamento.nome} — ${m.dose}`)
-        ),
-    validation: 'validated' as const,
     validatedBy: c.supervisorNome || c.responsavel.nome,
     exameFisico: c.exameFisico,
     alta: c.alta,

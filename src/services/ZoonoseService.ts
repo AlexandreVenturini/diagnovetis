@@ -55,16 +55,4 @@ export class ZoonoseService {
         return todos.filter(z => z.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
-    async listarAltoRisco(): Promise<Zoonose[]> {
-        const todos = await zoonoseRepository.getAll();
-        return todos.filter(z => z.isAltoRisco());
-    }
-
-    async removerZoonose(id: number): Promise<void> {
-        await zoonoseRepository.remove(id);
-    }
-
-    async atualizarZoonose(zoonose: Zoonose): Promise<void> {
-        await zoonoseRepository.update(zoonose);
-    }
 }

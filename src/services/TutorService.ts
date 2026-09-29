@@ -125,15 +125,6 @@ export class TutorService {
         return todos.filter(t => t.nome.toLowerCase().includes(nome.toLowerCase()));
     }
 
-    async buscarPorEmail(email: string): Promise<Tutor | undefined> {
-        const todos = await this.listarTutores();
-        return todos.find(t => t.email.toLowerCase() === email.toLowerCase());
-    }
-
-    async removerTutor(id: number): Promise<void> {
-        await supabase.from("tutores").delete().eq("id", id);
-    }
-
     async atualizarTutor(tutor: Tutor): Promise<void> {
         await supabase.from("tutores").update({
             nome: tutor.nome,

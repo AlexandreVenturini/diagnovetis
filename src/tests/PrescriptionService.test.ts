@@ -28,16 +28,16 @@ describe('Receituário independente', () => {
     mock.from.mockReturnValue({ upsert: vi.fn().mockResolvedValue({ error: { message: 'offline' } }) })
     await expect(new PrescriptionService().issue('id', 1, 1, snapshot)).rejects.toThrow('Seus dados foram mantidos')
   })
-  it('combina receitas novas e antigas e filtra ambas pelo id do animal', async () => {
+  it('lista as receitas do animal pela tabela de receitas emitidas', async () => {
     const eq = vi.fn()
     mock.from.mockImplementation((table: string) => {
-      const result = { data: table === 'prescricoes' ? [{ id: 'nova', pet_id: 7, snapshot }] : [{ id: 9, pet_id: 7, prescricao: { ...snapshot, issuedAt: '2026-09-14T12:00:00Z' } }], error: null }
-      const chain = { not: () => chain, eq: (key: string, value: number) => { eq(table, key, value); return chain }, then: (resolve: (value: typeof result) => void) => resolve(result) }
+      const result = { data: [{ id: 'nova', pet_id: 7, snapshot }], error: null }
+      const chain = { eq: (key: string, value: number) => { eq(table, key, value); return chain }, then: (resolve: (value: typeof result) => void) => resolve(result) }
       return { select: () => chain }
     })
     const rows = await new PrescriptionService().list(7)
-    expect(rows.map(row => row.id)).toEqual(['nova', 'consulta-9'])
+    expect(rows.map(row => row.id)).toEqual(['nova'])
     expect(eq).toHaveBeenCalledWith('prescricoes', 'pet_id', 7)
-    expect(eq).toHaveBeenCalledWith('consultas', 'pet_id', 7)
+    expect(eq).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,20 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import './setup'
+import { inserirMedico } from './setup'
 import { Consulta } from '../models/Consulta'
 import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
 import { Endereco } from '../models/Endereco'
 import { Medico } from '../models/Medico'
 import { Pet } from '../models/Pet'
 import { Tutor } from '../models/Tutor'
-import { Aluno } from '../models/Aluno'
 import { ConsultaService } from '../services/ConsultaService'
-import { MedicoService } from '../services/MedicoService'
 import { TutorService } from '../services/TutorService'
 import { PetService } from '../services/PetService'
-import { AlunoService } from '../services/AlunoService'
 import { ValidacaoError } from '../services/validation/ValidacaoError'
-import { EMPTY_CONSULTATION } from '../features/consultations/consultationTypes'
-import { prescriptionHtml } from '../features/consultations/prescriptionReport'
 
 function criarMedico(id = 1): Medico {
     return new Medico(id, 'Dr. Silva', '27933001234', 'silva@vet.com', 'Clínica Geral', '12345-ES')
@@ -26,10 +21,6 @@ function criarTutor(id = 1): Tutor {
 
 function criarPet(tutor: Tutor, id = 1): Pet {
     return new Pet(id, 'Rex', 'Cão', 'Labrador', tutor)
-}
-
-function criarAluno(medico: Medico, id = 1): Aluno {
-    return new Aluno(id, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', medico)
 }
 
 function criarDiagnostico(): DiagnosticoZoonose {
@@ -47,57 +38,30 @@ function novaConsulta(medico: Medico, pet: Pet, id = 1): Consulta {
 }
 
 let service: ConsultaService
-let medicoService: MedicoService
 let tutorService: TutorService
 let petService: PetService
-let alunoService: AlunoService
 let medico: Medico
 let tutor: Tutor
 let pet: Pet
 
 beforeEach(async () => {
     service = new ConsultaService()
-    medicoService = new MedicoService()
     tutorService = new TutorService()
     petService = new PetService()
-    alunoService = new AlunoService()
 
     medico = criarMedico()
     tutor = criarTutor()
     pet = criarPet(tutor)
 
-    await medicoService.adicionarMedico(medico)
+    inserirMedico(medico)
     await tutorService.adicionarTutor(tutor)
     await petService.adicionarPet(pet)
 })
 
 describe('ConsultaService.adicionarConsulta', () => {
-    it('salva a receita com a consulta e recupera os dados originais para reimpressão', async () => {
-        const consulta = novaConsulta(medico, pet)
-        consulta.prescricao = {
-            version: 1,
-            issuedAt: '2026-09-14T15:00:00.000Z',
-            patient: { ...EMPTY_CONSULTATION, dogName: pet.nome, tutorName: tutor.nome, veterinarian: medico.nome, age: '6 meses' },
-            prescription: { crmv: medico.crmv, instructions: 'Orientação original', items: [{ medication: 'Medicamento teste', dose: 'Dose informada', route: 'Via informada', frequency: 'Frequência informada', duration: 'Duração informada', quantity: 'Quantidade informada' }] },
-        }
-        await service.adicionarConsulta(consulta)
-        const carregada = await new ConsultaService().buscarPorId(consulta.id)
-        expect(carregada?.prescricao).toEqual(consulta.prescricao)
-        const saved = carregada!.prescricao!
-        const html = prescriptionHtml(saved.patient, saved.prescription, new Date(saved.issuedAt))
-        expect(html).toContain('14/09/2026')
-        expect(html).toContain('6 meses')
-        expect(html).toContain('Orientação original')
-        expect((await service.listarPorPet(pet.id))[0].prescricao).toEqual(consulta.prescricao)
-    })
-
-    it('mantém atendimentos sem receita compatíveis', async () => {
-        await service.adicionarConsulta(novaConsulta(medico, pet))
-        expect((await service.buscarPorId(1))?.prescricao).toBeNull()
-    })
     it('adiciona consulta válida com sucesso', async () => {
         await service.adicionarConsulta(novaConsulta(medico, pet))
-        expect(await service.listarConsultas()).toHaveLength(1)
+        expect(await service.buscarPorId(1)).toBeDefined()
     })
 
     it('vincula consulta ao pet após adicionar', async () => {
@@ -157,45 +121,3 @@ describe('ConsultaService.listarPorPet', () => {
     })
 })
 
-describe('ConsultaService.listarPorMedico', () => {
-    it('retorna consultas do médico correto', async () => {
-        const medico2 = criarMedico(2)
-        await medicoService.adicionarMedico(medico2)
-
-        await service.adicionarConsulta(novaConsulta(medico, pet, 1))
-        await service.adicionarConsulta(new Consulta(2, dataFutura(2), '10:00', 'Diag', 'Obs', medico2, pet, criarDiagnostico()))
-
-        expect(await service.listarPorMedico(1)).toHaveLength(1)
-        expect(await service.listarPorMedico(2)).toHaveLength(1)
-    })
-})
-
-describe('ConsultaService.listarPorData', () => {
-    it('retorna consultas da data correta', async () => {
-        const amanha = dataFutura(1)
-        const depoisDeAmanha = dataFutura(2)
-
-        await service.adicionarConsulta(new Consulta(1, amanha, '09:00', 'Diag', 'Obs', medico, pet, criarDiagnostico()))
-        await service.adicionarConsulta(new Consulta(2, depoisDeAmanha, '10:00', 'Diag', 'Obs', medico, pet, criarDiagnostico()))
-
-        expect(await service.listarPorData(amanha)).toHaveLength(1)
-    })
-})
-
-describe('ConsultaService.listarPorAluno', () => {
-    it('retorna consultas em que o aluno participou', async () => {
-        const aluno = criarAluno(medico)
-        await alunoService.adicionarAluno(aluno)
-
-        const consulta = novaConsulta(medico, pet)
-        consulta.adicionarAluno(aluno)
-        await service.adicionarConsulta(consulta)
-
-        expect(await service.listarPorAluno(1)).toHaveLength(1)
-    })
-
-    it('não retorna consultas sem o aluno', async () => {
-        await service.adicionarConsulta(novaConsulta(medico, pet))
-        expect(await service.listarPorAluno(1)).toHaveLength(0)
-    })
-})

@@ -1,11 +1,8 @@
-import type { Aluno } from "./Aluno";
 import type { DiagnosticoZoonose } from "./DiagnosticoZoonose";
 import type { Exame } from "./Exame";
 import type { Medico } from "./Medico";
 import type { Pessoa } from "./Pessoa";
 import type { Pet } from "./Pet";
-import type { Receita } from "./Receita";
-import type { PrescricaoSalva } from './Prescricao';
 
 export type ExameFisico = {
     temperatura?: number
@@ -50,12 +47,9 @@ export class Consulta {
     private _responsavel: Medico;
     private _pet: Pet;
     private _exames: Exame[];
-    private _receitas: Receita[];
-    private _alunos: Aluno[];
     private _diagnosticoZoonose: DiagnosticoZoonose;
     exameFisico: ExameFisico;
     alta: Alta;
-    prescricao: PrescricaoSalva | null = null;
     participantes: ParticipanteConsulta[] = [];
     supervisorNome = '';
     liberacaoId: string | null = null;
@@ -73,8 +67,6 @@ export class Consulta {
         pet: Pet,
         diagnosticoZoonose: DiagnosticoZoonose,
         exames: Exame[] = [],
-        receitas: Receita[] = [],
-        alunos: Aluno[] = [],
         exameFisico: ExameFisico = {},
         alta: Alta = {}
     ) {
@@ -86,8 +78,6 @@ export class Consulta {
         this._responsavel = responsavel;
         this._pet = pet;
         this._exames = exames;
-        this._receitas = receitas;
-        this._alunos = alunos;
         this._diagnosticoZoonose = diagnosticoZoonose;
         this.exameFisico = exameFisico;
         this.alta = alta;
@@ -157,24 +147,6 @@ export class Consulta {
         return this._responsavel;
     }
 
-    get alunos(): Aluno[] {
-        return [...this._alunos];
-    }
-
-    getAlunos(): Aluno[] {
-        return [...this._alunos];
-    }
-
-    adicionarAluno(aluno: Aluno): void {
-        if (!this._alunos.includes(aluno)) {
-            this._alunos.push(aluno);
-        }
-    }
-
-    removerAluno(aluno: Aluno): void {
-        this._alunos = this._alunos.filter(alunoCadastrado => alunoCadastrado !== aluno);
-    }
-
     get pet(): Pet {
         return this._pet;
     }
@@ -189,14 +161,6 @@ export class Consulta {
 
     getExames(): Exame[] {
         return [...this._exames];
-    }
-
-    get receitas(): Receita[] {
-        return [...this._receitas];
-    }
-
-    getReceitas(): Receita[] {
-        return [...this._receitas];
     }
 
     get diagnosticoZoonose(): DiagnosticoZoonose {

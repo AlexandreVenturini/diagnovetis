@@ -160,6 +160,10 @@ export const supabaseMock = {
     },
 }
 
+export function inserirMedico(medico: { id: number; nome: string; telefone: string; email: string; especialidade: string; crmv: string }) {
+    getTable('medicos').push({ id: medico.id, nome: medico.nome, telefone: medico.telefone, email: medico.email, especialidade: medico.especialidade, crmv: medico.crmv })
+}
+
 vi.mock('../services/storage/supabaseClient', () => ({
     supabase: supabaseMock,
 }))

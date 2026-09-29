@@ -11,11 +11,6 @@ export class ExameService {
         if (error) throw new Error(error.message)
         return (data ?? []).map(row => exameFromRow(row as ExameRow))
     }
-    async listarTodos(): Promise<Exame[]> {
-        const { data, error } = await supabase.from('exames').select('*')
-        if (error) throw new Error(error.message)
-        return (data ?? []).map(row => exameFromRow(row as ExameRow))
-    }
     async buscarPorId(id: number): Promise<Exame | undefined> {
         const { data, error } = await supabase.from('exames').select('*').eq('id', id).maybeSingle()
         if (error) throw new Error(error.message)

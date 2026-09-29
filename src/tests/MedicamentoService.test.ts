@@ -68,31 +68,3 @@ describe('MedicamentoService.buscarPorNome', () => {
     })
 })
 
-describe('MedicamentoService.buscarPorPrincipioAtivo', () => {
-    it('encontra medicamento pelo princípio ativo', async () => {
-        await service.adicionarMedicamento(novoMedicamento())
-        expect(await service.buscarPorPrincipioAtivo('amoxicilina')).toHaveLength(1)
-    })
-
-    it('retorna lista vazia para princípio ativo inexistente', async () => {
-        await service.adicionarMedicamento(novoMedicamento())
-        expect(await service.buscarPorPrincipioAtivo('ibuprofeno')).toHaveLength(0)
-    })
-})
-
-describe('MedicamentoService.atualizarMedicamento', () => {
-    it('atualiza medicamento existente', async () => {
-        await service.adicionarMedicamento(novoMedicamento())
-        const atualizado = new Medicamento(1, 'Dipirona Vet', 'Dipirona', 'Analgésico', 500, 'mg', 'Comprimido', 'Oral', 'Vet')
-        await service.atualizarMedicamento(atualizado)
-        expect((await service.buscarPorId(1))?.nome).toBe('Dipirona Vet')
-    })
-})
-
-describe('MedicamentoService.removerMedicamento', () => {
-    it('remove medicamento existente', async () => {
-        await service.adicionarMedicamento(novoMedicamento())
-        await service.removerMedicamento(1)
-        expect(await service.listarMedicamentos()).toHaveLength(0)
-    })
-})

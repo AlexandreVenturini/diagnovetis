@@ -107,7 +107,7 @@ export function ClinicalCareModule({ dogs, initialAppointment, role = 'veterinar
     setSaving(true)
     setMessage('')
     try {
-      const resultado = await salvarConsulta(data, null, exams, isStudent ? liberacao?.id ?? null : null)
+      const resultado = await salvarConsulta(data, exams, isStudent ? liberacao?.id ?? null : null)
       if (!resultado.sucesso || resultado.id === undefined) {
         setMessage(resultado.erro ?? 'Não foi possível salvar o atendimento. Os dados preenchidos foram mantidos.')
         return

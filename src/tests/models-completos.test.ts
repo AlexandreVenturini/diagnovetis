@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { Aluno } from '../models/Aluno'
 import { Consulta } from '../models/Consulta'
 import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
 import { Endereco } from '../models/Endereco'
@@ -305,34 +304,6 @@ describe('Pet getters e setters', () => {
     })
 })
 
-describe('Aluno getters', () => {
-    it('getMatricula retorna a matrícula', () => {
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', criarMedico())
-        expect(aluno.getMatricula()).toBe('20221001')
-    })
-
-    it('getPeriodo retorna o período', () => {
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 5, 'Medicina Veterinária', criarMedico())
-        expect(aluno.getPeriodo()).toBe(5)
-    })
-
-    it('getCurso retorna o curso', () => {
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', criarMedico())
-        expect(aluno.getCurso()).toBe('Medicina Veterinária')
-    })
-
-    it('getMedicoOrientador retorna o médico', () => {
-        const medico = criarMedico()
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', medico)
-        expect(aluno.getMedicoOrientador()).toBe(medico)
-    })
-
-    it('getConsultasParticipadas retorna lista', () => {
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Medicina Veterinária', criarMedico())
-        expect(aluno.getConsultasParticipadas()).toHaveLength(0)
-    })
-})
-
 describe('Consulta getters e setters', () => {
     it('getId retorna o id', () => {
         const medico = criarMedico()
@@ -401,36 +372,9 @@ describe('Consulta getters e setters', () => {
         expect(criarConsulta(criarMedico(), criarPet(criarTutor())).getExames()).toHaveLength(0)
     })
 
-    it('getReceitas retorna lista de receitas', () => {
-        expect(criarConsulta(criarMedico(), criarPet(criarTutor())).getReceitas()).toHaveLength(0)
-    })
-
-    it('getAlunos retorna lista de alunos', () => {
-        expect(criarConsulta(criarMedico(), criarPet(criarTutor())).getAlunos()).toHaveLength(0)
-    })
-
     it('getDiagnosticoZoonose retorna o diagnóstico de zoonose', () => {
         const consulta = criarConsulta(criarMedico(), criarPet(criarTutor()))
         expect(consulta.getDiagnosticoZoonose()).toBeInstanceOf(DiagnosticoZoonose)
-    })
-
-    it('removerAluno remove aluno da lista', () => {
-        const medico = criarMedico()
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Vet', medico)
-        const consulta = criarConsulta(medico, criarPet(criarTutor()))
-        consulta.adicionarAluno(aluno)
-        expect(consulta.alunos).toHaveLength(1)
-        consulta.removerAluno(aluno)
-        expect(consulta.alunos).toHaveLength(0)
-    })
-
-    it('adicionarAluno não duplica o mesmo aluno', () => {
-        const medico = criarMedico()
-        const aluno = new Aluno(1, 'Maria', '27911112222', 'maria@ifes.edu.br', '20221001', 3, 'Vet', medico)
-        const consulta = criarConsulta(medico, criarPet(criarTutor()))
-        consulta.adicionarAluno(aluno)
-        consulta.adicionarAluno(aluno)
-        expect(consulta.alunos).toHaveLength(1)
     })
 })
 

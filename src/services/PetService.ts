@@ -103,16 +103,6 @@ export class PetService {
         return new Pet(data.id, data.nome, data.especie, data.raca, tutor, [], data.idade ?? '', data.peso ?? '', data.sexo ?? '', data.historico ?? '');
     }
 
-    async listarPorTutor(tutorId: number): Promise<Pet[]> {
-        const todos = await this.listarPets();
-        return todos.filter(p => p.tutor.id === tutorId);
-    }
-
-    async listarPorEspecie(especie: string): Promise<Pet[]> {
-        const todos = await this.listarPets();
-        return todos.filter(p => p.especie.toLowerCase() === especie.toLowerCase());
-    }
-
     async buscarPorNome(nome: string): Promise<Pet[]> {
         const todos = await this.listarPets();
         return todos.filter(p => p.nome.toLowerCase().includes(nome.toLowerCase()));
