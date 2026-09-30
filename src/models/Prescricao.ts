@@ -1,5 +1,5 @@
 import type { ConsultationData } from '../features/consultations/consultationTypes'
-import type { Prescription } from '../features/consultations/prescriptionReport'
+import type { Prescription } from '../features/prescriptions/prescriptionReport'
 
 /** Cópia dos dados no momento da finalização, preservada para reimpressão. */
 export type PrescricaoSalva = {

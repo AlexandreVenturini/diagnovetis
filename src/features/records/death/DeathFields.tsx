@@ -1,7 +1,6 @@
 import type { ObitoDados, VeterinarianOption } from '../../supervision/supervisionTypes'
 import type { ClinicalRecord } from '../recordTypes'
-import { DESTINOS_CORPO } from './death'
-import { toLocalInput } from './deathRules'
+import { DESTINOS_CORPO, toLocalInput } from './deathRules'
 
 type Update = <K extends keyof ObitoDados>(key: K, value: ObitoDados[K]) => void
 

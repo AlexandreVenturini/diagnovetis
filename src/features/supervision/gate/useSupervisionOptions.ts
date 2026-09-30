@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { listarEstudantes, listarVeterinarios } from '../supervision'
+import { SupervisionService } from '../../../services/SupervisionService'
 import type { StudentOption, VeterinarianOption } from '../supervisionTypes'
+
+const supervisionService = new SupervisionService()
 
 export function useSupervisionOptions(onError: (message: string) => void) {
   const [veterinarians, setVeterinarians] = useState<VeterinarianOption[]>([])
@@ -9,7 +11,7 @@ export function useSupervisionOptions(onError: (message: string) => void) {
 
   useEffect(() => {
     let active = true
-    Promise.all([listarVeterinarios(), listarEstudantes()])
+    Promise.all([supervisionService.listarVeterinarios(), supervisionService.listarEstudantes()])
       .then(([vets, studs]) => {
         if (!active) return
         setVeterinarians(vets)

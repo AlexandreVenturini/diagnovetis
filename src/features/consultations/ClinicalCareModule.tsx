@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { useAppointments } from '../../hooks/useAppointments'
-import { useConsultas } from '../../hooks/useConsultas'
+import { useAppointments } from '../appointments/useAppointments'
+import { salvarConsulta } from './saveConsultation'
 import type { Appointment } from '../appointments/appointmentTypes'
 import type { UserRole } from '../auth/profile'
 import type { Dog } from '../dogs/dogTypes'
 import { SupervisionGate } from '../supervision/gate/SupervisionGate'
-import { cancelarLiberacao, listarVeterinarios } from '../supervision/supervision'
+import { SupervisionService } from '../../services/SupervisionService'
 import type { Liberacao, VeterinarianOption } from '../supervision/supervisionTypes'
 import { CareCompleted, type CompletedCare } from './CareCompleted'
 import { applyVeterinarian, openAppointments, validateConsultation } from './careRules'
@@ -29,6 +29,8 @@ type ClinicalCareModuleProps = {
   onOpenRecord?: (petId: number) => void
 }
 
+const supervisionService = new SupervisionService()
+
 const AGENDA_NOT_UPDATED =
   'Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.'
 
@@ -50,14 +52,14 @@ export function ClinicalCareModule({
   const saveLock = useRef(false)
   const [completed, setCompleted] = useState<CompletedCare | null>(null)
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(initialAppointment?.id ?? null)
-  const { salvarConsulta } = useConsultas()
   const { appointments, updateAppointment } = useAppointments()
   const [veterinarians, setVeterinarians] = useState<VeterinarianOption[]>([])
   const [liberacao, setLiberacao] = useState<Liberacao | null>(null)
 
   useEffect(() => {
     let active = true
-    listarVeterinarios()
+    supervisionService
+      .listarVeterinarios()
       .then((vets) => {
         if (!active) return
         setVeterinarians(vets)
@@ -84,7 +86,7 @@ export function ClinicalCareModule({
     )
     if (!confirmed) return
     try {
-      await cancelarLiberacao(liberacao.id)
+      await supervisionService.cancelar(liberacao.id)
     } catch {
       setMessage('Não foi possível cancelar a liberação anterior.')
     }

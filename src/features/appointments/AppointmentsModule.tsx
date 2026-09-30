@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AppointmentForm } from './AppointmentForm'
 import { AppointmentList } from './AppointmentList'
-import { useAppointments } from '../../hooks/useAppointments'
+import { useAppointments } from './useAppointments'
 import { usePeriod } from '../common/usePeriod'
 import { periodRange } from '../common/period'
 import type { Appointment, AppointmentFormData, AppointmentScreen } from './appointmentTypes'

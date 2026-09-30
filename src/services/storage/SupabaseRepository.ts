@@ -1,4 +1,4 @@
-import type { Repository } from '../../interfaces/Repository'
+import type { Repository } from './Repository'
 import { supabase } from './supabaseClient'
 
 export class SupabaseRepository<T extends { id: number }> implements Repository<T> {

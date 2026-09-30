@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { IssuedPrescription } from '../../services/PrescriptionService'
 import type { UserRole } from '../auth/profile'
-import { generatePrescription, validatePrescription } from '../consultations/prescriptionReport'
+import { generatePrescription, validatePrescription } from './prescriptionReport'
 import type { Dog } from '../dogs/dogTypes'
 import { SupervisionGate } from '../supervision/gate/SupervisionGate'
 import type { Liberacao } from '../supervision/supervisionTypes'

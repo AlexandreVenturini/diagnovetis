@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { supabase } from '../../../services/storage/supabaseClient'
-import { listarPedidosPendentes, observarLiberacoes } from '../supervision'
+import { AuthService } from '../../../services/AuthService'
+import { SupervisionService } from '../../../services/SupervisionService'
 import type { PedidoLiberacao } from '../supervisionTypes'
 import { notificarNavegador } from './browserAlerts'
+
+const authService = new AuthService()
+const supervisionService = new SupervisionService()
 
 export function usePendingRequests() {
   const [pedidos, setPedidos] = useState<PedidoLiberacao[]>([])
   const knownIds = useRef<Set<string> | null>(null)
 
   const carregar = useCallback(async () => {
-    const lista = await listarPedidosPendentes().catch(() => null)
+    const lista = await supervisionService.listarPendentes().catch(() => null)
     if (!lista) return
     if (knownIds.current) {
       lista.filter((pedido) => !knownIds.current?.has(pedido.id)).forEach(notificarNavegador)
@@ -21,10 +24,10 @@ export function usePendingRequests() {
   useEffect(() => {
     let stop: (() => void) | undefined
     let active = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active || !data.user) return
+    authService.usuarioAtual().then((user) => {
+      if (!active || !user) return
       void carregar()
-      stop = observarLiberacoes(`supervisor_id=eq.${data.user.id}`, () => {
+      stop = supervisionService.observar(`supervisor_id=eq.${user.id}`, () => {
         void carregar()
       })
     })

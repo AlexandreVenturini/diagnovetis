@@ -1,14 +1,15 @@
 import { PetService } from '../../services/PetService'
 import { ConsultaService } from '../../services/ConsultaService'
+import { DeathService } from '../../services/DeathService'
 import type { Consulta } from '../../models/Consulta'
 import type { Pet } from '../../models/Pet'
 import type { DateRange } from '../common/period'
-import { buscarObito } from './death/death'
 import type { SummaryItem } from './patientSummaries'
 import type { ClinicalRecord, PatientRecord } from './recordTypes'
 
 const petService = new PetService()
 const consultaService = new ConsultaService()
+const deathService = new DeathService()
 
 function petInfo(pet: Pet): SummaryItem['pet'] {
   return { id: pet.id, dogName: pet.nome, tutorName: pet.tutor.nome, breed: pet.raca, weight: pet.peso }
@@ -85,7 +86,7 @@ export async function fetchPatient(petId: number): Promise<PatientRecord | null>
   const [pets, consultas, death] = await Promise.all([
     petService.listarPorIds([petId]),
     consultaService.listarPorPet(petId),
-    buscarObito(petId),
+    deathService.buscar(petId),
   ])
   return pets[0] ? { ...buildPatientRecord(pets[0], consultas), death } : null
 }

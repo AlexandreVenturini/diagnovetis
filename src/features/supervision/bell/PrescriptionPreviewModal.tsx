@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { prescriptionHtml } from '../../consultations/prescriptionReport'
+import { prescriptionHtml } from '../../prescriptions/prescriptionReport'
 import type { PrescricaoSalva } from '../../../models/Prescricao'
 import { rotuloDoPedido } from '../liberationKinds'
 import type { PedidoLiberacao } from '../supervisionTypes'

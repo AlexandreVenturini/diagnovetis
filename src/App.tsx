@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import type { User } from '@supabase/supabase-js'
 import { LoginPage } from './features/auth/LoginPage'
 import { RegisterPage } from './features/auth/RegisterPage'
 import { checkAccess, type UserRole } from './features/auth/profile'
 import { VeterinarianDashboard } from './features/veterinarian/VeterinarianDashboard'
 import { AttendantDashboard } from './features/attendant/AttendantDashboard'
-import { supabase } from './services/storage/supabaseClient'
+import { AuthService, type SessionUser } from './services/AuthService'
 
 type AuthUser = { email: string; name: string; isAdmin: boolean }
+
+const authService = new AuthService()
 
 function App() {
   const [role, setRole] = useState<UserRole | null>(null)
@@ -17,7 +18,7 @@ function App() {
   const [notice, setNotice] = useState('')
   const requestId = useRef(0)
 
-  async function applySession(sessionUser: User | null | undefined) {
+  async function applySession(sessionUser: SessionUser | null) {
     const current = ++requestId.current
 
     if (!sessionUser) {
@@ -35,7 +36,7 @@ function App() {
       setUser(null)
       setNotice(access.message)
       setCheckingSession(false)
-      await supabase.auth.signOut()
+      await authService.sair()
       return
     }
 
@@ -49,25 +50,25 @@ function App() {
   useEffect(() => {
     let active = true
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) void applySession(data.session?.user)
+    authService.usuarioDaSessao().then((sessionUser) => {
+      if (active) void applySession(sessionUser)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    const stop = authService.observarSessao((event, sessionUser) => {
       if (!active || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') return
       setTimeout(() => {
-        if (active) void applySession(session?.user)
+        if (active) void applySession(sessionUser)
       }, 0)
     })
 
     return () => {
       active = false
-      listener.subscription.unsubscribe()
+      stop()
     }
   }, [])
 
   async function logout() {
-    await supabase.auth.signOut()
+    await authService.sair()
   }
 
   if (checkingSession) {

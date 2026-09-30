@@ -1,4 +1,6 @@
-import { supabase } from '../../services/storage/supabaseClient'
+import { ProfileService } from '../../services/ProfileService'
+
+const profileService = new ProfileService()
 
 export type UserRole = 'veterinarian' | 'attendant'
 export type ProfileStatus = 'pendente' | 'aprovado' | 'suspenso'
@@ -19,9 +21,12 @@ export type Profile = {
 export type AccessResult = { ok: true; role: UserRole; profile: Profile } | { ok: false; message: string }
 
 export async function checkAccess(userId: string): Promise<AccessResult> {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle<Profile>()
-
-  if (error) return { ok: false, message: 'Não foi possível verificar seu cadastro. Tente novamente.' }
+  let data: Profile | null
+  try {
+    data = await profileService.buscar(userId)
+  } catch {
+    return { ok: false, message: 'Não foi possível verificar seu cadastro. Tente novamente.' }
+  }
   if (!data) return { ok: false, message: 'Perfil de acesso não encontrado. Procure um administrador.' }
   if (data.status === 'pendente') {
     return { ok: false, message: 'Seu cadastro ainda não foi aprovado. Aguarde a liberação de um administrador.' }

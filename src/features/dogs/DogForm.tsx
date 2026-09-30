@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { EMPTY_DOG } from './dogData'
 import { parseDogAge, serializeDogAge } from './dogAge'
 import type { Dog, DogFormData } from './dogTypes'
-import { TutorNotFoundError } from '../../hooks/useDogs'
+import { TutorNotFoundError } from './useDogs'
 import { TutorForm } from '../tutors/TutorForm'
 import type { TutorFormData } from '../tutors/tutorTypes'
 

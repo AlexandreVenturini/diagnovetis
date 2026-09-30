@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { EMPTY_CLINICAL } from '../features/zoonoses/zoonosisTypes'
 import { EMPTY_FILTERS, filterConditions } from '../features/zoonoses/clinicalCatalog'
-import { zoonoseToFrontend } from '../hooks/useZoonoses'
+import { zoonoseToFrontend } from '../features/zoonoses/useZoonoses'
 import { Zoonose } from '../models/Zoonose'
 import { ZoonoseService } from '../services/ZoonoseService'
 

@@ -1,6 +1,9 @@
 import { useState } from 'react'
-import { formatDateTime, listarVersoesObito } from './death'
-import type { DeathRecord, DeathVersion } from './death'
+import { DeathService } from '../../../services/DeathService'
+import { formatDateTime } from './deathRules'
+import type { DeathRecord, DeathVersion } from './deathTypes'
+
+const deathService = new DeathService()
 
 type DeathSectionProps = {
   death: DeathRecord
@@ -23,7 +26,7 @@ export function DeathSection({ death, canRetify, onRetify }: DeathSectionProps) 
     setShowVersions(true)
     if (versions) return
     try {
-      setVersions(await listarVersoesObito(death.id))
+      setVersions(await deathService.listarVersoes(death.id))
     } catch (err) {
       setError((err as Error).message)
     }

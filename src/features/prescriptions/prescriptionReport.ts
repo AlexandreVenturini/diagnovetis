@@ -1,4 +1,4 @@
-import type { ConsultationData } from './consultationTypes'
+import type { ConsultationData } from '../consultations/consultationTypes'
 import { formatDogAge } from '../dogs/dogAge'
 import prescriptionPrintCss from './print/prescription-print.css?raw'
 

@@ -1,5 +1,7 @@
 import type { PedidoLiberacao, TipoLiberacao } from './supervisionTypes'
 
+export const LIBERACAO_EXPIRA_MS = 30 * 60 * 1000
+
 type TextosLiberacao = {
   alvo: string
   alvoRecusa: string

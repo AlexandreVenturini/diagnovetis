@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { compararObito, formatValue } from '../features/records/death/death'
+import { compararObito, formatValue } from '../features/records/death/deathRules'
 import { DogList } from '../features/dogs/DogList'
 import type { Dog } from '../features/dogs/dogTypes'
 

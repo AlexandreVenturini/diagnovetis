@@ -1,7 +1,7 @@
 import { supabase } from './storage/supabaseClient'
 import type { PrescricaoSalva } from '../models/Prescricao'
 import { rangeEndIso, rangeStartIso, type DateRange } from '../features/common/period'
-import { validatePrescription } from '../features/consultations/prescriptionReport'
+import { validatePrescription } from '../features/prescriptions/prescriptionReport'
 
 export type IssuedPrescription = { id: string; petId: number; snapshot: PrescricaoSalva }
 

@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import { PrescriptionService, type IssuedPrescription } from '../../../services/PrescriptionService'
-import { emitirReceita } from '../../supervision/supervision'
+import { SupervisionService } from '../../../services/SupervisionService'
 
 type IssueArgs = Parameters<PrescriptionService['issue']>
 
 const service = new PrescriptionService()
+const supervisionService = new SupervisionService()
 
 export function usePrescriptionIssue() {
   const [saving, setSaving] = useState(false)
@@ -29,7 +30,7 @@ export function usePrescriptionIssue() {
   async function issueApproved(liberacaoId: string): Promise<IssuedPrescription> {
     setSaving(true)
     try {
-      return await service.get(await emitirReceita(liberacaoId))
+      return await service.get(await supervisionService.emitirReceita(liberacaoId))
     } finally {
       setSaving(false)
     }

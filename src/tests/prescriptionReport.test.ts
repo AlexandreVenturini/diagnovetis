@@ -6,7 +6,7 @@ import {
   hasPrescription,
   prescriptionHtml,
   validatePrescription,
-} from '../features/consultations/prescriptionReport'
+} from '../features/prescriptions/prescriptionReport'
 
 const patient = {
   ...EMPTY_CONSULTATION,

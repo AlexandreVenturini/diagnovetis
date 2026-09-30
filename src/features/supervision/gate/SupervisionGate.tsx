@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { liberarAtendimento, solicitarLiberacao } from '../supervision'
+import { SupervisionService } from '../../../services/SupervisionService'
 import { LIBERACAO } from '../liberationKinds'
 import type { Liberacao, ObitoParaAprovar, ReceitaParaAprovar, TipoLiberacao } from '../supervisionTypes'
 import { ParticipantsPicker } from './ParticipantsPicker'
 import { WaitingApproval } from './WaitingApproval'
 import { useRemoteApproval } from './useRemoteApproval'
 import { useSupervisionOptions } from './useSupervisionOptions'
+
+const supervisionService = new SupervisionService()
 
 type SupervisionGateProps = {
   onLiberado: (liberacao: Liberacao) => void
@@ -31,7 +33,8 @@ export function SupervisionGate({
   onCancel,
   onRecusado,
 }: SupervisionGateProps) {
-  const tipo: TipoLiberacao = tipoDoPedido({ consultaId, receita, obito })
+  const alvo = { consultaId, receita, obito }
+  const tipo: TipoLiberacao = tipoDoPedido(alvo)
   const textos = LIBERACAO[tipo]
   const [supervisorId, setSupervisorId] = useState('')
   const [participants, setParticipants] = useState<string[]>([])
@@ -64,14 +67,7 @@ export function SupervisionGate({
     setSending(true)
     setMessage('')
     try {
-      const id = await liberarAtendimento(
-        supervisor.profileId,
-        password,
-        participantIds,
-        consultaId ?? null,
-        receita ?? null,
-        obito ?? null,
-      )
+      const id = await supervisionService.liberarComSenha(supervisor.profileId, password, participantIds, alvo)
       setPassword('')
       if (!id) {
         setMessage('Senha incorreta. Peça ao professor para digitar novamente.')
@@ -96,13 +92,7 @@ export function SupervisionGate({
     setSending(true)
     setMessage('')
     try {
-      const id = await solicitarLiberacao(
-        supervisor.profileId,
-        participantIds,
-        consultaId ?? null,
-        receita ?? null,
-        obito ?? null,
-      )
+      const id = await supervisionService.solicitar(supervisor.profileId, participantIds, alvo)
       remote.aguardar({ id, supervisor, participantes: selectedStudents, enviadoEm: Date.now() })
     } catch {
       setMessage('Não foi possível enviar o pedido ao professor. Tente novamente.')

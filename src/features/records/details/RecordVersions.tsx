@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
-import { compararCampos, listarVersoes } from '../retification/retification'
+import { RetificationService } from '../../../services/RetificationService'
+import { compararCampos } from '../retification/retification'
 import type { AlteracaoCampo, VersaoConsulta } from '../retification/retification'
+
+const retificationService = new RetificationService()
 
 type Retificacao = VersaoConsulta & { alteracoes: AlteracaoCampo[] }
 
@@ -20,7 +23,8 @@ export function RecordVersions({ consultaId, onClose }: { consultaId: number; on
 
   useEffect(() => {
     let active = true
-    listarVersoes(consultaId)
+    retificationService
+      .listarVersoes(consultaId)
       .then(({ versoes, atual }) => {
         if (!active) return
         setRetificacoes(

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useAppointments } from '../../hooks/useAppointments'
+import { useAppointments } from '../appointments/useAppointments'
 import type { Appointment, AppointmentStatus } from '../appointments/appointmentTypes'
 import type { Dog } from '../dogs/dogTypes'
 

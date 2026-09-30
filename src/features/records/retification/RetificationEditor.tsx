@@ -2,15 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 import { ConsultaService } from '../../../services/ConsultaService'
 import type { UserRole } from '../../auth/profile'
 import { SupervisionGate } from '../../supervision/gate/SupervisionGate'
-import { cancelarLiberacao } from '../../supervision/supervision'
+import { SupervisionService } from '../../../services/SupervisionService'
 import type { Liberacao } from '../../supervision/supervisionTypes'
 import type { ConsultationData } from '../../consultations/consultationTypes'
 import { ClinicalHistoryStep } from '../../consultations/steps/ClinicalHistoryStep'
 import { PhysicalExamStep } from '../../consultations/steps/PhysicalExamStep'
 import { DiagnosisStep } from '../../consultations/steps/DiagnosisStep'
-import { consultaToData, dataToCampos, retificarConsulta } from './retification'
+import { RetificationService } from '../../../services/RetificationService'
+import { consultaToData, dataToCampos } from './retification'
 
 const consultaService = new ConsultaService()
+
+const supervisionService = new SupervisionService()
+const retificationService = new RetificationService()
 
 type RetificationEditorProps = {
   consultaId: number
@@ -58,7 +62,7 @@ export function RetificationEditor({ consultaId, role, onDone, onCancel }: Retif
   }
 
   async function cancelar() {
-    if (liberacao) await cancelarLiberacao(liberacao.id).catch(() => {})
+    if (liberacao) await supervisionService.cancelar(liberacao.id).catch(() => {})
     onCancel()
   }
 
@@ -72,7 +76,12 @@ export function RetificationEditor({ consultaId, role, onDone, onCancel }: Retif
     setSaving(true)
     setMessage('')
     try {
-      const versao = await retificarConsulta(consultaId, dataToCampos(data), motivo.trim(), liberacao?.id ?? null)
+      const versao = await retificationService.retificar(
+        consultaId,
+        dataToCampos(data),
+        motivo.trim(),
+        liberacao?.id ?? null,
+      )
       onDone(`Atendimento nº ${consultaId} retificado. A versão anterior foi arquivada (versão atual: ${versao}).`)
     } catch (error) {
       setMessage((error as Error).message)

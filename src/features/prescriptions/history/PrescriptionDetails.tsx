@@ -1,5 +1,5 @@
 import type { IssuedPrescription } from '../../../services/PrescriptionService'
-import { prescriptionHtml } from '../../consultations/prescriptionReport'
+import { prescriptionHtml } from '../prescriptionReport'
 
 type PrescriptionDetailsProps = {
   row: IssuedPrescription

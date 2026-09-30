@@ -1,6 +1,5 @@
 import { Pet } from '../models/Pet'
 import type { Tutor } from '../models/Tutor'
-import { SupabaseRepository } from './storage/SupabaseRepository'
 import { supabase } from './storage/supabaseClient'
 import { TutorService } from './TutorService'
 import { validarObrigatorio, validarIdUnico } from './validation/validadores'
@@ -21,35 +20,7 @@ interface PetRow {
   obito_em?: string | null
 }
 
-export const petRepository = new SupabaseRepository<Pet>(
-  'pets',
-  (pet) => ({
-    id: pet.id,
-    nome: pet.nome,
-    especie: pet.especie,
-    raca: pet.raca,
-    tutor_id: pet.tutor.id,
-    idade: pet.idade,
-    peso: pet.peso,
-    sexo: pet.sexo,
-    historico: pet.historico,
-  }),
-  (raw) => {
-    const r = raw as PetRow
-    return new Pet(
-      r.id,
-      r.nome,
-      r.especie,
-      r.raca,
-      null as never,
-      [],
-      r.idade ?? '',
-      r.peso ?? '',
-      r.sexo ?? '',
-      r.historico ?? '',
-    )
-  },
-)
+export type PetUpdate = Pick<PetRow, 'nome' | 'raca' | 'idade' | 'peso' | 'sexo' | 'historico'>
 
 function montarPets(rows: PetRow[], tutores: Tutor[]): Pet[] {
   const tutoresPorId = new Map(tutores.map((t) => [t.id, t]))
@@ -139,6 +110,13 @@ export class PetService {
   async buscarPorNome(nome: string): Promise<Pet[]> {
     const todos = await this.listarPets()
     return todos.filter((p) => p.nome.toLowerCase().includes(nome.toLowerCase()))
+  }
+
+  async atualizarPet(id: number, dados: PetUpdate): Promise<void> {
+    validarObrigatorio(dados.nome, 'nome')
+    validarObrigatorio(dados.raca, 'raca')
+    const { error } = await supabase.from('pets').update(dados).eq('id', id)
+    if (error) throw new Error(error.message)
   }
 
   async removerPet(id: number): Promise<void> {

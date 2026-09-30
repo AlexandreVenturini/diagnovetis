@@ -23,6 +23,7 @@ export type ObitoDados = {
 
 export type ReceitaParaAprovar = { petId: number; dados: PrescricaoSalva }
 export type ObitoParaAprovar = { petId: number; dados: ObitoDados }
+export type AlvoLiberacao = { consultaId?: number; receita?: ReceitaParaAprovar; obito?: ObitoParaAprovar }
 
 export type PedidoLiberacao = {
   id: string

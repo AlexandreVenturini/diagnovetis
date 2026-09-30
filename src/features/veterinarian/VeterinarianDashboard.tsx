@@ -1,5 +1,5 @@
 import { MainNavigation } from '../../components/layout/MainNavigation'
-import { useDogs } from '../../hooks/useDogs'
+import { useDogs } from '../dogs/useDogs'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
 import { DashboardHome } from '../dashboard/DashboardHome'

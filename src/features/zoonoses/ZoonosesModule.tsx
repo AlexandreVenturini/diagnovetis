@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useZoonoses } from '../../hooks/useZoonoses'
+import { useZoonoses } from './useZoonoses'
 import { ConditionCatalog } from './ConditionCatalog'
 import { ConditionFilters } from './ConditionFilters'
 import { ConditionForm } from './ConditionForm'

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { listarVeterinarios } from '../../supervision/supervision'
+import { SupervisionService } from '../../../services/SupervisionService'
 import type { VeterinarianOption } from '../../supervision/supervisionTypes'
+
+const supervisionService = new SupervisionService()
 
 type Callbacks = {
   onSelf: (vet: VeterinarianOption) => void
@@ -12,7 +14,8 @@ export function useResponsibleVeterinarians(userEmail: string | undefined, { onS
 
   useEffect(() => {
     let active = true
-    listarVeterinarios()
+    supervisionService
+      .listarVeterinarios()
       .then((vets) => {
         if (!active) return
         setVeterinarians(vets)

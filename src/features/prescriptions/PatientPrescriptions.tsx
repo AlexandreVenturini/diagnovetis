@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { PrescriptionService, type IssuedPrescription } from '../../services/PrescriptionService'
-import { generatePrescription } from '../consultations/prescriptionReport'
+import { generatePrescription } from './prescriptionReport'
 
 export function PatientPrescriptions({ petId }: { petId: number }) {
   const [items, setItems] = useState<IssuedPrescription[]>([])

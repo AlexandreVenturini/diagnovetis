@@ -1,5 +1,5 @@
 import type { ConsultationData } from '../../consultations/consultationTypes'
-import { prescriptionHtml, type Prescription } from '../../consultations/prescriptionReport'
+import { prescriptionHtml, type Prescription } from '../prescriptionReport'
 
 type PrescriptionReviewProps = {
   patient: ConsultationData

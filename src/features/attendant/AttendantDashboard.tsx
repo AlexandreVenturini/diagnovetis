@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Icon } from '../../components/common/Icon'
-import { useDogs } from '../../hooks/useDogs'
+import { useDogs } from '../dogs/useDogs'
 import { AppointmentsModule } from '../appointments/AppointmentsModule'
 import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
 import { DashboardShell, type DashboardUser } from '../dashboard/DashboardShell'

@@ -7,7 +7,7 @@ import {
   type HistoryFilters,
 } from '../features/prescriptions/history/historyFilters'
 import { EMPTY_CONSULTATION } from '../features/consultations/consultationTypes'
-import { emptyPrescription, emptyPrescriptionItem } from '../features/consultations/prescriptionReport'
+import { emptyPrescription, emptyPrescriptionItem } from '../features/prescriptions/prescriptionReport'
 import type { IssuedPrescription } from '../services/PrescriptionService'
 
 const filters: HistoryFilters = { view: 'week', date: '2026-09-21', query: '', veterinarian: '', medication: '' }

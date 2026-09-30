@@ -1,4 +1,4 @@
-import type { Prescription } from '../../consultations/prescriptionReport'
+import type { Prescription } from '../prescriptionReport'
 import { calculateDose } from './doseCalculation'
 
 export function decimalValue(value: string) {

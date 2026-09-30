@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import type { useDogs } from '../../hooks/useDogs'
+import type { useDogs } from './useDogs'
 import { DogDetails } from './DogDetails'
 import { DogForm } from './DogForm'
 import { DogList } from './DogList'

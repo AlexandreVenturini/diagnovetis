@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { responderLiberacao } from '../supervision'
+import { SupervisionService } from '../../../services/SupervisionService'
 import { LIBERACAO } from '../liberationKinds'
 import type { PedidoLiberacao } from '../supervisionTypes'
+
+const supervisionService = new SupervisionService()
 
 export type Recusa = { id: string; motivo: string }
 
@@ -25,7 +27,7 @@ export function useRequestResponse(onResponded: () => Promise<void>) {
     setBusyId(pedido.id)
     setMessage('')
     try {
-      await responderLiberacao(pedido.id, aprovar, motivo)
+      await supervisionService.responder(pedido.id, aprovar, motivo)
     } catch (error) {
       setMessage(mensagemDeErro((error as Error).message))
     } finally {

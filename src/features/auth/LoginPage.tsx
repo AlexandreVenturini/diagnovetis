@@ -2,7 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { BrandMark } from '../../components/common/BrandMark'
 import { AuthField } from './AuthField'
-import { isSupabaseConfigured, supabase } from '../../services/storage/supabaseClient'
+import { AuthService } from '../../services/AuthService'
+
+const authService = new AuthService()
 
 type LoginPageProps = {
   notice: string
@@ -28,7 +30,7 @@ export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProp
     event.preventDefault()
     setMessage('')
     onDismissNotice()
-    if (!isSupabaseConfigured) {
+    if (!authService.configurado) {
       setMessage(
         'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ou VITE_SUPABASE_KEY) no arquivo .env.local e reinicie o servidor local.',
       )
@@ -36,14 +38,8 @@ export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProp
     }
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      })
-
-      if (error) {
-        setMessage(translateAuthError(error.code, error.message))
-      }
+      const error = await authService.entrar(email.trim(), password)
+      if (error) setMessage(translateAuthError(error.code, error.message))
     } catch {
       setMessage('Não foi possível conectar ao serviço de login. Verifique sua conexão e tente novamente.')
     } finally {

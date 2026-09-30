@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { LIBERACAO_EXPIRA_MS, buscarStatusLiberacao, cancelarLiberacao, observarLiberacoes } from '../supervision'
-import { LIBERACAO } from '../liberationKinds'
+import { SupervisionService } from '../../../services/SupervisionService'
+import { LIBERACAO, LIBERACAO_EXPIRA_MS } from '../liberationKinds'
 import type { Liberacao, StudentOption, TipoLiberacao, VeterinarianOption } from '../supervisionTypes'
+
+const supervisionService = new SupervisionService()
 
 export type PedidoAguardando = {
   id: string
@@ -33,13 +35,13 @@ export function useRemoteApproval(tipo: TipoLiberacao, callbacks: Callbacks) {
     async function verificar() {
       const { onLiberado, onRecusado, onMessage } = callbacksRef.current
       if (Date.now() - pedido.enviadoEm > LIBERACAO_EXPIRA_MS) {
-        await cancelarLiberacao(pedido.id).catch(() => {})
+        await supervisionService.cancelar(pedido.id).catch(() => {})
         if (!active) return
         setAguardando(null)
         onMessage('O pedido expirou sem resposta. Envie um novo pedido ou use a senha do professor.')
         return
       }
-      const situacao = await buscarStatusLiberacao(pedido.id).catch(() => null)
+      const situacao = await supervisionService.buscarSituacao(pedido.id).catch(() => null)
       if (!active || !situacao) return
       const concluidoPeloProfessor =
         situacao.status === 'finalizada' &&
@@ -57,7 +59,7 @@ export function useRemoteApproval(tipo: TipoLiberacao, callbacks: Callbacks) {
       }
     }
 
-    const stop = observarLiberacoes(`id=eq.${pedido.id}`, () => {
+    const stop = supervisionService.observar(`id=eq.${pedido.id}`, () => {
       void verificar()
     })
     return () => {
@@ -68,7 +70,7 @@ export function useRemoteApproval(tipo: TipoLiberacao, callbacks: Callbacks) {
 
   async function cancelar() {
     if (!aguardando) return
-    await cancelarLiberacao(aguardando.id).catch(() => {})
+    await supervisionService.cancelar(aguardando.id).catch(() => {})
     setAguardando(null)
   }
 

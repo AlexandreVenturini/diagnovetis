@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useAppointments } from '../../hooks/useAppointments'
+import { useAppointments } from '../appointments/useAppointments'
 import type { Dog } from '../dogs/dogTypes'
 
 type Props = {

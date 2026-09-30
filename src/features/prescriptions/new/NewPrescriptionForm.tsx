@@ -1,6 +1,6 @@
 import type { Medico } from '../../../models/Medico'
 import type { Medicamento } from '../../../models/Medicamento'
-import { PrescriptionEditor } from '../../consultations/PrescriptionEditor'
+import { PrescriptionEditor } from './PrescriptionEditor'
 import type { Dog } from '../../dogs/dogTypes'
 import { DoseCalculator } from './DoseCalculator'
 import { MedicationSearch } from './MedicationSearch'

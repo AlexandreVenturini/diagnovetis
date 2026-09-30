@@ -1,6 +1,5 @@
 import { Tutor } from '../models/Tutor'
 import { Endereco } from '../models/Endereco'
-import { SupabaseRepository } from './storage/SupabaseRepository'
 import { supabase } from './storage/supabaseClient'
 import {
   validarObrigatorio,
@@ -32,66 +31,34 @@ interface TutorRow {
   enderecos: EnderecoRow
 }
 
-export const tutorRepository = new SupabaseRepository<Tutor>(
-  'tutores',
-  (tutor) => ({
-    id: tutor.id,
-    nome: tutor.nome,
-    telefone: tutor.telefone,
-    email: tutor.email,
-    data_cadastro: tutor.dataCadastro.toISOString(),
-    endereco_id: (tutor as unknown as { _enderecoId?: number })._enderecoId,
-  }),
-  (raw) => {
-    const r = raw as TutorRow
-    const e = r.enderecos
-    return new Tutor(
-      r.id,
-      r.nome,
-      r.telefone,
-      r.email,
-      new Date(r.data_cadastro),
-      new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep),
-    )
-  },
-)
+const TUTOR_COM_ENDERECO = '*, enderecos(*)'
+
+function rowToTutor(row: TutorRow): Tutor {
+  const e = row.enderecos
+  return new Tutor(
+    row.id,
+    row.nome,
+    row.telefone,
+    row.email,
+    new Date(row.data_cadastro),
+    new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep),
+    [],
+    row.cpf ?? '',
+  )
+}
 
 export class TutorService {
   async listarTutores(): Promise<Tutor[]> {
-    const { data, error } = await supabase.from('tutores').select('*, enderecos(*)')
+    const { data, error } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO)
     if (error) throw new Error(error.message)
-    return (data ?? []).map((r) => {
-      const e = r.enderecos as EnderecoRow
-      return new Tutor(
-        r.id,
-        r.nome,
-        r.telefone,
-        r.email,
-        new Date(r.data_cadastro),
-        new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep),
-        [],
-        r.cpf ?? '',
-      )
-    })
+    return ((data ?? []) as TutorRow[]).map(rowToTutor)
   }
 
   async listarPorIds(ids: number[]): Promise<Tutor[]> {
     if (ids.length === 0) return []
-    const { data, error } = await supabase.from('tutores').select('*, enderecos(*)').in('id', ids)
+    const { data, error } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO).in('id', ids)
     if (error) throw new Error(error.message)
-    return (data ?? []).map((r) => {
-      const e = r.enderecos as EnderecoRow
-      return new Tutor(
-        r.id,
-        r.nome,
-        r.telefone,
-        r.email,
-        new Date(r.data_cadastro),
-        new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep),
-        [],
-        r.cpf ?? '',
-      )
-    })
+    return ((data ?? []) as TutorRow[]).map(rowToTutor)
   }
 
   async adicionarTutor(tutor: Tutor): Promise<void> {
@@ -133,19 +100,9 @@ export class TutorService {
   }
 
   async buscarPorId(id: number): Promise<Tutor | undefined> {
-    const { data, error } = await supabase.from('tutores').select('*, enderecos(*)').eq('id', id).single()
+    const { data, error } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO).eq('id', id).single()
     if (error || !data) return undefined
-    const e = data.enderecos as EnderecoRow
-    return new Tutor(
-      data.id,
-      data.nome,
-      data.telefone,
-      data.email,
-      new Date(data.data_cadastro),
-      new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep),
-      [],
-      data.cpf ?? '',
-    )
+    return rowToTutor(data as TutorRow)
   }
 
   async buscarPorNome(nome: string): Promise<Tutor[]> {

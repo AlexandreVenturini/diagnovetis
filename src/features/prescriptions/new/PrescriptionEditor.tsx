@@ -1,5 +1,5 @@
-import type { Prescription, PrescriptionItem } from './prescriptionReport'
-import { emptyPrescriptionItem } from './prescriptionReport'
+import type { Prescription, PrescriptionItem } from '../prescriptionReport'
+import { emptyPrescriptionItem } from '../prescriptionReport'
 
 type Props = { value: Prescription; onChange: (value: Prescription) => void; hideCrmv?: boolean }
 const fields: { key: keyof PrescriptionItem; label: string; placeholder: string }[] = [

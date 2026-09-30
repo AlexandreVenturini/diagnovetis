@@ -1,14 +1,17 @@
 import { useCallback, useState } from 'react'
 import type { UserRole } from '../../auth/profile'
 import { SupervisionGate } from '../../supervision/gate/SupervisionGate'
-import { registrarObitoLiberado } from '../../supervision/supervision'
+import { SupervisionService } from '../../../services/SupervisionService'
 import type { Liberacao, ObitoDados, VeterinarianOption } from '../../supervision/supervisionTypes'
 import type { ClinicalRecord } from '../recordTypes'
-import { deathToDados, registrarObito, retificarObito } from './death'
-import type { DeathRecord } from './death'
-import { novoObito, validarObito } from './deathRules'
+import { DeathService } from '../../../services/DeathService'
+import { deathToDados, novoObito, validarObito } from './deathRules'
+import type { DeathRecord } from './deathTypes'
 import { DeathFields } from './DeathFields'
 import { useResponsibleVeterinarians } from './useResponsibleVeterinarians'
+
+const supervisionService = new SupervisionService()
+const deathService = new DeathService()
 
 type DeathFormProps = {
   petId: number
@@ -62,10 +65,10 @@ export function DeathForm({ petId, dogName, role, userEmail, records, existing, 
     setMessage('')
     try {
       if (existing) {
-        const versao = await retificarObito(existing.id, dados, motivo.trim())
+        const versao = await deathService.retificar(existing.id, dados, motivo.trim())
         onDone(`Registro de óbito retificado. A versão anterior foi arquivada (versão atual: ${versao}).`)
       } else {
-        await registrarObito(petId, dados)
+        await deathService.registrar(petId, dados)
         onDone(`Óbito de ${dogName} registrado. O histórico do animal foi mantido.`)
       }
     } catch (error) {
@@ -78,7 +81,7 @@ export function DeathForm({ petId, dogName, role, userEmail, records, existing, 
   async function concluirAprovado(liberacao: Liberacao) {
     setSaving(true)
     try {
-      await registrarObitoLiberado(liberacao.id)
+      await supervisionService.registrarObito(liberacao.id)
       onDone(`Óbito de ${dogName} registrado com aprovação de ${liberacao.supervisor.nome}.`)
     } catch (error) {
       setApproving(false)

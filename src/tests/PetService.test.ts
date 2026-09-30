@@ -80,3 +80,28 @@ describe('PetService.removerPet', () => {
     expect(await petService.listarPets()).toHaveLength(0)
   })
 })
+
+describe('PetService.atualizarPet', () => {
+  it('atualiza os dados do pet mantendo o tutor', async () => {
+    await petService.adicionarPet(novoPet(tutor))
+    await petService.atualizarPet(1, {
+      nome: 'Rex II',
+      raca: 'SRD',
+      idade: '4 anos',
+      peso: '20',
+      sexo: 'Macho',
+      historico: 'Vacinado',
+    })
+    const [pet] = await petService.listarPets()
+    expect(pet.nome).toBe('Rex II')
+    expect(pet.raca).toBe('SRD')
+    expect(pet.tutor.id).toBe(tutor.id)
+  })
+
+  it('lança erro quando o nome fica vazio', async () => {
+    await petService.adicionarPet(novoPet(tutor))
+    await expect(
+      petService.atualizarPet(1, { nome: '', raca: 'SRD', idade: '', peso: '', sexo: '', historico: '' }),
+    ).rejects.toThrow(ValidacaoError)
+  })
+})

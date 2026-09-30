@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { RiskLevel, Zoonosis, ZoonosisFormData } from '../features/zoonoses/zoonosisTypes'
-import { EMPTY_CLINICAL } from '../features/zoonoses/zoonosisTypes'
-import { Zoonose } from '../models/Zoonose'
-import { ZoonoseService } from '../services/ZoonoseService'
+import type { RiskLevel, Zoonosis, ZoonosisFormData } from './zoonosisTypes'
+import { EMPTY_CLINICAL } from './zoonosisTypes'
+import { Zoonose } from '../../models/Zoonose'
+import { ZoonoseService } from '../../services/ZoonoseService'
 
 const service = new ZoonoseService()
 const risks: Record<RiskLevel, string> = { Alto: 'alto', Médio: 'medio', Baixo: 'baixo' }

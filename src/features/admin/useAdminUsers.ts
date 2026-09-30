@@ -1,16 +1,31 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../services/storage/supabaseClient'
+import { AuthService } from '../../services/AuthService'
+import { ProfileService, type ProfileChanges } from '../../services/ProfileService'
 import type { Profile } from '../auth/profile'
 
-type ProfileChanges = Partial<Pick<Profile, 'status' | 'is_admin'>>
 type AdminData = { currentUserId: string | null; profiles: Profile[]; error: string }
 
+const authService = new AuthService()
+const profileService = new ProfileService()
+
 async function fetchAdminData(): Promise<AdminData> {
-  const [{ data: auth }, { data, error }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from('profiles').select('*').order('created_at', { ascending: false }).returns<Profile[]>(),
+  const [user, profiles] = await Promise.all([
+    authService.usuarioAtual(),
+    profileService.listar().then(
+      (list) => ({ list, error: '' }),
+      (error: Error) => ({ list: [] as Profile[], error: error.message }),
+    ),
   ])
-  return { currentUserId: auth.user?.id ?? null, profiles: data ?? [], error: error?.message ?? '' }
+  return { currentUserId: user?.id ?? null, profiles: profiles.list, error: profiles.error }
+}
+
+async function attempt(action: () => Promise<void>): Promise<string> {
+  try {
+    await action()
+    return ''
+  } catch (error) {
+    return (error as Error).message
+  }
 }
 
 export function useAdminUsers() {
@@ -43,18 +58,18 @@ export function useAdminUsers() {
   }, [])
 
   async function update(userId: string, changes: ProfileChanges, errorLabel: string) {
-    const { error } = await supabase.from('profiles').update(changes).eq('id', userId)
+    const error = await attempt(() => profileService.atualizar(userId, changes))
     if (error) {
-      setMessage(errorLabel + ': ' + error.message)
+      setMessage(errorLabel + ': ' + error)
       return
     }
     await load()
   }
 
   async function remove(userId: string, errorLabel: string) {
-    const { error } = await supabase.rpc('admin_remover_usuario', { p_user_id: userId })
+    const error = await attempt(() => profileService.remover(userId))
     if (error) {
-      setMessage(errorLabel + ': ' + error.message)
+      setMessage(errorLabel + ': ' + error)
       return
     }
     await load()
