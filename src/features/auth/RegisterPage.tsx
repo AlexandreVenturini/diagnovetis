@@ -2,162 +2,53 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { BrandMark } from '../../components/common/BrandMark'
 import { Icon } from '../../components/common/Icon'
-import { supabase } from '../../services/storage/supabaseClient'
-import type { UserRole } from './LoginPage'
-
-const UFS = [
-  'AC',
-  'AL',
-  'AM',
-  'AP',
-  'BA',
-  'CE',
-  'DF',
-  'ES',
-  'GO',
-  'MA',
-  'MG',
-  'MS',
-  'MT',
-  'PA',
-  'PB',
-  'PE',
-  'PI',
-  'PR',
-  'RJ',
-  'RN',
-  'RO',
-  'RR',
-  'RS',
-  'SC',
-  'SE',
-  'SP',
-  'TO',
-]
+import { AuthField } from './AuthField'
+import { RegisterSuccess } from './RegisterSuccess'
+import { UFS, formatMatricula, registerUser, validateRegistration, type RegistrationData } from './registration'
 
 type RegisterPageProps = {
   onBack: () => void
 }
 
+const EMPTY_REGISTRATION: RegistrationData = {
+  name: '',
+  email: '',
+  password: '',
+  confirm: '',
+  role: 'veterinarian',
+  crmvUf: 'ES',
+  crmvNumero: '',
+  matricula: '',
+}
+
+const ROLE_LABELS = { veterinarian: '🩺 Veterinário(a)', attendant: '📚 Estudante' } as const
+
 export function RegisterPage({ onBack }: RegisterPageProps) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [role, setRole] = useState<UserRole>('veterinarian')
-  const [crmvUf, setCrmvUf] = useState('ES')
-  const [crmvNumero, setCrmvNumero] = useState('')
-  const [matricula, setMatricula] = useState('')
+  const [data, setData] = useState(EMPTY_REGISTRATION)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  function formatMatricula(value: string) {
-    return value
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '')
-      .slice(0, 20)
+  function set<K extends keyof RegistrationData>(key: K, value: RegistrationData[K]) {
+    setData((current) => ({ ...current, [key]: value }))
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('')
-
-    if (password !== confirm) {
-      setMessage('As senhas não coincidem.')
+    const invalid = validateRegistration(data)
+    if (invalid) {
+      setMessage(invalid)
       return
     }
-    if (password.length < 6) {
-      setMessage('A senha deve ter pelo menos 6 caracteres.')
-      return
-    }
-    if (role === 'veterinarian' && !/^\d{1,10}$/.test(crmvNumero)) {
-      setMessage('Informe o número do CRMV (somente números).')
-      return
-    }
-    if (role === 'attendant' && matricula.length < 4) {
-      setMessage('Informe sua matrícula do IFES.')
-      return
-    }
-
-    const crmv = role === 'veterinarian' ? `${crmvUf}-${Number(crmvNumero)}` : undefined
-    const matriculaFinal = role === 'attendant' ? matricula : undefined
-
     setLoading(true)
-
-    const { data: emUso, error: checkError } = await supabase.rpc('cadastro_disponivel', {
-      p_crmv: crmv ?? null,
-      p_matricula: matriculaFinal ?? null,
-    })
-    if (checkError) {
-      setLoading(false)
-      setMessage('Não foi possível verificar os dados do cadastro. Tente novamente.')
-      return
-    }
-    if (emUso === 'crmv') {
-      setLoading(false)
-      setMessage('Este CRMV já está cadastrado. Se ele é seu, procure um administrador.')
-      return
-    }
-    if (emUso === 'matricula') {
-      setLoading(false)
-      setMessage('Esta matrícula já está cadastrada. Se ela é sua, procure um administrador.')
-      return
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { role, name: name.trim(), crmv, matricula: matriculaFinal },
-      },
-    })
-
+    const error = await registerUser(data)
     setLoading(false)
-
-    if (error) {
-      setMessage(
-        error.message.includes('Database error')
-          ? 'Não foi possível criar a conta. Verifique se o CRMV ou a matrícula já estão em uso.'
-          : error.message,
-      )
-      return
-    }
-
-    if (data.session) {
-      await supabase.auth.signOut()
-    }
-
-    setSuccess(true)
+    if (error) setMessage(error)
+    else setSuccess(true)
   }
 
-  if (success) {
-    return (
-      <main className="login-page">
-        <section className="login-card" aria-labelledby="register-title">
-          <header className="login-brand">
-            <BrandMark />
-            <h1 id="register-title">DiagnoVetis</h1>
-            <p className="brand-subtitle">Cadastro realizado!</p>
-          </header>
-          <div className="register-success">
-            <p>
-              Enviamos um e-mail de confirmação para <strong>{email}</strong>.<br />
-              Acesse o link no e-mail para confirmar seu endereço.
-            </p>
-            <p className="register-success-note">Não encontrou? Verifique também a caixa de spam ou lixo eletrônico.</p>
-            <p className="register-success-note register-success-note--last">
-              Depois da confirmação, seu cadastro ainda precisa ser aprovado por um administrador para liberar o acesso.
-            </p>
-            <button className="submit-button" onClick={onBack}>
-              Voltar para o login
-            </button>
-          </div>
-        </section>
-      </main>
-    )
-  }
+  if (success) return <RegisterSuccess email={data.email} onBack={onBack} />
 
   return (
     <main className="login-page">
@@ -172,86 +63,63 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         <form className="login-form" onSubmit={submit}>
           <label>Perfil de acesso</label>
           <div className="role-options">
-            {(['veterinarian', 'attendant'] as const).map((r) => (
+            {(['veterinarian', 'attendant'] as const).map((role) => (
               <button
-                key={r}
+                key={role}
                 type="button"
-                className={`role-option${role === r ? ' active' : ''}`}
-                onClick={() => setRole(r)}
+                className={`role-option${data.role === role ? ' active' : ''}`}
+                onClick={() => set('role', role)}
               >
-                {r === 'veterinarian' ? '🩺 Veterinário(a)' : '📚 Estudante'}
+                {ROLE_LABELS[role]}
               </button>
             ))}
           </div>
 
-          <label htmlFor="reg-name">Nome completo</label>
-          <div className="input-wrap">
-            <Icon>
-              <circle cx="12" cy="8" r="3.25" />
-              <path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20" />
-            </Icon>
-            <input
-              id="reg-name"
-              type="text"
-              placeholder="Ex: Maria da Silva"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
+          <AuthField
+            id="reg-name"
+            label="Nome completo"
+            icon="user"
+            type="text"
+            placeholder="Ex: Maria da Silva"
+            value={data.name}
+            onChange={(event) => set('name', event.target.value)}
+            required
+          />
+          <AuthField
+            id="reg-email"
+            label="E-mail"
+            icon="mail"
+            type="email"
+            autoComplete="email"
+            placeholder="seu.email@ifes.edu.br"
+            value={data.email}
+            onChange={(event) => set('email', event.target.value)}
+            required
+          />
+          <AuthField
+            id="reg-password"
+            label="Senha"
+            icon="lock"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Mínimo 6 caracteres"
+            value={data.password}
+            onChange={(event) => set('password', event.target.value)}
+            required
+          />
+          <AuthField
+            id="reg-confirm"
+            label="Confirmar senha"
+            icon="lock"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Repita a senha"
+            value={data.confirm}
+            onChange={(event) => set('confirm', event.target.value)}
+            required
+          />
 
-          <label htmlFor="reg-email">E-mail</label>
-          <div className="input-wrap">
-            <Icon>
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <path d="m3 7 9 6 9-6" />
-            </Icon>
-            <input
-              id="reg-email"
-              type="email"
-              autoComplete="email"
-              placeholder="seu.email@ifes.edu.br"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <label htmlFor="reg-password">Senha</label>
-          <div className="input-wrap">
-            <Icon>
-              <rect x="4.5" y="10" width="15" height="10.5" rx="1.5" />
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-            </Icon>
-            <input
-              id="reg-password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Mínimo 6 caracteres"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <label htmlFor="reg-confirm">Confirmar senha</label>
-          <div className="input-wrap">
-            <Icon>
-              <rect x="4.5" y="10" width="15" height="10.5" rx="1.5" />
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-            </Icon>
-            <input
-              id="reg-confirm"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Repita a senha"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              required
-            />
-          </div>
-
-          {role === 'veterinarian' && (
+          {data.role === 'veterinarian' && (
             <>
               <label htmlFor="reg-crmv">CRMV</label>
               <div className="crmv-fields">
@@ -259,8 +127,8 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                   id="reg-crmv-uf"
                   className="crmv-uf"
                   aria-label="UF do CRMV"
-                  value={crmvUf}
-                  onChange={(e) => setCrmvUf(e.target.value)}
+                  value={data.crmvUf}
+                  onChange={(event) => set('crmvUf', event.target.value)}
                 >
                   {UFS.map((uf) => (
                     <option key={uf} value={uf}>
@@ -278,8 +146,8 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                     type="text"
                     inputMode="numeric"
                     placeholder="Número. Ex: 12345"
-                    value={crmvNumero}
-                    onChange={(e) => setCrmvNumero(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    value={data.crmvNumero}
+                    onChange={(event) => set('crmvNumero', event.target.value.replace(/\D/g, '').slice(0, 10))}
                     required
                   />
                 </div>
@@ -287,24 +155,17 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             </>
           )}
 
-          {role === 'attendant' && (
-            <>
-              <label htmlFor="reg-matricula">Matrícula</label>
-              <div className="input-wrap">
-                <Icon>
-                  <rect x="3" y="5" width="18" height="14" rx="2" />
-                  <path d="M7 9h6M7 13h10" />
-                </Icon>
-                <input
-                  id="reg-matricula"
-                  type="text"
-                  placeholder="Sua matrícula no IFES"
-                  value={matricula}
-                  onChange={(e) => setMatricula(formatMatricula(e.target.value))}
-                  required
-                />
-              </div>
-            </>
+          {data.role === 'attendant' && (
+            <AuthField
+              id="reg-matricula"
+              label="Matrícula"
+              icon="card"
+              type="text"
+              placeholder="Sua matrícula no IFES"
+              value={data.matricula}
+              onChange={(event) => set('matricula', formatMatricula(event.target.value))}
+              required
+            />
           )}
 
           {message && (

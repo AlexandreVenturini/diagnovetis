@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { applyDoseToPrescription } from '../features/prescriptions/applyDose'
-import { filterAnimals } from '../features/prescriptions/filterAnimals'
+import { applyDoseToPrescription } from '../features/prescriptions/new/applyDose'
+import { filterAnimals } from '../features/prescriptions/new/filterAnimals'
 import { emptyPrescription, emptyPrescriptionItem } from '../features/consultations/prescriptionReport'
 
 const prescription = {

@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { BrandMark } from '../../components/common/BrandMark'
-import { Icon } from '../../components/common/Icon'
+import { AuthField } from './AuthField'
 import { isSupabaseConfigured, supabase } from '../../services/storage/supabaseClient'
-
-export type UserRole = 'veterinarian' | 'attendant'
 
 type LoginPageProps = {
   notice: string
@@ -64,39 +62,28 @@ export function LoginPage({ notice, onDismissNotice, onRegister }: LoginPageProp
         </header>
 
         <form className="login-form" onSubmit={submit}>
-          <label htmlFor="email">E-mail</label>
-          <div className="input-wrap">
-            <Icon>
-              <circle cx="12" cy="8" r="3.25" />
-              <path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20" />
-            </Icon>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="seu.email@ifes.edu.br"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </div>
-
-          <label htmlFor="password">Senha</label>
-          <div className="input-wrap">
-            <Icon>
-              <rect x="4.5" y="10" width="15" height="10.5" rx="1.5" />
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-            </Icon>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Digite sua senha"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </div>
+          <AuthField
+            id="email"
+            label="E-mail"
+            icon="user"
+            type="email"
+            autoComplete="email"
+            placeholder="seu.email@ifes.edu.br"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+          <AuthField
+            id="password"
+            label="Senha"
+            icon="lock"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Digite sua senha"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
 
           {(message || notice) && (
             <p className="form-message error" role="status">

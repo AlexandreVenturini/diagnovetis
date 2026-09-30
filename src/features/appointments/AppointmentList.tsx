@@ -1,8 +1,20 @@
 import { useMemo, useState } from 'react'
 import { Icon } from '../../components/common/Icon'
 import { PeriodFilter } from '../common/PeriodFilter'
-import { inRange, periodNoun, periodRange, type PeriodValue } from '../common/period'
-import type { Appointment, AppointmentReminder, AppointmentStatus, ReminderType } from './appointmentTypes'
+import { periodNoun, periodRange, type PeriodValue } from '../common/period'
+import type { Appointment, AppointmentStatus } from './appointmentTypes'
+import { AgendaDialogs, type AgendaDialog } from './agenda/AgendaDialogs'
+import { AppointmentCard } from './agenda/AppointmentCard'
+import { RemindersPanel } from './agenda/RemindersPanel'
+import {
+  STATUS_LABELS,
+  appointmentsInPeriod,
+  filterAppointments,
+  hasLocalConflict,
+  pendingReminders,
+  toDateInput,
+  uniqueValues,
+} from './agenda/agendaFilters'
 
 type AppointmentListProps = {
   appointments: Appointment[]
@@ -16,31 +28,6 @@ type AppointmentListProps = {
   reminderAppointments?: Appointment[]
   onCheckConflict?: (veterinarian: string, date: string, time: string, ignoreId: number) => Promise<boolean>
   loading?: boolean
-}
-
-const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  confirmed: 'Confirmado',
-  waiting: 'Aguardando',
-  'in-progress': 'Em atendimento',
-  completed: 'Concluído',
-  'no-show': 'Faltou',
-  cancelled: 'Cancelado',
-}
-
-function parseDate(date: string) {
-  return new Date(`${date}T12:00:00`)
-}
-
-function toDateInput(date: Date) {
-  const offset = date.getTimezoneOffset()
-  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10)
-}
-
-function formatDate(date: string, options?: Intl.DateTimeFormatOptions) {
-  if (!date) return 'Data não informada'
-  return new Intl.DateTimeFormat('pt-BR', options ?? { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
-    parseDate(date),
-  )
 }
 
 export function AppointmentList({
@@ -69,96 +56,22 @@ export function AppointmentList({
   const [veterinarian, setVeterinarian] = useState('all')
   const [service, setService] = useState('all')
   const [status, setStatus] = useState<AppointmentStatus | 'all'>('all')
-  const [rescheduling, setRescheduling] = useState<Appointment | null>(null)
-  const [newDate, setNewDate] = useState('')
-  const [newTime, setNewTime] = useState('')
-  const [cancelling, setCancelling] = useState<Appointment | null>(null)
-  const [cancellationReason, setCancellationReason] = useState('')
-  const [reminderFor, setReminderFor] = useState<Appointment | null>(null)
-  const [reminderType, setReminderType] = useState<ReminderType>('return')
-  const [reminderDate, setReminderDate] = useState('')
-  const [dialogError, setDialogError] = useState('')
+  const [dialog, setDialog] = useState<AgendaDialog | null>(null)
 
-  const veterinarians = [...new Set(appointments.map((item) => item.veterinarian).filter(Boolean))]
-  const services = [...new Set(appointments.map((item) => item.serviceType).filter(Boolean))]
-
+  const veterinarians = uniqueValues(appointments.map((item) => item.veterinarian))
+  const services = uniqueValues(appointments.map((item) => item.serviceType))
   const filtered = useMemo(
-    () =>
-      appointments.filter((appointment) => {
-        const normalizedQuery = query.trim().toLocaleLowerCase('pt-BR')
-        const matchesQuery =
-          !normalizedQuery ||
-          `${appointment.dogName} ${appointment.tutorName}`.toLocaleLowerCase('pt-BR').includes(normalizedQuery)
-        return (
-          matchesQuery &&
-          (veterinarian === 'all' || appointment.veterinarian === veterinarian) &&
-          (service === 'all' || appointment.serviceType === service) &&
-          (status === 'all' || appointment.status === status)
-        )
-      }),
+    () => filterAppointments(appointments, { query, veterinarian, service, status }),
     [appointments, query, veterinarian, service, status],
   )
+  const visibleAppointments = appointmentsInPeriod(filtered, range, period.view)
+  const reminders = pendingReminders(reminderAppointments ?? appointments)
 
-  const visibleAppointments = filtered
-    .filter((appointment) => {
-      if (!appointment.date) return period.view === 'day' || !range
-      return inRange(appointment.date, range)
-    })
-    .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
-  const pendingReminders = (reminderAppointments ?? appointments)
-    .flatMap((appointment) =>
-      appointment.reminders.filter((reminder) => !reminder.done).map((reminder) => ({ appointment, reminder })),
+  async function hasConflict(appointment: Appointment, date: string, time: string) {
+    return (
+      hasLocalConflict(appointments, appointment, date, time) ||
+      Boolean(await onCheckConflict?.(appointment.veterinarian, date, time, appointment.id))
     )
-    .sort((a, b) => a.reminder.date.localeCompare(b.reminder.date))
-
-  function openReschedule(appointment: Appointment) {
-    setRescheduling(appointment)
-    setNewDate(appointment.date)
-    setNewTime(appointment.time)
-    setDialogError('')
-  }
-
-  async function confirmReschedule() {
-    if (!rescheduling || !newDate || !newTime) return
-    const conflict =
-      appointments.some(
-        (item) =>
-          item.id !== rescheduling.id &&
-          item.status !== 'cancelled' &&
-          item.veterinarian === rescheduling.veterinarian &&
-          item.date === newDate &&
-          item.time === newTime,
-      ) || Boolean(await onCheckConflict?.(rescheduling.veterinarian, newDate, newTime, rescheduling.id))
-    if (conflict) {
-      setDialogError('Este veterinário já possui uma consulta nesse horário.')
-      return
-    }
-    onUpdate(rescheduling.id, { date: newDate, time: newTime, status: 'confirmed' })
-    if (period.view !== 'all') setPeriod({ ...period, date: newDate })
-    setRescheduling(null)
-  }
-
-  function confirmCancellation() {
-    if (!cancelling || !cancellationReason.trim()) {
-      setDialogError('Informe o motivo do cancelamento.')
-      return
-    }
-    onUpdate(cancelling.id, { status: 'cancelled', cancellationReason: cancellationReason.trim() })
-    setCancelling(null)
-    setCancellationReason('')
-    setDialogError('')
-  }
-
-  function addReminder() {
-    if (!reminderFor || !reminderDate) {
-      setDialogError('Informe a data do lembrete.')
-      return
-    }
-    const reminder: AppointmentReminder = { id: Date.now(), type: reminderType, date: reminderDate, done: false }
-    onUpdate(reminderFor.id, { reminders: [...reminderFor.reminders, reminder] })
-    setReminderFor(null)
-    setReminderDate('')
-    setDialogError('')
   }
 
   return (
@@ -225,226 +138,52 @@ export function AppointmentList({
               <div className="empty-appointments">Nenhuma consulta encontrada neste período.</div>
             )}
             {visibleAppointments.map((appointment) => {
-              const isExpanded = expandedId === appointment.id
+              const expanded = expandedId === appointment.id
               return (
-                <article
-                  className={`appointment-card status-${appointment.status}${isExpanded ? ' expanded' : ''}`}
+                <AppointmentCard
                   key={appointment.id}
-                >
-                  <button
-                    className="appointment-card-summary"
-                    type="button"
-                    aria-expanded={isExpanded}
-                    onClick={() => setExpandedId(isExpanded ? null : appointment.id)}
-                  >
-                    <div>
-                      <div className="appointment-name-row">
-                        <strong>{appointment.dogName}</strong>
-                        <span className={`status-badge status-${appointment.status}`}>
-                          {STATUS_LABELS[appointment.status]}
-                        </span>
-                      </div>
-                      <p>Tutor: {appointment.tutorName}</p>
-                      <div className="appointment-meta">
-                        <span>▣ {formatDate(appointment.date)}</span>
-                        <span>◷ {appointment.time || 'Horário não informado'}</span>
-                      </div>
-                    </div>
-                    <div className="appointment-card-side">
-                      <span className="service-label">{appointment.serviceType}</span>
-                      <span className="appointment-chevron">
-                        <Icon>
-                          <path d="m7 10 5 5 5-5" />
-                        </Icon>
-                      </span>
-                    </div>
-                  </button>
-                  {onStartCare && !['completed', 'cancelled', 'no-show'].includes(appointment.status) && (
-                    <div className="appointment-care-action">
-                      <button type="button" className="primary-button" onClick={() => onStartCare(appointment)}>
-                        Ir para atendimento
-                      </button>
-                    </div>
-                  )}
-                  {isExpanded && (
-                    <div className="appointment-details">
-                      <div>
-                        <span>Veterinário</span>
-                        <strong>{appointment.veterinarian || 'Não informado'}</strong>
-                      </div>
-                      <div>
-                        <span>Tipo</span>
-                        <strong>Horário marcado</strong>
-                      </div>
-                      <div>
-                        <span>Observações</span>
-                        <strong>{appointment.notes || 'Nenhuma observação'}</strong>
-                      </div>
-                      {appointment.cancellationReason && (
-                        <div className="appointment-notes">
-                          <span>Motivo do cancelamento</span>
-                          <strong>{appointment.cancellationReason}</strong>
-                        </div>
-                      )}
-                      <div className="appointment-actions appointment-notes">
-                        <select
-                          aria-label="Alterar situação"
-                          value={appointment.status}
-                          onChange={(event) =>
-                            onUpdate(appointment.id, { status: event.target.value as AppointmentStatus })
-                          }
-                        >
-                          {Object.entries(STATUS_LABELS)
-                            .filter(([value]) => value !== 'cancelled')
-                            .map(([value, label]) => (
-                              <option value={value} key={value}>
-                                {label}
-                              </option>
-                            ))}
-                          {appointment.status === 'cancelled' && <option value="cancelled">Cancelado</option>}
-                        </select>
-                        <button onClick={() => openReschedule(appointment)}>Remarcar</button>
-                        <button
-                          onClick={() => {
-                            setReminderFor(appointment)
-                            setDialogError('')
-                          }}
-                        >
-                          Criar lembrete
-                        </button>
-                        <button
-                          className="danger-action"
-                          disabled={appointment.status === 'cancelled'}
-                          onClick={() => {
-                            setCancelling(appointment)
-                            setDialogError('')
-                          }}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </article>
+                  appointment={appointment}
+                  expanded={expanded}
+                  onToggle={() => setExpandedId(expanded ? null : appointment.id)}
+                  onStartCare={onStartCare}
+                  onStatusChange={(next) => onUpdate(appointment.id, { status: next })}
+                  onOpenDialog={(kind) => setDialog({ kind, appointment })}
+                />
               )
             })}
           </div>
         </div>
 
-        <aside className="reminders-column">
-          <h3>Lembretes</h3>
-          <div className="reminders-panel">
-            {pendingReminders.length === 0 && <p className="empty-reminders">Nenhum lembrete pendente.</p>}
-            {pendingReminders.slice(0, 6).map(({ appointment, reminder }) => (
-              <div className="reminder-item" key={reminder.id}>
-                <span className={`reminder-icon ${reminder.type}`}>{reminder.type === 'return' ? '↻' : '+'}</span>
-                <div>
-                  <strong>
-                    {reminder.type === 'return' ? 'Retorno' : 'Vacinação'} — {appointment.dogName}
-                  </strong>
-                  <span>
-                    {formatDate(reminder.date)} · {appointment.tutorName}
-                  </span>
-                </div>
-                <button
-                  aria-label="Marcar lembrete como concluído"
-                  onClick={() =>
-                    onUpdate(appointment.id, {
-                      reminders: appointment.reminders.map((item) =>
-                        item.id === reminder.id ? { ...item, done: true } : item,
-                      ),
-                    })
-                  }
-                >
-                  ✓
-                </button>
-              </div>
-            ))}
-          </div>
-        </aside>
+        <RemindersPanel
+          reminders={reminders}
+          onDone={(appointment, reminderId) =>
+            onUpdate(appointment.id, {
+              reminders: appointment.reminders.map((item) => (item.id === reminderId ? { ...item, done: true } : item)),
+            })
+          }
+        />
       </div>
 
-      {(rescheduling || cancelling || reminderFor) && (
-        <div className="agenda-modal-backdrop" role="presentation">
-          <section className="agenda-modal" role="dialog" aria-modal="true" aria-labelledby="agenda-dialog-title">
-            {rescheduling && (
-              <>
-                <h3 id="agenda-dialog-title">Remarcar consulta de {rescheduling.dogName}</h3>
-                <div className="modal-fields">
-                  <label>
-                    Nova data
-                    <input type="date" value={newDate} onChange={(event) => setNewDate(event.target.value)} />
-                  </label>
-                  <label>
-                    Novo horário
-                    <input type="time" value={newTime} onChange={(event) => setNewTime(event.target.value)} />
-                  </label>
-                </div>
-                {dialogError && <p className="dialog-error">{dialogError}</p>}
-                <div className="modal-actions">
-                  <button className="secondary-button" onClick={() => setRescheduling(null)}>
-                    Voltar
-                  </button>
-                  <button className="primary-button" onClick={confirmReschedule}>
-                    Confirmar remarcação
-                  </button>
-                </div>
-              </>
-            )}
-            {cancelling && (
-              <>
-                <h3 id="agenda-dialog-title">Cancelar consulta de {cancelling.dogName}</h3>
-                <label className="cancel-reason">
-                  Motivo do cancelamento
-                  <textarea
-                    value={cancellationReason}
-                    onChange={(event) => setCancellationReason(event.target.value)}
-                    placeholder="Descreva o motivo"
-                  />
-                </label>
-                {dialogError && <p className="dialog-error">{dialogError}</p>}
-                <div className="modal-actions">
-                  <button className="secondary-button" onClick={() => setCancelling(null)}>
-                    Voltar
-                  </button>
-                  <button className="danger-button" onClick={confirmCancellation}>
-                    Cancelar consulta
-                  </button>
-                </div>
-              </>
-            )}
-            {reminderFor && (
-              <>
-                <h3 id="agenda-dialog-title">Novo lembrete para {reminderFor.dogName}</h3>
-                <div className="modal-fields">
-                  <label>
-                    Tipo
-                    <select
-                      value={reminderType}
-                      onChange={(event) => setReminderType(event.target.value as ReminderType)}
-                    >
-                      <option value="return">Retorno</option>
-                      <option value="vaccination">Vacinação</option>
-                    </select>
-                  </label>
-                  <label>
-                    Data
-                    <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} />
-                  </label>
-                </div>
-                {dialogError && <p className="dialog-error">{dialogError}</p>}
-                <div className="modal-actions">
-                  <button className="secondary-button" onClick={() => setReminderFor(null)}>
-                    Voltar
-                  </button>
-                  <button className="primary-button" onClick={addReminder}>
-                    Salvar lembrete
-                  </button>
-                </div>
-              </>
-            )}
-          </section>
-        </div>
+      {dialog && (
+        <AgendaDialogs
+          key={`${dialog.kind}-${dialog.appointment.id}`}
+          dialog={dialog}
+          onClose={() => setDialog(null)}
+          hasConflict={hasConflict}
+          onReschedule={(appointment, date, time) => {
+            onUpdate(appointment.id, { date, time, status: 'confirmed' })
+            if (period.view !== 'all') setPeriod({ ...period, date })
+            setDialog(null)
+          }}
+          onCancelAppointment={(appointment, reason) => {
+            onUpdate(appointment.id, { status: 'cancelled', cancellationReason: reason })
+            setDialog(null)
+          }}
+          onAddReminder={(appointment, reminder) => {
+            onUpdate(appointment.id, { reminders: [...appointment.reminders, reminder] })
+            setDialog(null)
+          }}
+        />
       )}
     </section>
   )

@@ -5,7 +5,7 @@ import {
   periodBounds,
   shiftPeriod,
   type HistoryFilters,
-} from '../features/prescriptions/historyFilters'
+} from '../features/prescriptions/history/historyFilters'
 import { EMPTY_CONSULTATION } from '../features/consultations/consultationTypes'
 import { emptyPrescription, emptyPrescriptionItem } from '../features/consultations/prescriptionReport'
 import type { IssuedPrescription } from '../services/PrescriptionService'

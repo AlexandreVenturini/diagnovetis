@@ -10,6 +10,6 @@
 @import '../features/zoonoses/zoonoses.css';
 @import '../features/medications/medications.css';
 @import '../features/consultations/consultations.css';
-@import '../features/consultations/supervision.css';
+@import '../features/supervision/supervision.css';
 @import '../features/prescriptions/prescriptions.css';
 @import '../features/admin/admin.css';

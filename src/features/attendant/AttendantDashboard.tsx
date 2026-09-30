@@ -1,29 +1,21 @@
-import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { Icon } from '../../components/common/Icon'
-import { AppHeader } from '../../components/layout/AppHeader'
-import { AdminPanel } from '../admin/AdminPanel'
-import { AppointmentsModule } from '../appointments/AppointmentsModule'
-import type { Appointment } from '../appointments/appointmentTypes'
-import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
-import { RecordsModule } from '../records/RecordsModule'
-import { PrescriptionsModule } from '../prescriptions/PrescriptionsModule'
-import { DogDetails } from '../dogs/DogDetails'
-import { DogForm } from '../dogs/DogForm'
-import { DogList } from '../dogs/DogList'
 import { useDogs } from '../../hooks/useDogs'
-import type { Dog, DogFormData, DogScreen } from '../dogs/dogTypes'
+import { AppointmentsModule } from '../appointments/AppointmentsModule'
+import { ClinicalCareModule } from '../consultations/ClinicalCareModule'
+import { DashboardShell, type DashboardUser } from '../dashboard/DashboardShell'
+import { useDashboardNavigation, type DashboardModule } from '../dashboard/useDashboardNavigation'
+import { DogsModule } from '../dogs/DogsModule'
+import { PrescriptionsModule } from '../prescriptions/PrescriptionsModule'
+import { RecordsModule } from '../records/RecordsModule'
 import { AttendantHome } from './AttendantHome'
 
 type AttendantDashboardProps = {
   onLogout: () => void
-  user: { email: string; name: string; isAdmin: boolean } | null
+  user: DashboardUser
 }
 
-type AttendantModule = 'dashboard' | 'dogs' | 'appointments' | 'consultations' | 'prescriptions' | 'records'
-
-type AppointmentEntry = { screen: 'list' | 'create'; key: number }
-
-const NAV_ITEMS: { id: AttendantModule; label: string; icon: React.ReactNode }[] = [
+const NAV_ITEMS: { id: DashboardModule; label: string; icon: ReactNode }[] = [
   {
     id: 'dashboard',
     label: 'Dashboard',
@@ -87,186 +79,73 @@ const NAV_ITEMS: { id: AttendantModule; label: string; icon: React.ReactNode }[]
 ]
 
 export function AttendantDashboard({ onLogout, user }: AttendantDashboardProps) {
-  const [activeModule, setActiveModule] = useState<AttendantModule>('dashboard')
-  const [showAdmin, setShowAdmin] = useState(false)
-  const [screen, setScreen] = useState<DogScreen>('list')
-  const [appointmentEntry, setAppointmentEntry] = useState<AppointmentEntry>({ screen: 'list', key: 0 })
-  const [selected, setSelected] = useState<Dog | null>(null)
-  const [careAppointment, setCareAppointment] = useState<Appointment | undefined>()
-  const [careKey, setCareKey] = useState(0)
-  const [recordsKey, setRecordsKey] = useState(0)
-  const [recordPetId, setRecordPetId] = useState<number | undefined>()
-
-  const { dogs, createDog, createTutor, updateDog, removeDog } = useDogs()
-
-  function selectModule(module: AttendantModule) {
-    if (module === 'consultations' && activeModule !== 'consultations') {
-      setCareAppointment(undefined)
-      setCareKey((prev) => prev + 1)
-    }
-    setActiveModule(module)
-    if (module === 'records') {
-      setRecordPetId(undefined)
-      setRecordsKey((prev) => prev + 1)
-    }
-    if (module === 'dogs') setScreen('list')
-    if (module === 'appointments') setAppointmentEntry((prev) => ({ screen: 'list', key: prev.key + 1 }))
-  }
-
-  function openRecord(petId: number) {
-    setRecordPetId(petId)
-    setRecordsKey((prev) => prev + 1)
-    setActiveModule('records')
-  }
-
-  function startCare(appointment: Appointment) {
-    setCareAppointment(appointment)
-    setCareKey((prev) => prev + 1)
-    setActiveModule('consultations')
-  }
-
-  function openNewDog() {
-    setActiveModule('dogs')
-    setScreen('create')
-  }
-
-  function openNewAppointment() {
-    setActiveModule('appointments')
-    setAppointmentEntry((prev) => ({ screen: 'create', key: prev.key + 1 }))
-  }
-
-  async function handleCreate(data: DogFormData) {
-    await createDog(data)
-    setScreen('list')
-  }
-
-  async function handleEdit(data: DogFormData) {
-    if (!selected) return
-    await updateDog(selected.id, data)
-    setScreen('list')
-  }
-
-  function openEdit(dog: Dog) {
-    setSelected(dog)
-    setScreen('edit')
-  }
-
-  function openDetails(dog: Dog) {
-    setSelected(dog)
-    setScreen('details')
-  }
-
-  async function handleRemove(dog: Dog) {
-    await removeDog(dog.id)
-    setScreen('list')
-  }
-
-  if (showAdmin) {
-    return (
-      <div className="app-shell">
-        <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
-        <main className="shell-width dashboard-content">
-          <AdminPanel onClose={() => setShowAdmin(false)} />
-        </main>
-      </div>
-    )
-  }
+  const nav = useDashboardNavigation()
+  const dogsApi = useDogs()
+  const { dogs } = dogsApi
 
   return (
-    <div className="app-shell">
-      <AppHeader isAdmin={user?.isAdmin} onAdminClick={() => setShowAdmin(true)} />
-      <main className="shell-width dashboard-content">
-        <section className="user-row">
-          <div className="profile-badge">
-            <span>Perfil:</span>
-            Estudante
-          </div>
-          <button className="logout-button" onClick={onLogout}>
-            <span>↪</span> Sair
+    <DashboardShell user={user} profileLabel="Estudante" onLogout={onLogout}>
+      <nav className="attendant-nav" aria-label="Módulos do atendente">
+        {NAV_ITEMS.map(({ id, label, icon }) => (
+          <button key={id} className={nav.activeModule === id ? 'active' : ''} onClick={() => nav.selectModule(id)}>
+            {icon}
+            {label}
           </button>
-        </section>
+        ))}
+        <span>Cadastro, agenda, atendimento, receitas e prontuários</span>
+      </nav>
 
-        <nav className="attendant-nav" aria-label="Módulos do atendente">
-          {NAV_ITEMS.map(({ id, label, icon }) => (
-            <button key={id} className={activeModule === id ? 'active' : ''} onClick={() => selectModule(id)}>
-              {icon}
-              {label}
-            </button>
-          ))}
-          <span>Cadastro, agenda, atendimento, receitas e prontuários</span>
-        </nav>
+      {nav.activeModule !== 'dashboard' && (
+        <aside className="attendant-notice">
+          <span>▣</span>
+          <p>
+            <strong>Perfil Estudante:</strong> Você tem acesso ao cadastro de pets, agendamentos, atendimentos, receitas
+            e prontuários; atendimentos, receitas e correções precisam da aprovação de um professor
+          </p>
+        </aside>
+      )}
 
-        {activeModule !== 'dashboard' && (
-          <aside className="attendant-notice">
-            <span>▣</span>
-            <p>
-              <strong>Perfil Estudante:</strong> Você tem acesso ao cadastro de pets, agendamentos, atendimentos,
-              receitas e prontuários; atendimentos, receitas e correções precisam da aprovação de um professor
-            </p>
-          </aside>
-        )}
-
-        {activeModule === 'dashboard' && (
-          <AttendantHome
-            dogs={dogs}
-            onOpenDogs={() => selectModule('dogs')}
-            onOpenAppointments={() => selectModule('appointments')}
-            onNewDog={openNewDog}
-            onNewAppointment={openNewAppointment}
-          />
-        )}
-
-        {activeModule === 'dogs' && (
-          <>
-            {screen === 'list' && (
-              <DogList dogs={dogs} onCreate={() => setScreen('create')} onEdit={openEdit} onDetails={openDetails} />
-            )}
-            {screen === 'create' && (
-              <DogForm onSave={handleCreate} onCreateTutor={createTutor} onCancel={() => setScreen('list')} />
-            )}
-            {screen === 'edit' && selected && (
-              <DogForm
-                dog={selected}
-                editing
-                onSave={handleEdit}
-                onCreateTutor={createTutor}
-                onCancel={() => setScreen('list')}
-              />
-            )}
-            {screen === 'details' && selected && (
-              <DogDetails dog={selected} onBack={() => setScreen('list')} onRemove={() => handleRemove(selected)} />
-            )}
-          </>
-        )}
-
-        {activeModule === 'appointments' && (
-          <AppointmentsModule
-            dogs={dogs}
-            key={appointmentEntry.key}
-            initialScreen={appointmentEntry.screen}
-            onStartCare={startCare}
-          />
-        )}
-
-        {activeModule === 'consultations' && (
-          <ClinicalCareModule
-            key={careKey}
-            dogs={dogs}
-            initialAppointment={careAppointment}
-            role="attendant"
-            userEmail={user?.email}
-            onOpenRecord={openRecord}
-          />
-        )}
-
-        {activeModule === 'prescriptions' && (
-          <PrescriptionsModule dogs={dogs} onOpenRecord={openRecord} role="attendant" />
-        )}
-
-        {activeModule === 'records' && (
-          <RecordsModule key={recordsKey} initialPetId={recordPetId} role="attendant" userEmail={user?.email} />
-        )}
-      </main>
-    </div>
+      {nav.activeModule === 'dashboard' && (
+        <AttendantHome
+          dogs={dogs}
+          onOpenDogs={() => nav.selectModule('dogs')}
+          onOpenAppointments={() => nav.selectModule('appointments')}
+          onNewDog={nav.openNewDog}
+          onNewAppointment={nav.openNewAppointment}
+        />
+      )}
+      {nav.activeModule === 'dogs' && (
+        <DogsModule key={nav.dogsEntry.key} dogsApi={dogsApi} initialScreen={nav.dogsEntry.screen} />
+      )}
+      {nav.activeModule === 'appointments' && (
+        <AppointmentsModule
+          dogs={dogs}
+          key={nav.appointmentEntry.key}
+          initialScreen={nav.appointmentEntry.screen}
+          onStartCare={nav.startCare}
+        />
+      )}
+      {nav.activeModule === 'consultations' && (
+        <ClinicalCareModule
+          key={nav.careEntry.key}
+          dogs={dogs}
+          initialAppointment={nav.careEntry.screen}
+          role="attendant"
+          userEmail={user?.email}
+          onOpenRecord={nav.openRecord}
+        />
+      )}
+      {nav.activeModule === 'prescriptions' && (
+        <PrescriptionsModule dogs={dogs} onOpenRecord={nav.openRecord} role="attendant" />
+      )}
+      {nav.activeModule === 'records' && (
+        <RecordsModule
+          key={nav.recordsEntry.key}
+          initialPetId={nav.recordsEntry.screen}
+          role="attendant"
+          userEmail={user?.email}
+        />
+      )}
+    </DashboardShell>
   )
 }

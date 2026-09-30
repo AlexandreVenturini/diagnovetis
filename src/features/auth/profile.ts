@@ -1,6 +1,6 @@
 import { supabase } from '../../services/storage/supabaseClient'
-import type { UserRole } from './LoginPage'
 
+export type UserRole = 'veterinarian' | 'attendant'
 export type ProfileStatus = 'pendente' | 'aprovado' | 'suspenso'
 
 export type Profile = {

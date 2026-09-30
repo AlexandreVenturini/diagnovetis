@@ -1,23 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Appointment } from '../appointments/appointmentTypes'
-import { consultationFromAppointment } from './consultationFromAppointment'
+import { useAppointments } from '../../hooks/useAppointments'
 import { useConsultas } from '../../hooks/useConsultas'
+import type { Appointment } from '../appointments/appointmentTypes'
+import type { UserRole } from '../auth/profile'
+import type { Dog } from '../dogs/dogTypes'
+import { SupervisionGate } from '../supervision/gate/SupervisionGate'
+import { cancelarLiberacao, listarVeterinarios } from '../supervision/supervision'
+import type { Liberacao, VeterinarianOption } from '../supervision/supervisionTypes'
+import { CareCompleted, type CompletedCare } from './CareCompleted'
+import { applyVeterinarian, openAppointments, validateConsultation } from './careRules'
 import { ConsultationHeader } from './ConsultationHeader'
-import { generateConsultationReport } from './consultationReport'
+import { consultationFromAppointment } from './consultationFromAppointment'
 import { EMPTY_CONSULTATION } from './consultationTypes'
 import type { ConsultationData, ConsultationStep } from './consultationTypes'
+import type { ExamDraft } from './examTypes'
+import { LiberationNotice } from './LiberationNotice'
 import { ClinicalHistoryStep } from './steps/ClinicalHistoryStep'
+import { ComplementaryExamsStep } from './steps/ComplementaryExamsStep'
 import { DiagnosisStep } from './steps/DiagnosisStep'
 import { IdentificationStep } from './steps/IdentificationStep'
-import { ComplementaryExamsStep } from './steps/ComplementaryExamsStep'
-import { validateExam, type ExamDraft } from './examTypes'
 import { PhysicalExamStep } from './steps/PhysicalExamStep'
-import { useAppointments } from '../../hooks/useAppointments'
-import type { Dog } from '../dogs/dogTypes'
-import type { UserRole } from '../auth/LoginPage'
-import { SupervisionGate } from './SupervisionGate'
-import { cancelarLiberacao, listarVeterinarios } from './supervision'
-import type { Liberacao, VeterinarianOption } from './supervision'
 
 type ClinicalCareModuleProps = {
   dogs: Dog[]
@@ -27,23 +29,8 @@ type ClinicalCareModuleProps = {
   onOpenRecord?: (petId: number) => void
 }
 
-function applyVeterinarian(
-  data: ConsultationData,
-  veterinarians: VeterinarianOption[],
-  liberacao: Liberacao | null,
-  userEmail?: string,
-): ConsultationData {
-  if (liberacao)
-    return { ...data, veterinarian: liberacao.supervisor.nome, veterinarianId: String(liberacao.supervisor.medicoId) }
-  if (data.veterinarianId && veterinarians.some((vet) => String(vet.medicoId) === data.veterinarianId)) return data
-  const normalize = (value: string) => value.trim().toLocaleLowerCase('pt-BR')
-  const vet =
-    (data.veterinarian && veterinarians.find((item) => normalize(item.nome) === normalize(data.veterinarian))) ||
-    (userEmail && veterinarians.find((item) => normalize(item.email) === normalize(userEmail)))
-  return vet
-    ? { ...data, veterinarian: vet.nome, veterinarianId: String(vet.medicoId) }
-    : { ...data, veterinarianId: '' }
-}
+const AGENDA_NOT_UPDATED =
+  'Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.'
 
 export function ClinicalCareModule({
   dogs,
@@ -61,12 +48,7 @@ export function ClinicalCareModule({
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const saveLock = useRef(false)
-  const [completed, setCompleted] = useState<{
-    data: ConsultationData
-    exams: ExamDraft[]
-    id: number
-    petId?: number
-  } | null>(null)
+  const [completed, setCompleted] = useState<CompletedCare | null>(null)
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(initialAppointment?.id ?? null)
   const { salvarConsulta } = useConsultas()
   const { appointments, updateAppointment } = useAppointments()
@@ -97,12 +79,10 @@ export function ClinicalCareModule({
 
   async function trocarLiberacao() {
     if (!liberacao || saving) return
-    if (
-      !window.confirm(
-        'Cancelar a liberação atual? Os dados preenchidos serão mantidos e será preciso uma nova liberação do professor.',
-      )
+    const confirmed = window.confirm(
+      'Cancelar a liberação atual? Os dados preenchidos serão mantidos e será preciso uma nova liberação do professor.',
     )
-      return
+    if (!confirmed) return
     try {
       await cancelarLiberacao(liberacao.id)
     } catch {
@@ -110,10 +90,6 @@ export function ClinicalCareModule({
     }
     setLiberacao(null)
   }
-
-  const availableAppointments = appointments
-    .filter((item) => !['completed', 'cancelled', 'no-show'].includes(item.status))
-    .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
 
   function selectAppointment(id: number | null) {
     setSelectedAppointmentId(id)
@@ -133,21 +109,25 @@ export function ClinicalCareModule({
     setMessage('')
   }
 
+  async function completeAppointment() {
+    if (selectedAppointmentId === null) return
+    try {
+      if (!(await updateAppointment(selectedAppointmentId, { status: 'completed' }))) setMessage(AGENDA_NOT_UPDATED)
+    } catch {
+      setMessage(AGENDA_NOT_UPDATED)
+    }
+  }
+
   async function saveRecord() {
     if (saveLock.current || completed) return
     if (isStudent && !liberacao) {
       setMessage('O atendimento precisa da liberação do professor supervisor.')
       return
     }
-    if (![data.dogName, data.tutorName, data.veterinarianId].every((value) => value.trim())) {
-      setMessage('Preencha a identificação do paciente antes de finalizar.')
-      setStep(1)
-      return
-    }
-    const examError = exams.map(validateExam).find(Boolean)
-    if (examError) {
-      setMessage(examError)
-      setStep(4)
+    const invalid = validateConsultation(data, exams)
+    if (invalid) {
+      setMessage(invalid.message)
+      setStep(invalid.step)
       return
     }
     saveLock.current = true
@@ -161,15 +141,7 @@ export function ClinicalCareModule({
       }
       setCompleted({ data: { ...data }, exams: structuredClone(exams), id: resultado.id, petId: resultado.petId })
       setMessage('Atendimento finalizado e salvo no prontuário.')
-      if (selectedAppointmentId !== null) {
-        try {
-          const updated = await updateAppointment(selectedAppointmentId, { status: 'completed' })
-          if (!updated)
-            setMessage('Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.')
-        } catch {
-          setMessage('Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.')
-        }
-      }
+      await completeAppointment()
     } catch {
       setMessage('Não foi possível finalizar o atendimento. Verifique a conexão e tente novamente.')
     } finally {
@@ -190,77 +162,27 @@ export function ClinicalCareModule({
 
   if (completed)
     return (
-      <section className="consultation-panel content-card">
-        <h2>Atendimento finalizado</h2>
-        <p>
-          Atendimento nº {completed.id} de <strong>{completed.data.dogName}</strong> salvo no prontuário.
-        </p>
-        {completed.data.dischargeCondition === 'Óbito' ? (
-          <aside className="profile-notice profile-notice--death">
-            <span>✝</span>
-            <p>
-              <strong>Condição na alta: óbito.</strong> Registre o óbito completo no prontuário do animal: data e hora,
-              circunstâncias, causa provável, eutanásia, necropsia e destinação do corpo.
-              {onOpenRecord && completed.petId !== undefined && (
-                <>
-                  {' '}
-                  <button type="button" className="text-back-button" onClick={() => onOpenRecord(completed.petId!)}>
-                    Abrir prontuário para registrar o óbito →
-                  </button>
-                </>
-              )}
-            </p>
-          </aside>
-        ) : (
-          <p>Para emitir uma receita, acesse a aba Receituário.</p>
-        )}
-        <div className="form-actions">
-          <button
-            className="secondary-button"
-            onClick={() =>
-              setMessage(
-                generateConsultationReport(completed.data, completed.exams)
-                  ? 'Relatório clínico aberto.'
-                  : 'O navegador bloqueou o relatório. Permita novas janelas e tente novamente.',
-              )
-            }
-          >
-            Gerar relatório clínico
-          </button>
-          <button className="secondary-button" disabled={saving} onClick={startNew}>
-            Novo atendimento
-          </button>
-        </div>
-        {message && (
-          <p className="consultation-message" role="status">
-            {message}
-          </p>
-        )}
-      </section>
+      <CareCompleted
+        completed={completed}
+        message={message}
+        onMessage={setMessage}
+        onNew={startNew}
+        newDisabled={saving}
+        onOpenRecord={onOpenRecord}
+      />
     )
   if (isStudent && !liberacao) return <SupervisionGate onLiberado={handleLiberado} />
   return (
     <section className="clinical-care-module">
       {liberacao && (
-        <aside className="profile-notice">
-          <span>✔</span>
-          <p>
-            <strong>Atendimento liberado por {liberacao.supervisor.nome}</strong>
-            {liberacao.participantes.length > 0 && (
-              <> · Participantes: {liberacao.participantes.map((p) => p.nome).join(', ')}</>
-            )}{' '}
-            <button type="button" className="text-back-button" onClick={() => void trocarLiberacao()} disabled={saving}>
-              Trocar liberação
-            </button>
-          </p>
-        </aside>
+        <LiberationNotice liberacao={liberacao} onChange={() => void trocarLiberacao()} disabled={saving} />
       )}
       <fieldset className="consultation-edit-fields" disabled={saving}>
         <ConsultationHeader currentStep={step} onStepChange={setStep} />
         {step === 1 && (
           <IdentificationStep
             data={data}
-            appointments={availableAppointments}
+            appointments={openAppointments(appointments)}
             selectedAppointmentId={selectedAppointmentId}
             onSelectAppointment={selectAppointment}
             update={update}

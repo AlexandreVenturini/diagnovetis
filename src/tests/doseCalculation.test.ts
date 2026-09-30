@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateDose } from '../features/prescriptions/doseCalculation'
+import { calculateDose } from '../features/prescriptions/new/doseCalculation'
 
 describe('Conversão aritmética de dose', () => {
   it('converte mg/kg em mg e mL por administração sem arredondamento intermediário', () => {

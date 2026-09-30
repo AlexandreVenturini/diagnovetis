@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ConsultationData } from '../consultationTypes'
 import type { Appointment } from '../../appointments/appointmentTypes'
-import type { VeterinarianOption } from '../supervision'
+import type { VeterinarianOption } from '../../supervision/supervisionTypes'
 
 type IdentificationStepProps = {
   data: ConsultationData

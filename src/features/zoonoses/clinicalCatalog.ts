@@ -80,3 +80,6 @@ export function filterConditions(items: Zoonosis[], filters: ClinicalFilters) {
           : a.name.localeCompare(b.name, 'pt-BR'),
     )
 }
+
+export const showValue = (value: string | string[]) =>
+  (Array.isArray(value) ? value.join(', ') : value) || 'Não informado'

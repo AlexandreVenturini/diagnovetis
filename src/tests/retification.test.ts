@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EMPTY_CONSULTATION } from '../features/consultations/consultationTypes'
-import { compararCampos, dataToCampos, splitObservacoes } from '../features/records/retification'
+import { compararCampos, dataToCampos, splitObservacoes } from '../features/records/retification/retification'
 
 describe('Retificação de atendimentos', () => {
   it('separa queixa e histórico gravados nas observações', () => {

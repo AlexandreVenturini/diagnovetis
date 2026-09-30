@@ -1,5 +1,5 @@
 import type { Exame } from '../../models/Exame'
-import type { DeathRecord } from './death'
+import type { DeathRecord } from './death/death'
 
 export type WeightEntry = { date: string; weight: number }
 

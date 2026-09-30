@@ -1,80 +1,34 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Icon } from '../../components/common/Icon'
-import { Medicamento } from '../../models/Medicamento'
 import { MedicamentoService } from '../../services/MedicamentoService'
+import { EMPTY_MEDICATION_FORM, buildMedication, medicamentoToMedication } from './medicationData'
+import { MedicationDetails } from './MedicationDetails'
+import { MedicationForm } from './MedicationForm'
+import { PillIcon, SearchIcon } from './MedicationIcons'
 import type { Medication, MedicationFormData } from './medicationTypes'
 
-const EMPTY_FORM: MedicationFormData = {
-  commercialName: '',
-  activeIngredient: '',
-  indications: '',
-  dosage: '',
-  doseMgKg: 0,
-  frequency: 'SID (uma vez ao dia)',
-  route: 'Oral',
-  concentration: '',
-  concentrationMgMl: null,
-  contraindications: '',
-  notes: '',
-}
-const splitList = (value: string) =>
-  value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
 const medicamentoService = new MedicamentoService()
 
-function splitMeasurement(measurement: string) {
-  const match = measurement.trim().match(/^(\d+(?:[.,]\d+)?)\s*(.*)$/)
-  return {
-    value: match ? Number(match[1].replace(',', '.')) : Number.NaN,
-    unit: match?.[2].trim() ?? '',
-  }
-}
-
-function medicamentoToMedication(medicamento: Medicamento): Medication {
-  const concentration = `${medicamento.concentracao} ${medicamento.unidadeConcentracao}`.trim()
-  const dosageValue = splitMeasurement(medicamento.tipo).value
-  const liquidConcentration = medicamento.unidadeConcentracao.toLocaleLowerCase('pt-BR').replaceAll(' ', '') === 'mg/ml'
-
-  return {
-    id: medicamento.id,
-    commercialName: medicamento.nome,
-    activeIngredient: medicamento.principioAtivo,
-    indications: [],
-    dosage: medicamento.tipo,
-    doseMgKg: Number.isFinite(dosageValue) ? dosageValue : 0,
-    frequency: medicamento.formaFarmaceutica,
-    route: medicamento.viaAdministracao,
-    concentration,
-    concentrationMgMl: liquidConcentration ? medicamento.concentracao : null,
-    contraindications: [],
-    notes: medicamento.descricao,
-  }
-}
-
-function PillIcon() {
+function MedicationCard({ item, selected, onSelect }: { item: Medication; selected: boolean; onSelect: () => void }) {
   return (
-    <Icon>
-      <path d="M8.5 19.5a5 5 0 0 1-7-7l7-7a5 5 0 0 1 7 7zM6 8l7 7" />
-    </Icon>
-  )
-}
-function SearchIcon() {
-  return (
-    <Icon>
-      <circle cx="11" cy="11" r="7" />
-      <path d="m16 16 5 5" />
-    </Icon>
-  )
-}
-function CalculatorIcon() {
-  return (
-    <Icon>
-      <rect x="5" y="2" width="14" height="20" rx="2" />
-      <path d="M8 6h8v3H8zm0 7h1m3 0h1m3 0h1m-9 4h1m3 0h1m3 0h1" />
-    </Icon>
+    <button className={`medication-card${selected ? ' selected' : ''}`} onClick={onSelect}>
+      <span className="medication-card-icon">
+        <PillIcon />
+      </span>
+      <span>
+        <strong>{item.commercialName}</strong>
+        <small>{item.activeIngredient}</small>
+        {item.indications.length > 0 && (
+          <span className="medication-indications">
+            <b>Indicações:</b> {item.indications.join(', ')}
+          </span>
+        )}
+        <span className="medication-tags">
+          <em>{item.dosage}</em>
+          <em>{item.frequency}</em>
+        </span>
+      </span>
+    </button>
   )
 }
 
@@ -83,19 +37,18 @@ export function MedicationsModule() {
   const [screen, setScreen] = useState<'browse' | 'create'>('browse')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [query, setQuery] = useState('')
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [form, setForm] = useState(EMPTY_MEDICATION_FORM)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const filtered = useMemo(
-    () =>
-      items.filter((item) =>
-        `${item.commercialName} ${item.activeIngredient} ${item.indications.join(' ')}`
-          .toLocaleLowerCase('pt-BR')
-          .includes(query.trim().toLocaleLowerCase('pt-BR')),
-      ),
-    [items, query],
-  )
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase('pt-BR')
+    return items.filter((item) =>
+      `${item.commercialName} ${item.activeIngredient} ${item.indications.join(' ')}`
+        .toLocaleLowerCase('pt-BR')
+        .includes(normalized),
+    )
+  }, [items, query])
   const selected = items.find((item) => item.id === selectedId) ?? null
 
   useEffect(() => {
@@ -119,45 +72,23 @@ export function MedicationsModule() {
   function update<K extends keyof MedicationFormData>(key: K, value: MedicationFormData[K]) {
     setForm((current) => ({ ...current, [key]: value }))
   }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
-    const parsedConcentration = splitMeasurement(form.concentration)
-    const concentrationValue = form.concentrationMgMl ?? parsedConcentration.value
-    const concentrationUnit = parsedConcentration.unit || (form.concentrationMgMl ? 'mg/mL' : '')
-    if (!Number.isFinite(concentrationValue) || concentrationValue <= 0 || !concentrationUnit) {
-      setError('Informe a concentração com valor e unidade, por exemplo: 30 mg/mL.')
+    const id = Math.max(0, ...items.map((item) => item.id)) + 1
+    const built = buildMedication(form, id)
+    if ('error' in built) {
+      setError(built.error)
       return
     }
-
-    const id = Math.max(0, ...items.map((item) => item.id)) + 1
-    const medicamento = new Medicamento(
-      id,
-      form.commercialName.trim(),
-      form.activeIngredient.trim(),
-      form.notes.trim(),
-      concentrationValue,
-      concentrationUnit,
-      form.frequency.trim(),
-      form.route.trim(),
-      form.dosage.trim(),
-    )
     setSaving(true)
     try {
-      await medicamentoService.adicionarMedicamento(medicamento)
-      const medication: Medication = {
-        ...form,
-        id,
-        indications: splitList(form.indications),
-        contraindications: splitList(form.contraindications),
-        concentration: `${concentrationValue} ${concentrationUnit}`,
-        concentrationMgMl:
-          concentrationUnit.toLocaleLowerCase('pt-BR').replaceAll(' ', '') === 'mg/ml' ? concentrationValue : null,
-      }
-      setItems((current) => [...current, medication])
+      await medicamentoService.adicionarMedicamento(built.medicamento)
+      setItems((current) => [...current, built.medication])
       setSelectedId(id)
       setScreen('browse')
-      setForm(EMPTY_FORM)
+      setForm(EMPTY_MEDICATION_FORM)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível cadastrar o medicamento.')
     } finally {
@@ -208,128 +139,23 @@ export function MedicationsModule() {
       </header>
 
       {screen === 'create' ? (
-        <form className="medication-form content-card" onSubmit={save}>
-          <div>
-            <h3>Cadastrar novo medicamento</h3>
-            <p>Adicione as informações terapêuticas para consulta da equipe veterinária.</p>
-          </div>
-          <div className="medication-form-grid">
-            <label>
-              Nome comercial
-              <input required value={form.commercialName} onChange={(e) => update('commercialName', e.target.value)} />
-            </label>
-            <label>
-              Princípio ativo
-              <input
-                required
-                value={form.activeIngredient}
-                onChange={(e) => update('activeIngredient', e.target.value)}
-              />
-            </label>
-            <label className="full-field">
-              Indicações clínicas
-              <input
-                required
-                value={form.indications}
-                onChange={(e) => update('indications', e.target.value)}
-                placeholder="Separe por vírgulas"
-              />
-            </label>
-            <label>
-              Dosagem exibida
-              <input
-                required
-                value={form.dosage}
-                onChange={(e) => update('dosage', e.target.value)}
-                placeholder="Ex.: 2 mg/kg"
-              />
-            </label>
-            <label>
-              Dose para cálculo (mg/kg)
-              <input
-                required
-                min="0"
-                step="0.01"
-                type="number"
-                value={form.doseMgKg || ''}
-                onChange={(e) => update('doseMgKg', Number(e.target.value))}
-              />
-            </label>
-            <label>
-              Frequência
-              <input required value={form.frequency} onChange={(e) => update('frequency', e.target.value)} />
-            </label>
-            <label>
-              Via
-              <input required value={form.route} onChange={(e) => update('route', e.target.value)} />
-            </label>
-            <label>
-              Concentração exibida
-              <input
-                required
-                value={form.concentration}
-                onChange={(e) => update('concentration', e.target.value)}
-                placeholder="Ex.: 30 mg/mL"
-              />
-            </label>
-            <label>
-              Concentração líquida (mg/mL, opcional)
-              <input
-                min="0"
-                step="0.01"
-                type="number"
-                value={form.concentrationMgMl ?? ''}
-                onChange={(e) => update('concentrationMgMl', e.target.value ? Number(e.target.value) : null)}
-              />
-            </label>
-            <label className="full-field">
-              Contraindicações
-              <input
-                value={form.contraindications}
-                onChange={(e) => update('contraindications', e.target.value)}
-                placeholder="Separe por vírgulas"
-              />
-            </label>
-            <label className="full-field">
-              Observações
-              <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} />
-            </label>
-          </div>
-          <div className="form-actions">
-            <button className="primary-button" type="submit" disabled={saving}>
-              {saving ? 'Cadastrando...' : 'Cadastrar medicamento'}
-            </button>
-            <button className="secondary-button" type="button" onClick={() => setScreen('browse')} disabled={saving}>
-              Cancelar
-            </button>
-          </div>
-        </form>
+        <MedicationForm
+          form={form}
+          onChange={update}
+          saving={saving}
+          onSubmit={save}
+          onCancel={() => setScreen('browse')}
+        />
       ) : (
         <div className="medication-browser">
           <div className="medication-list">
             {filtered.map((item) => (
-              <button
+              <MedicationCard
                 key={item.id}
-                className={`medication-card${selectedId === item.id ? ' selected' : ''}`}
-                onClick={() => setSelectedId(item.id)}
-              >
-                <span className="medication-card-icon">
-                  <PillIcon />
-                </span>
-                <span>
-                  <strong>{item.commercialName}</strong>
-                  <small>{item.activeIngredient}</small>
-                  {item.indications.length > 0 && (
-                    <span className="medication-indications">
-                      <b>Indicações:</b> {item.indications.join(', ')}
-                    </span>
-                  )}
-                  <span className="medication-tags">
-                    <em>{item.dosage}</em>
-                    <em>{item.frequency}</em>
-                  </span>
-                </span>
-              </button>
+                item={item}
+                selected={selectedId === item.id}
+                onSelect={() => setSelectedId(item.id)}
+              />
             ))}
             {!loading && filtered.length === 0 && (
               <div className="medication-empty-list">Nenhum medicamento encontrado.</div>
@@ -340,93 +166,5 @@ export function MedicationsModule() {
         </div>
       )}
     </section>
-  )
-}
-
-function MedicationDetails({ medication }: { medication: Medication | null }) {
-  const [weight, setWeight] = useState('')
-  const [result, setResult] = useState<string | null>(null)
-  if (!medication)
-    return (
-      <aside className="medication-details empty">
-        <PillIcon />
-        <p>Selecione um medicamento ao lado para ver os detalhes e calcular a dose</p>
-      </aside>
-    )
-  function calculate() {
-    const kg = Number(weight.replace(',', '.'))
-    if (!kg || kg <= 0) return setResult('Informe um peso válido.')
-    const mg = kg * medication!.doseMgKg
-    const volume = medication!.concentrationMgMl
-      ? ` (${(mg / medication!.concentrationMgMl).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} mL)`
-      : ''
-    setResult(`${mg.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} mg por administração${volume}`)
-  }
-  return (
-    <aside className="medication-details" key={medication.id}>
-      <h3>{medication.commercialName}</h3>
-      <p className="active-ingredient">{medication.activeIngredient}</p>
-      <div className="medication-summary">
-        <p>
-          <b>Dosagem:</b> {medication.dosage}
-        </p>
-        <p>
-          <b>Frequência:</b> {medication.frequency}
-        </p>
-        <p>
-          <b>Via:</b> {medication.route}
-        </p>
-        <p>
-          <b>Concentração:</b> {medication.concentration}
-        </p>
-      </div>
-      <section className="medication-section">
-        <h4>Indicações Clínicas</h4>
-        <ul>
-          {medication.indications.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-      {medication.contraindications.length > 0 && (
-        <section className="medication-alert">
-          <h4>
-            <span>△</span>Contraindicações
-          </h4>
-          <ul>
-            {medication.contraindications.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <section className="medication-notes">
-        <h4>Observações</h4>
-        <p>{medication.notes || 'Sem observações adicionais.'}</p>
-      </section>
-      <section className="dose-calculator">
-        <h4>
-          <CalculatorIcon />
-          Calculadora de Dose
-        </h4>
-        <label>
-          Peso do Animal (kg)
-          <input
-            inputMode="decimal"
-            value={weight}
-            onChange={(event) => {
-              setWeight(event.target.value)
-              setResult(null)
-            }}
-            placeholder="Ex: 25.5"
-          />
-        </label>
-        <button type="button" onClick={calculate}>
-          <CalculatorIcon />
-          Calcular Dose
-        </button>
-        {result && <output>{result}</output>}
-      </section>
-    </aside>
   )
 }
