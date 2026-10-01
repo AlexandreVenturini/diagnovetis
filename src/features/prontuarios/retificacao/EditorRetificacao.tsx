@@ -9,7 +9,8 @@ import { EtapaHistoricoClinico } from '../../atendimentos/etapas/EtapaHistoricoC
 import { EtapaExameFisico } from '../../atendimentos/etapas/EtapaExameFisico'
 import { EtapaDiagnostico } from '../../atendimentos/etapas/EtapaDiagnostico'
 import { RetificacaoService } from '../../../services/RetificacaoService'
-import { consultaParaDados, dadosParaCampos } from './retificacaoRegras'
+import { consultaParaDados } from '../../atendimentos/consultaParaDados'
+import { dadosParaCampos } from './retificacaoRegras'
 
 const consultaService = new ConsultaService()
 

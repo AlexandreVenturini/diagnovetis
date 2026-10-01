@@ -1,15 +1,54 @@
-import { Consulta, type ExameFisico, type Alta, type ParticipanteConsulta } from '../models/Consulta'
+import {
+  Consulta,
+  type ExameFisico,
+  type Alta,
+  type ParticipanteConsulta,
+  type SituacaoConsulta,
+} from '../models/Consulta'
 import { DiagnosticoZoonose } from '../models/DiagnosticoZoonose'
 import { linhaParaExame, exameParaLinha, type ExameRow } from './storage/mapeamentoExame'
 import { Medico } from '../models/Medico'
 import { supabase } from './storage/supabaseClient'
 import { PetService } from './PetService'
-import { validarObrigatorio, validarDataFutura, validarIdUnico } from './validation/validadores'
+import { validarObrigatorio, validarDataFutura } from './validation/validadores'
 import { dataParaCampo, fimIntervaloIso, inicioIntervaloIso, type Intervalo } from '../features/shared/periodo'
 
 const petService = new PetService()
 
 export type ResumoConsulta = { id: number; petId: number; data: string; veterinario: string }
+
+export type AtendimentoEmAndamento = {
+  id: number
+  petId: number
+  nomePet: string
+  nomeTutor: string
+  dataConsulta: string
+  atualizadoEm: string
+  iniciadoPor: string
+  veterinario: string
+  agendamentoId: number | null
+  podeDescartar: boolean
+}
+
+export type OpcoesSalvarAtendimento = {
+  id: number | null
+  finalizar: boolean
+  participantes: string[]
+  agendamentoId: number | null
+}
+
+type AtendimentoEmAndamentoRow = {
+  id: number
+  pet_id: number
+  pet_nome: string
+  tutor_nome: string | null
+  data_consulta: string
+  atualizado_em: string
+  iniciado_por: string
+  veterinario: string
+  agendamento_id: number | null
+  pode_descartar: boolean
+}
 
 interface MedicoRow {
   id: number
@@ -25,6 +64,8 @@ interface ParticipanteRow {
   nome: string
 }
 interface ConsultaRow {
+  situacao?: SituacaoConsulta
+  agendamento_id?: number | null
   versao?: number
   retificado_em?: string | null
   retificado_por_nome?: string | null
@@ -150,15 +191,68 @@ async function carregarConsultas(linhas: ConsultaRow[]): Promise<Consulta[]> {
       alta,
     )
     consulta.conduta = linha.conduta ?? ''
-    consulta.participantes = participantes.map((p) => ({ nome: p.nome, papel: p.papel }))
+    consulta.participantes = participantes.map((p) => ({ idPerfil: p.profile_id, nome: p.nome, papel: p.papel }))
     consulta.supervisorNome = participantes.find((p) => p.profile_id === linha.supervisor_id)?.nome ?? ''
     consulta.liberacaoId = linha.liberacao_id ?? null
     consulta.versao = linha.versao ?? 1
     consulta.retificadoEm = linha.retificado_em ? new Date(linha.retificado_em) : null
     consulta.retificadoPorNome = linha.retificado_por_nome ?? ''
+    consulta.situacao = linha.situacao ?? 'finalizado'
+    consulta.agendamentoId = linha.agendamento_id ?? null
     consultas.push(consulta)
   }
   return consultas
+}
+
+function paraLinhaConsulta(consulta: Consulta, agendamentoId: number | null) {
+  return {
+    data_consulta: consulta.dataConsulta.toISOString(),
+    horario: consulta.horario,
+    diagnostico: consulta.diagnostico,
+    conduta: consulta.conduta,
+    ...(consulta.liberacaoId ? { liberacao_id: consulta.liberacaoId } : {}),
+    agendamento_id: agendamentoId,
+    observacoes: consulta.observacoes,
+    responsavel_id: consulta.responsavel.id,
+    pet_id: consulta.pet.id,
+    diagnostico_zoonose_status: consulta.diagnosticoZoonose.status,
+    diagnostico_zoonose_observacoes: consulta.diagnosticoZoonose.observacoes,
+    diagnostico_zoonose_data_confirmacao: consulta.diagnosticoZoonose.dataConfirmacao.toISOString(),
+    temperatura: consulta.exameFisico.temperatura ?? null,
+    frequencia_cardiaca: consulta.exameFisico.frequenciaCardiaca ?? null,
+    frequencia_respiratoria: consulta.exameFisico.frequenciaRespiratoria ?? null,
+    tpc: consulta.exameFisico.tpc ?? null,
+    mucosas: consulta.exameFisico.mucosas ?? null,
+    hidratacao: consulta.exameFisico.hidratacao ?? null,
+    nivel_consciencia: consulta.exameFisico.nivelConsciencia ?? null,
+    pele_pelagem: consulta.exameFisico.pelePelagem ?? null,
+    olhos: consulta.exameFisico.olhos ?? null,
+    ouvidos: consulta.exameFisico.ouvidos ?? null,
+    boca_dentes: consulta.exameFisico.bocaDentes ?? null,
+    sistema_respiratorio: consulta.exameFisico.sistemaRespiratorio ?? null,
+    sistema_cardiovascular: consulta.exameFisico.sistemaCardiovascular ?? null,
+    sistema_gastrointestinal: consulta.exameFisico.sistemaGastrointestinal ?? null,
+    sistema_urinario: consulta.exameFisico.sistemaUrinario ?? null,
+    sistema_reprodutivo: consulta.exameFisico.sistemaReprodutivo ?? null,
+    sistema_neurologico: consulta.exameFisico.sistemaNeurologico ?? null,
+    dor: consulta.exameFisico.dor ?? null,
+    alta_data: consulta.alta.dados ?? null,
+    alta_condicao: consulta.alta.condicao ?? null,
+    alta_orientacoes: consulta.alta.orientacoes ?? null,
+    alta_prognostico: consulta.alta.prognostico ?? null,
+  }
+}
+
+function mensagemErroSalvar(mensagem: string, temExames: boolean): string {
+  if (mensagem.includes('óbito'))
+    return 'Este animal tem óbito registrado; não é possível registrar novos atendimentos para ele.'
+  if (mensagem.includes('liberação'))
+    return 'A liberação do professor não é mais válida. Peça uma nova liberação para salvar o atendimento. Os dados foram mantidos.'
+  if (mensagem.includes('já foi finalizado')) return 'Este atendimento já foi finalizado por outra pessoa da equipe.'
+  if (mensagem.includes('Sem permissão')) return 'Você não participa deste atendimento e não pode alterá-lo.'
+  if (temExames)
+    return 'Não foi possível gravar o atendimento com os exames. Confira a conexão e tente novamente. Os dados foram mantidos.'
+  return mensagem
 }
 
 export class ConsultaService {
@@ -166,6 +260,7 @@ export class ConsultaService {
     let busca = supabase
       .from('consultas')
       .select('id, pet_id, data_consulta, responsavel_id, medicos!responsavel_id(*)')
+      .eq('situacao', 'finalizado')
     if (intervalo)
       busca = busca.gte('data_consulta', inicioIntervaloIso(intervalo)).lte('data_consulta', fimIntervaloIso(intervalo))
     const { data: dados, error: erro } = await busca
@@ -180,81 +275,42 @@ export class ConsultaService {
     }))
   }
 
-  async proximoId(): Promise<number> {
-    const { data: dados, error: erro } = await supabase
-      .from('consultas')
-      .select('id')
-      .order('id', { ascending: false })
-      .limit(1)
-    if (erro) throw new Error(erro.message)
-    const ultimo = ((dados ?? []) as { id: number }[])[0]
-    return ultimo ? ultimo.id + 1 : 1
-  }
-
-  async adicionarConsulta(consulta: Consulta): Promise<void> {
-    const { data: existente, error: erroId } = await supabase.from('consultas').select('id').eq('id', consulta.id)
-    if (erroId) throw new Error(erroId.message)
-    validarIdUnico(consulta.id, (existente ?? []) as { id: number }[], 'consulta')
-    validarDataFutura(consulta.dataConsulta, 'dataConsulta')
+  async salvarAtendimento(consulta: Consulta, opcoes: OpcoesSalvarAtendimento): Promise<number> {
+    if (opcoes.id === null) validarDataFutura(consulta.dataConsulta, 'dataConsulta')
     validarObrigatorio(consulta.horario, 'horario')
 
-    const linhaConsulta = {
-      id: consulta.id,
-      data_consulta: consulta.dataConsulta.toISOString(),
-      horario: consulta.horario,
-      diagnostico: consulta.diagnostico,
-      ...(consulta.conduta ? { conduta: consulta.conduta } : {}),
-      ...(consulta.liberacaoId ? { liberacao_id: consulta.liberacaoId } : {}),
-      observacoes: consulta.observacoes,
-      responsavel_id: consulta.responsavel.id,
-      pet_id: consulta.pet.id,
-      diagnostico_zoonose_status: consulta.diagnosticoZoonose.status,
-      diagnostico_zoonose_observacoes: consulta.diagnosticoZoonose.observacoes,
-      diagnostico_zoonose_data_confirmacao: consulta.diagnosticoZoonose.dataConfirmacao.toISOString(),
-      temperatura: consulta.exameFisico.temperatura ?? null,
-      frequencia_cardiaca: consulta.exameFisico.frequenciaCardiaca ?? null,
-      frequencia_respiratoria: consulta.exameFisico.frequenciaRespiratoria ?? null,
-      tpc: consulta.exameFisico.tpc ?? null,
-      mucosas: consulta.exameFisico.mucosas ?? null,
-      hidratacao: consulta.exameFisico.hidratacao ?? null,
-      nivel_consciencia: consulta.exameFisico.nivelConsciencia ?? null,
-      pele_pelagem: consulta.exameFisico.pelePelagem ?? null,
-      olhos: consulta.exameFisico.olhos ?? null,
-      ouvidos: consulta.exameFisico.ouvidos ?? null,
-      boca_dentes: consulta.exameFisico.bocaDentes ?? null,
-      sistema_respiratorio: consulta.exameFisico.sistemaRespiratorio ?? null,
-      sistema_cardiovascular: consulta.exameFisico.sistemaCardiovascular ?? null,
-      sistema_gastrointestinal: consulta.exameFisico.sistemaGastrointestinal ?? null,
-      sistema_urinario: consulta.exameFisico.sistemaUrinario ?? null,
-      sistema_reprodutivo: consulta.exameFisico.sistemaReprodutivo ?? null,
-      sistema_neurologico: consulta.exameFisico.sistemaNeurologico ?? null,
-      dor: consulta.exameFisico.dor ?? null,
-      alta_data: consulta.alta.dados ?? null,
-      alta_condicao: consulta.alta.condicao ?? null,
-      alta_orientacoes: consulta.alta.orientacoes ?? null,
-      alta_prognostico: consulta.alta.prognostico ?? null,
-    }
-    const { error: erro } = consulta.exames.length
-      ? await supabase.rpc('salvar_consulta_com_exames', {
-          p_consulta: linhaConsulta,
-          p_exames: consulta.exames.map(exameParaLinha),
-        })
-      : await supabase.from('consultas').insert(linhaConsulta)
-    if (erro) {
-      if (erro.message.includes('óbito'))
-        throw new Error('Este animal tem óbito registrado; não é possível registrar novos atendimentos para ele.')
-      if (erro.message.includes('liberação'))
-        throw new Error(
-          'A liberação do professor não é mais válida. Peça uma nova liberação para salvar o atendimento. Os dados foram mantidos.',
-        )
-      if (consulta.exames.length)
-        throw new Error(
-          'Não foi possível confirmar a gravação da consulta com exames. Confira a conexão e a migração de exames complementares. Os dados foram mantidos.',
-        )
-      throw new Error(erro.message)
-    }
+    const { data: dados, error: erro } = await supabase.rpc('salvar_atendimento', {
+      p_id: opcoes.id,
+      p_consulta: paraLinhaConsulta(consulta, opcoes.agendamentoId),
+      p_exames: consulta.exames.map(exameParaLinha),
+      p_participantes: opcoes.participantes,
+      p_finalizar: opcoes.finalizar,
+    })
+    if (erro) throw new Error(mensagemErroSalvar(erro.message, consulta.exames.length > 0))
+    if (opcoes.finalizar) consulta.pet.adicionarConsulta(consulta)
+    return dados as number
+  }
 
-    consulta.pet.adicionarConsulta(consulta)
+  async listarEmAndamento(): Promise<AtendimentoEmAndamento[]> {
+    const { data: dados, error: erro } = await supabase.rpc('atendimentos_em_andamento')
+    if (erro) throw new Error('Não foi possível carregar os atendimentos em andamento.')
+    return ((dados ?? []) as AtendimentoEmAndamentoRow[]).map((linha) => ({
+      id: linha.id,
+      petId: linha.pet_id,
+      nomePet: linha.pet_nome,
+      nomeTutor: linha.tutor_nome ?? '',
+      dataConsulta: linha.data_consulta,
+      atualizadoEm: linha.atualizado_em,
+      iniciadoPor: linha.iniciado_por,
+      veterinario: linha.veterinario,
+      agendamentoId: linha.agendamento_id,
+      podeDescartar: linha.pode_descartar,
+    }))
+  }
+
+  async descartarAtendimento(id: number): Promise<void> {
+    const { error: erro } = await supabase.rpc('descartar_atendimento', { p_consulta: id })
+    if (erro) throw new Error(erro.message)
   }
 
   async buscarPorId(id: number): Promise<Consulta | undefined> {
@@ -272,6 +328,7 @@ export class ConsultaService {
       .from('consultas')
       .select('*, medicos!responsavel_id(*)')
       .eq('pet_id', petId)
+      .eq('situacao', 'finalizado')
     if (erro) throw new Error(erro.message)
     return carregarConsultas((dados ?? []) as ConsultaRow[])
   }

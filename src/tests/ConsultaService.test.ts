@@ -65,47 +65,112 @@ beforeEach(async () => {
   await petService.adicionarPet(pet)
 })
 
-describe('ConsultaService.adicionarConsulta', () => {
-  it('adiciona consulta válida com sucesso', async () => {
-    await servico.adicionarConsulta(novaConsulta(medico, pet))
-    expect(await servico.buscarPorId(1)).toBeDefined()
+type Opcoes = Parameters<ConsultaService['salvarAtendimento']>[1]
+
+function salvar(consulta: Consulta, opcoes: Partial<Opcoes> = {}) {
+  return servico.salvarAtendimento(consulta, {
+    id: null,
+    finalizar: true,
+    participantes: [],
+    agendamentoId: null,
+    ...opcoes,
+  })
+}
+
+describe('ConsultaService.salvarAtendimento', () => {
+  it('salva o atendimento finalizado e devolve o id gerado', async () => {
+    const id = await salvar(novaConsulta(medico, pet))
+    expect(id).toBe(1)
+    expect((await servico.buscarPorId(id))?.situacao).toBe('finalizado')
   })
 
-  it('vincula consulta ao pet após adicionar', async () => {
+  it('gera ids em sequência', async () => {
+    expect(await salvar(novaConsulta(medico, pet))).toBe(1)
+    expect(await salvar(novaConsulta(medico, pet))).toBe(2)
+  })
+
+  it('vincula consulta ao pet ao finalizar', async () => {
     const consulta = novaConsulta(medico, pet)
-    await servico.adicionarConsulta(consulta)
+    await salvar(consulta)
     expect(pet.historicoConsulta).toHaveLength(1)
   })
 
-  it('lança erro para id duplicado', async () => {
-    await servico.adicionarConsulta(novaConsulta(medico, pet, 1))
-    await expect(servico.adicionarConsulta(novaConsulta(medico, pet, 1))).rejects.toThrow(ValidacaoError)
-  })
-
-  it('lança erro para data no passado', async () => {
+  it('lança erro para data no passado em atendimento novo', async () => {
     const ontem = new Date()
     ontem.setDate(ontem.getDate() - 1)
-    const consulta = new Consulta(1, ontem, '09:00', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
-    await expect(servico.adicionarConsulta(consulta)).rejects.toThrow(ValidacaoError)
+    const consulta = new Consulta(0, ontem, '09:00', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
+    await expect(salvar(consulta)).rejects.toThrow(ValidacaoError)
+  })
+
+  it('aceita data antiga ao continuar um atendimento em andamento', async () => {
+    const id = await salvar(novaConsulta(medico, pet), { finalizar: false })
+    const ontem = new Date()
+    ontem.setDate(ontem.getDate() - 1)
+    const consulta = new Consulta(0, ontem, '09:00', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
+    await expect(salvar(consulta, { id, finalizar: false })).resolves.toBe(id)
   })
 
   it('lança erro para horário vazio', async () => {
-    const consulta = new Consulta(1, dataFutura(), '', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
-    await expect(servico.adicionarConsulta(consulta)).rejects.toThrow(ValidacaoError)
+    const consulta = new Consulta(0, dataFutura(), '', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
+    await expect(salvar(consulta)).rejects.toThrow(ValidacaoError)
   })
 
   it('aceita consulta para hoje', async () => {
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
-    const consulta = new Consulta(1, hoje, '09:00', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
-    await expect(servico.adicionarConsulta(consulta)).resolves.not.toThrow()
+    const consulta = new Consulta(0, hoje, '09:00', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
+    await expect(salvar(consulta)).resolves.toBe(1)
+  })
+})
+
+describe('Atendimento em andamento', () => {
+  it('fica fora do prontuário até ser finalizado', async () => {
+    const id = await salvar(novaConsulta(medico, pet), { finalizar: false })
+    expect((await servico.buscarPorId(id))?.situacao).toBe('aberto')
+    expect(await servico.listarPorPet(1)).toHaveLength(0)
+    expect(await servico.listarResumo()).toHaveLength(0)
+    expect(pet.historicoConsulta).toHaveLength(0)
+
+    await salvar(novaConsulta(medico, pet), { id, finalizar: true })
+    expect(await servico.listarPorPet(1)).toHaveLength(1)
+    expect(await servico.listarResumo()).toHaveLength(1)
+  })
+
+  it('continua o mesmo atendimento ao salvar de novo', async () => {
+    const id = await salvar(novaConsulta(medico, pet), { finalizar: false })
+    const editada = new Consulta(
+      0,
+      dataFutura(),
+      '09:00',
+      'Diagnóstico revisado',
+      'Nenhuma',
+      medico,
+      pet,
+      criarDiagnostico(),
+    )
+    expect(await salvar(editada, { id, finalizar: false })).toBe(id)
+    expect((await servico.buscarPorId(id))?.diagnostico).toBe('Diagnóstico revisado')
+  })
+
+  it('não altera atendimento já finalizado', async () => {
+    const id = await salvar(novaConsulta(medico, pet))
+    await expect(salvar(novaConsulta(medico, pet), { id, finalizar: false })).rejects.toThrow('já foi finalizado')
+  })
+
+  it('descarta atendimento em andamento e recusa descartar finalizado', async () => {
+    const aberto = await salvar(novaConsulta(medico, pet), { finalizar: false })
+    await servico.descartarAtendimento(aberto)
+    expect(await servico.buscarPorId(aberto)).toBeUndefined()
+
+    const finalizado = await salvar(novaConsulta(medico, pet))
+    await expect(servico.descartarAtendimento(finalizado)).rejects.toThrow('em andamento')
   })
 })
 
 describe('ConsultaService.buscarPorId', () => {
   it('retorna consulta existente', async () => {
-    await servico.adicionarConsulta(novaConsulta(medico, pet))
-    expect((await servico.buscarPorId(1))?.horario).toBe('09:00')
+    const id = await salvar(novaConsulta(medico, pet))
+    expect((await servico.buscarPorId(id))?.horario).toBe('09:00')
   })
 
   it('retorna undefined para id inexistente', async () => {
@@ -120,10 +185,8 @@ describe('ConsultaService.listarPorPet', () => {
     await tutorService.adicionarTutor(tutor2)
     await petService.adicionarPet(pet2)
 
-    await servico.adicionarConsulta(novaConsulta(medico, pet, 1))
-    await servico.adicionarConsulta(
-      new Consulta(2, dataFutura(2), '10:00', 'Diag', 'Obs', medico, pet2, criarDiagnostico()),
-    )
+    await salvar(novaConsulta(medico, pet))
+    await salvar(new Consulta(0, dataFutura(2), '10:00', 'Diag', 'Obs', medico, pet2, criarDiagnostico()))
 
     expect(await servico.listarPorPet(1)).toHaveLength(1)
     expect(await servico.listarPorPet(2)).toHaveLength(1)

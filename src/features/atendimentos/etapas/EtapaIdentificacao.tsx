@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import type { DadosAtendimento } from '../atendimentoTipos'
 import type { Agendamento } from '../../agenda/agendaTipos'
-import type { OpcaoVeterinario } from '../../supervisao/supervisaoTipos'
+import type { OpcaoEstudante, OpcaoVeterinario } from '../../supervisao/supervisaoTipos'
+import { SeletorParticipantes } from '../../shared/SeletorParticipantes'
 
 type EtapaIdentificacaoProps = {
   dados: DadosAtendimento
@@ -12,6 +13,9 @@ type EtapaIdentificacaoProps = {
   aoAvancar: () => void
   veterinarios: OpcaoVeterinario[]
   veterinarioBloqueado?: boolean
+  estudantes: OpcaoEstudante[]
+  participantes: string[]
+  aoAlternarParticipante: (idPerfil: string) => void
 }
 
 function formatarDataAgendamento(data: string) {
@@ -30,6 +34,9 @@ export function EtapaIdentificacao({
   aoAvancar,
   veterinarios,
   veterinarioBloqueado = false,
+  estudantes,
+  participantes,
+  aoAlternarParticipante,
 }: EtapaIdentificacaoProps) {
   const [buscaAgendamento, setBuscaAgendamento] = useState('')
   const [buscaAberta, setBuscaAberta] = useState(false)
@@ -196,6 +203,12 @@ export function EtapaIdentificacao({
           </select>
         </label>
       </div>
+      <SeletorParticipantes
+        estudantes={estudantes}
+        selecionado={participantes}
+        aoAlternar={aoAlternarParticipante}
+        desabilitado={false}
+      />
       <div className="consultation-next">
         <button className="primary-button" disabled={!concluir} onClick={aoAvancar}>
           Próximo: Histórico Clínico →

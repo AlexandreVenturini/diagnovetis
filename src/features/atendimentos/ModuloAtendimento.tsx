@@ -1,25 +1,35 @@
 import { useEffect, useRef, useState } from 'react'
-import { useAgendamentos } from '../agenda/useAgendamentos'
-import { salvarConsulta } from './salvarAtendimento'
-import type { Agendamento } from '../agenda/agendaTipos'
+import type { AtendimentoEmAndamento } from '../../services/ConsultaService'
+import { SupervisaoService } from '../../services/SupervisaoService'
 import type { Papel } from '../acesso/perfil'
+import type { Agendamento } from '../agenda/agendaTipos'
+import { useAgendamentos } from '../agenda/useAgendamentos'
 import type { PetResumo } from '../pets/petTipos'
 import { TelaLiberacao } from '../supervisao/liberacao/TelaLiberacao'
-import { SupervisaoService } from '../../services/SupervisaoService'
-import type { Liberacao, OpcaoVeterinario } from '../supervisao/supervisaoTipos'
+import type { Liberacao, OpcaoEstudante, OpcaoVeterinario } from '../supervisao/supervisaoTipos'
 import { AtendimentoConcluido, type AtendimentoFinalizado } from './AtendimentoConcluido'
-import { aplicarVeterinario, agendamentosAbertos, validarAtendimento } from './atendimentoRegras'
-import { CabecalhoAtendimento } from './CabecalhoAtendimento'
 import { atendimentoDoAgendamento } from './atendimentoDoAgendamento'
+import { aplicarVeterinario, agendamentosAbertos, validarAtendimento } from './atendimentoRegras'
 import { ATENDIMENTO_VAZIO } from './atendimentoTipos'
 import type { DadosAtendimento, EtapaAtendimento } from './atendimentoTipos'
-import type { RascunhoExame } from './exameTipos'
+import { AtendimentosEmAndamento } from './AtendimentosEmAndamento'
 import { AvisoLiberacao } from './AvisoLiberacao'
-import { EtapaHistoricoClinico } from './etapas/EtapaHistoricoClinico'
-import { EtapaExamesComplementares } from './etapas/EtapaExamesComplementares'
+import { AvisoRascunho } from './AvisoRascunho'
+import { CabecalhoAtendimento } from './CabecalhoAtendimento'
+import type { RascunhoExame } from './exameTipos'
 import { EtapaDiagnostico } from './etapas/EtapaDiagnostico'
-import { EtapaIdentificacao } from './etapas/EtapaIdentificacao'
 import { EtapaExameFisico } from './etapas/EtapaExameFisico'
+import { EtapaExamesComplementares } from './etapas/EtapaExamesComplementares'
+import { EtapaHistoricoClinico } from './etapas/EtapaHistoricoClinico'
+import { EtapaIdentificacao } from './etapas/EtapaIdentificacao'
+import {
+  agoraComoInicio,
+  carregarRascunho,
+  descartarRascunho,
+  salvarConsulta,
+  type InicioAtendimento,
+} from './salvarAtendimento'
+import { useAtendimentosEmAndamento } from './useAtendimentosEmAndamento'
 
 type ModuloAtendimentoProps = {
   pets: PetResumo[]
@@ -34,6 +44,8 @@ const supervisaoService = new SupervisaoService()
 const AGENDA_NAO_ATUALIZADA =
   'Atendimento salvo. Não foi possível atualizar a agenda; confira o agendamento separadamente.'
 
+const horaAtual = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+
 export function ModuloAtendimento({
   pets,
   agendamentoInicial,
@@ -47,6 +59,7 @@ export function ModuloAtendimento({
     agendamentoInicial ? atendimentoDoAgendamento(agendamentoInicial, pets) : ATENDIMENTO_VAZIO,
   )
   const [exames, setExames] = useState<RascunhoExame[]>([])
+  const [participantes, setParticipantes] = useState<string[]>([])
   const [mensagem, setMensagem] = useState('')
   const [salvando, setSalvando] = useState(false)
   const travaSalvar = useRef(false)
@@ -55,20 +68,25 @@ export function ModuloAtendimento({
     agendamentoInicial?.id ?? null,
   )
   const { agendamentos, atualizarAgendamento } = useAgendamentos()
+  const emAndamento = useAtendimentosEmAndamento()
   const [veterinarios, setVeterinarios] = useState<OpcaoVeterinario[]>([])
+  const [estudantes, setEstudantes] = useState<OpcaoEstudante[]>([])
   const [liberacao, setLiberacao] = useState<Liberacao | null>(null)
+  const [idRascunho, setIdRascunho] = useState<number | null>(null)
+  const [inicio, setInicio] = useState<InicioAtendimento | null>(null)
+  const [supervisorRascunho, setSupervisorRascunho] = useState('')
 
   useEffect(() => {
     let ativo = true
-    supervisaoService
-      .listarVeterinarios()
-      .then((listaVeterinarios) => {
+    Promise.all([supervisaoService.listarVeterinarios(), supervisaoService.listarEstudantes()])
+      .then(([listaVeterinarios, listaEstudantes]) => {
         if (!ativo) return
         setVeterinarios(listaVeterinarios)
+        setEstudantes(listaEstudantes)
         setDados((atual) => aplicarVeterinario(atual, listaVeterinarios, null, emailUsuario))
       })
       .catch(() => {
-        if (ativo) setMensagem('Não foi possível carregar a lista de veterinários.')
+        if (ativo) setMensagem('Não foi possível carregar a lista de veterinários e estudantes.')
       })
     return () => {
       ativo = false
@@ -77,6 +95,7 @@ export function ModuloAtendimento({
 
   function tratarLiberacao(nova: Liberacao) {
     setLiberacao(nova)
+    setParticipantes(nova.participantes.map((participante) => participante.idPerfil))
     setDados((atual) => aplicarVeterinario(atual, veterinarios, nova, emailUsuario))
     setMensagem('')
   }
@@ -113,19 +132,24 @@ export function ModuloAtendimento({
     setMensagem('')
   }
 
-  async function concluirAgendamento() {
-    if (idAgendamentoSelecionado === null) return
+  function alternarParticipante(idPerfil: string) {
+    setParticipantes((atual) =>
+      atual.includes(idPerfil) ? atual.filter((id) => id !== idPerfil) : [...atual, idPerfil],
+    )
+  }
+
+  async function mudarSituacaoAgendamento(id: number | null, status: Agendamento['status']) {
+    if (id === null) return
     try {
-      if (!(await atualizarAgendamento(idAgendamentoSelecionado, { status: 'completed' })))
-        setMensagem(AGENDA_NAO_ATUALIZADA)
+      if (!(await atualizarAgendamento(id, { status }))) setMensagem(AGENDA_NAO_ATUALIZADA)
     } catch {
       setMensagem(AGENDA_NAO_ATUALIZADA)
     }
   }
 
-  async function salvarAtendimento() {
+  async function salvar(finalizar: boolean) {
     if (travaSalvar.current || concluido) return
-    if (ehEstudante && !liberacao) {
+    if (ehEstudante && !liberacao && idRascunho === null) {
       setMensagem('O atendimento precisa da liberação do professor supervisor.')
       return
     }
@@ -138,27 +162,101 @@ export function ModuloAtendimento({
     travaSalvar.current = true
     setSalvando(true)
     setMensagem('')
+    const inicioAtual = inicio ?? agoraComoInicio()
+    const primeiroSalvamento = idRascunho === null
     try {
-      const resultado = await salvarConsulta(dados, exames, ehEstudante ? (liberacao?.id ?? null) : null)
+      const resultado = await salvarConsulta(dados, exames, {
+        idRascunho,
+        inicio: inicioAtual,
+        liberacaoId: ehEstudante && primeiroSalvamento ? (liberacao?.id ?? null) : null,
+        participantes,
+        agendamentoId: idAgendamentoSelecionado,
+        finalizar,
+      })
       if (!resultado.sucesso || resultado.id === undefined) {
         setMensagem(resultado.erro ?? 'Não foi possível salvar o atendimento. Os dados preenchidos foram mantidos.')
         return
       }
-      setConcluido({ dados: { ...dados }, exames: structuredClone(exames), id: resultado.id, petId: resultado.petId })
-      setMensagem('Atendimento finalizado e salvo no prontuário.')
-      await concluirAgendamento()
+      void emAndamento.recarregar()
+      if (finalizar) {
+        setConcluido({
+          dados: { ...dados },
+          exames: structuredClone(exames),
+          id: resultado.id,
+          petId: resultado.petId,
+        })
+        setMensagem('Atendimento finalizado e salvo no prontuário.')
+        await mudarSituacaoAgendamento(idAgendamentoSelecionado, 'completed')
+        return
+      }
+      setIdRascunho(resultado.id)
+      setInicio(inicioAtual)
+      if (liberacao) setSupervisorRascunho(liberacao.supervisor.nome)
+      setMensagem(
+        `Atendimento salvo às ${horaAtual()}. Ele fica em "Atendimentos em andamento" até ser finalizado e só vai para o prontuário depois disso.`,
+      )
+      if (primeiroSalvamento) await mudarSituacaoAgendamento(idAgendamentoSelecionado, 'in-progress')
     } catch {
-      setMensagem('Não foi possível finalizar o atendimento. Verifique a conexão e tente novamente.')
+      setMensagem('Não foi possível salvar o atendimento. Verifique a conexão e tente novamente.')
     } finally {
       travaSalvar.current = false
       setSalvando(false)
     }
   }
 
+  async function continuarRascunho(id: number) {
+    if (salvando) return
+    setSalvando(true)
+    setMensagem('')
+    try {
+      const rascunho = await carregarRascunho(id)
+      setDados(rascunho.dados)
+      setExames(rascunho.exames)
+      setParticipantes(rascunho.participantes)
+      setIdAgendamentoSelecionado(rascunho.agendamentoId)
+      setIdRascunho(rascunho.id)
+      setInicio(rascunho.inicio)
+      setSupervisorRascunho(rascunho.supervisorNome)
+      setLiberacao(null)
+      setEtapa(1)
+      setMensagem(`Atendimento nº ${rascunho.id} aberto para continuar.`)
+    } catch (erro) {
+      setMensagem((erro as Error).message)
+      void emAndamento.recarregar()
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function descartar(item: AtendimentoEmAndamento) {
+    const confirmado = window.confirm(
+      `Descartar o atendimento em andamento nº ${item.id} de ${item.nomePet}? Os dados preenchidos serão apagados e não vão para o prontuário.`,
+    )
+    if (!confirmado) return
+    setSalvando(true)
+    setMensagem('')
+    try {
+      await descartarRascunho(item.id)
+      const agendamento = agendamentos.find((atual) => atual.id === item.agendamentoId)
+      if (agendamento?.status === 'in-progress') await mudarSituacaoAgendamento(agendamento.id, 'confirmed')
+      if (item.id === idRascunho) iniciarNova()
+      setMensagem(`Atendimento nº ${item.id} descartado.`)
+    } catch (erro) {
+      setMensagem((erro as Error).message)
+    } finally {
+      setSalvando(false)
+      void emAndamento.recarregar()
+    }
+  }
+
   function iniciarNova() {
     setConcluido(null)
     setExames([])
+    setParticipantes([])
     setLiberacao(null)
+    setIdRascunho(null)
+    setInicio(null)
+    setSupervisorRascunho('')
     setDados(aplicarVeterinario(ATENDIMENTO_VAZIO, veterinarios, null, emailUsuario))
     setIdAgendamentoSelecionado(null)
     setEtapa(1)
@@ -176,11 +274,40 @@ export function ModuloAtendimento({
         aoAbrirProntuario={aoAbrirProntuario}
       />
     )
-  if (ehEstudante && !liberacao) return <TelaLiberacao aoLiberar={tratarLiberacao} />
+
+  const listaEmAndamento = (
+    <AtendimentosEmAndamento
+      itens={emAndamento.itens}
+      erro={emAndamento.erro}
+      idAberto={idRascunho}
+      ocupado={salvando}
+      aoContinuar={(id) => void continuarRascunho(id)}
+      aoDescartar={(item) => void descartar(item)}
+    />
+  )
+
+  if (ehEstudante && !liberacao && idRascunho === null)
+    return (
+      <section className="clinical-care-module">
+        {listaEmAndamento}
+        {mensagem && (
+          <p className="consultation-message" role="status">
+            {mensagem}
+          </p>
+        )}
+        <TelaLiberacao aoLiberar={tratarLiberacao} />
+      </section>
+    )
+
   return (
     <section className="clinical-care-module">
-      {liberacao && (
-        <AvisoLiberacao liberacao={liberacao} aoAlterar={() => void trocarLiberacao()} desabilitado={salvando} />
+      {listaEmAndamento}
+      {idRascunho !== null ? (
+        <AvisoRascunho id={idRascunho} inicio={inicio} supervisorNome={supervisorRascunho} />
+      ) : (
+        liberacao && (
+          <AvisoLiberacao liberacao={liberacao} aoAlterar={() => void trocarLiberacao()} desabilitado={salvando} />
+        )
       )}
       <fieldset className="consultation-edit-fields" disabled={salvando}>
         <CabecalhoAtendimento etapaAtual={etapa} aoAlterarEtapa={setEtapa} />
@@ -194,6 +321,9 @@ export function ModuloAtendimento({
             aoAvancar={() => setEtapa(2)}
             veterinarios={veterinarios}
             veterinarioBloqueado={ehEstudante}
+            estudantes={estudantes}
+            participantes={participantes}
+            aoAlternarParticipante={alternarParticipante}
           />
         )}
         {etapa === 2 && (
@@ -228,7 +358,10 @@ export function ModuloAtendimento({
         </p>
       )}
       <div className="consultation-actions">
-        <button className="record-button" disabled={salvando} onClick={salvarAtendimento}>
+        <button className="draft-button" disabled={salvando} onClick={() => void salvar(false)}>
+          {salvando ? 'Salvando...' : 'Salvar e continuar depois'}
+        </button>
+        <button className="record-button" disabled={salvando} onClick={() => void salvar(true)}>
           {salvando ? 'Salvando atendimento...' : 'Finalizar atendimento e salvar no prontuário'}
         </button>
       </div>

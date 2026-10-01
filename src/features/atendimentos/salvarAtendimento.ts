@@ -7,7 +7,8 @@ import { ExameService } from '../../services/ExameService'
 import { MedicoService } from '../../services/MedicoService'
 import { PetService } from '../../services/PetService'
 import type { DadosAtendimento } from './atendimentoTipos'
-import type { RascunhoExame } from './exameTipos'
+import { consultaParaDados } from './consultaParaDados'
+import { exameParaRascunho, type RascunhoExame } from './exameTipos'
 
 const consultaService = new ConsultaService()
 const medicoService = new MedicoService()
@@ -15,6 +16,27 @@ const petService = new PetService()
 const exameService = new ExameService()
 
 export type ResultadoSalvar = { sucesso: boolean; erro?: string; id?: number; petId?: number }
+
+export type InicioAtendimento = { data: Date; horario: string }
+
+export type OpcoesSalvar = {
+  idRascunho: number | null
+  inicio: InicioAtendimento | null
+  liberacaoId: string | null
+  participantes: string[]
+  agendamentoId: number | null
+  finalizar: boolean
+}
+
+export type RascunhoCarregado = {
+  id: number
+  dados: DadosAtendimento
+  exames: RascunhoExame[]
+  participantes: string[]
+  agendamentoId: number | null
+  inicio: InicioAtendimento
+  supervisorNome: string
+}
 
 const normalizar = (valor: string) => valor.trim().toLocaleLowerCase('pt-BR')
 
@@ -71,17 +93,24 @@ function paraAlta(dados: DadosAtendimento): Alta {
   }
 }
 
+export function agoraComoInicio(): InicioAtendimento {
+  return {
+    data: hojeSemHorario(),
+    horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+  }
+}
+
 function paraConsulta(
-  id: number,
   dados: DadosAtendimento,
   exames: RascunhoExame[],
   medico: Medico,
   pet: Pet,
+  inicio: InicioAtendimento,
 ): Consulta {
   const consulta = new Consulta(
-    id,
-    hojeSemHorario(),
-    new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    0,
+    inicio.data,
+    inicio.horario,
     dados.diagnostico ?? '',
     `Queixa: ${dados.queixaPrincipal}. Histórico: ${dados.historico}`,
     medico,
@@ -101,8 +130,8 @@ function paraConsulta(
 
 export async function salvarConsulta(
   dados: DadosAtendimento,
-  exames: RascunhoExame[] = [],
-  liberacaoId: string | null = null,
+  exames: RascunhoExame[],
+  opcoes: OpcoesSalvar,
 ): Promise<ResultadoSalvar> {
   try {
     const medico = await resolverMedico(dados.veterinario, Number(dados.veterinarioId) || undefined)
@@ -116,11 +145,39 @@ export async function salvarConsulta(
         erro: 'Não foi possível identificar um único paciente. Confira o nome do animal e do tutor cadastrados.',
       }
 
-    const consulta = paraConsulta(await consultaService.proximoId(), dados, exames, medico, pet)
-    consulta.liberacaoId = liberacaoId
-    await consultaService.adicionarConsulta(consulta)
-    return { sucesso: true, id: consulta.id, petId: pet.id }
+    const consulta = paraConsulta(dados, exames, medico, pet, opcoes.inicio ?? agoraComoInicio())
+    consulta.liberacaoId = opcoes.liberacaoId
+    const id = await consultaService.salvarAtendimento(consulta, {
+      id: opcoes.idRascunho,
+      finalizar: opcoes.finalizar,
+      participantes: opcoes.participantes,
+      agendamentoId: opcoes.agendamentoId,
+    })
+    return { sucesso: true, id, petId: pet.id }
   } catch (erro) {
     return { sucesso: false, erro: (erro as Error).message }
   }
+}
+
+export async function carregarRascunho(id: number): Promise<RascunhoCarregado> {
+  const consulta = await consultaService.buscarPorId(id)
+  if (!consulta || consulta.situacao !== 'aberto')
+    throw new Error('Este atendimento não está mais em andamento. Ele pode ter sido finalizado ou descartado.')
+  return {
+    id: consulta.id,
+    dados: consultaParaDados(consulta),
+    exames: consulta.exames.map(exameParaRascunho),
+    participantes: consulta.participantes.filter((p) => p.papel === 'participante').map((p) => p.idPerfil),
+    agendamentoId: consulta.agendamentoId,
+    inicio: { data: consulta.dataConsulta, horario: consulta.horario },
+    supervisorNome: consulta.supervisorNome,
+  }
+}
+
+export async function descartarRascunho(id: number): Promise<void> {
+  await consultaService.descartarAtendimento(id)
+}
+
+export function listarEmAndamento() {
+  return consultaService.listarEmAndamento()
 }

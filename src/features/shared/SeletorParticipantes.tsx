@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { OpcaoEstudante } from '../supervisaoTipos'
+import type { OpcaoEstudante } from '../supervisao/supervisaoTipos'
 
 type SeletorParticipantesProps = {
   estudantes: OpcaoEstudante[]

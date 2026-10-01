@@ -61,6 +61,15 @@ let medico: Medico
 let tutor: Tutor
 let pet: Pet
 
+function salvarFinalizado(consulta: Consulta) {
+  return consultaService.salvarAtendimento(consulta, {
+    id: null,
+    finalizar: true,
+    participantes: [],
+    agendamentoId: null,
+  })
+}
+
 beforeEach(async () => {
   exameService = new ExameService()
   consultaService = new ConsultaService()
@@ -79,13 +88,13 @@ beforeEach(async () => {
 describe('ExameService', () => {
   it('listarPorConsulta retorna exames da consulta', async () => {
     const consulta = criarConsulta(medico, pet, 1, [criarExame(1), criarExame(2)])
-    await consultaService.adicionarConsulta(consulta)
+    await salvarFinalizado(consulta)
     expect(await exameService.listarPorConsulta(1)).toHaveLength(2)
   })
 
   it('listarPorConsulta retorna lista vazia para consulta sem exames', async () => {
     const consulta = criarConsulta(medico, pet, 1, [])
-    await consultaService.adicionarConsulta(consulta)
+    await salvarFinalizado(consulta)
     expect(await exameService.listarPorConsulta(1)).toHaveLength(0)
   })
 
@@ -94,7 +103,7 @@ describe('ExameService', () => {
   })
 
   it('buscarPorId encontra exame pelo id', async () => {
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(42)]))
+    await salvarFinalizado(criarConsulta(medico, pet, 1, [criarExame(42)]))
     expect((await exameService.buscarPorId(42))?.nomeExame).toBe('Hemograma')
   })
 
@@ -110,8 +119,8 @@ describe('ExameService', () => {
     await tutorService.adicionarTutor(tutor2)
     await petService.adicionarPet(pet2)
 
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(1)]))
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet2, 2, [criarExame(2)]))
+    await salvarFinalizado(criarConsulta(medico, pet, 1, [criarExame(1)]))
+    await salvarFinalizado(criarConsulta(medico, pet2, 2, [criarExame(2)]))
 
     expect(await exameService.listarPorPet(1)).toHaveLength(1)
     expect(await exameService.listarPorPet(2)).toHaveLength(1)
@@ -142,7 +151,7 @@ describe('Exames complementares no atendimento', () => {
       novoExame('Hemograma', 'laboratorial'),
       novoExame('Radiografia', 'imagem'),
     ])
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, exames))
+    await salvarFinalizado(criarConsulta(medico, pet, 1, exames))
     const salvo = await exameService.listarPorConsulta(1)
     expect(salvo).toHaveLength(2)
     expect(
@@ -166,7 +175,7 @@ describe('Exames complementares no atendimento', () => {
       laudo: 'Laudo inicial',
       laudoAnexo: { nome: 'exame.pdf', tipo: 'application/pdf', dados: 'data:application/pdf;base64,JVBERi0xLjc=' },
     }
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([rascunho])))
+    await salvarFinalizado(criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([rascunho])))
     const antes = await consultaService.buscarPorId(1)
     const [exame] = await exameService.listarPorConsulta(1)
     expect(exame.laudo).toBe('Laudo inicial')
@@ -196,10 +205,8 @@ describe('Exames complementares no atendimento', () => {
   })
 
   it('não deixa uma segunda consulta salva quando um exame da transação falha', async () => {
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, [criarExame(42)]))
-    await expect(consultaService.adicionarConsulta(criarConsulta(medico, pet, 2, [criarExame(42)]))).rejects.toThrow(
-      'exames',
-    )
+    await salvarFinalizado(criarConsulta(medico, pet, 1, [criarExame(42)]))
+    await expect(salvarFinalizado(criarConsulta(medico, pet, 2, [criarExame(42)]))).rejects.toThrow('exames')
     expect(await consultaService.buscarPorId(2)).toBeUndefined()
     expect(await exameService.listarPorConsulta(1)).toHaveLength(1)
     expect(await exameService.listarPorConsulta(2)).toHaveLength(0)
@@ -207,7 +214,7 @@ describe('Exames complementares no atendimento', () => {
 
   it('mantém o resultado salvo quando uma atualização inválida é rejeitada', async () => {
     const { novoExame, exameParaRascunho } = await import('../features/atendimentos/exameTipos')
-    await consultaService.adicionarConsulta(
+    await salvarFinalizado(
       criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([novoExame('PCR', 'laboratorial')])),
     )
     const [exame] = await exameService.listarPorConsulta(1)

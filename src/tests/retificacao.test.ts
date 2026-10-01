@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ATENDIMENTO_VAZIO } from '../features/atendimentos/atendimentoTipos'
-import {
-  compararCampos,
-  dadosParaCampos,
-  separarObservacoes,
-} from '../features/prontuarios/retificacao/retificacaoRegras'
+import { separarObservacoes } from '../features/atendimentos/consultaParaDados'
+import { compararCampos, dadosParaCampos } from '../features/prontuarios/retificacao/retificacaoRegras'
 
 describe('Retificação de atendimentos', () => {
   it('separa queixa e histórico gravados nas observações', () => {

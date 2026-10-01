@@ -138,17 +138,57 @@ function buildSelectChain(table: string, cols = '*') {
   return chain
 }
 
+type ArgumentosSalvar = {
+  p_id: number | null
+  p_consulta: Row
+  p_exames: Row[]
+  p_participantes: string[]
+  p_finalizar: boolean
+}
+
+function removerOnde(tabela: string, condicao: (linha: Row) => boolean) {
+  const linhas = getTable(tabela)
+  for (let i = linhas.length - 1; i >= 0; i--) if (condicao(linhas[i])) linhas.splice(i, 1)
+}
+
+function salvarAtendimentoMock({ p_id, p_consulta, p_exames, p_finalizar }: ArgumentosSalvar) {
+  const consultas = getTable('consultas')
+  let id = p_id
+  if (id === null) {
+    id = Math.max(0, ...consultas.map((linha) => linha.id as number)) + 1
+  } else {
+    const atual = consultas.find((linha) => linha.id === id)
+    if (!atual) return { data: null, error: { message: 'Atendimento não encontrado' } }
+    if (atual.situacao !== 'aberto') return { data: null, error: { message: 'Este atendimento já foi finalizado' } }
+  }
+  const novosExames = p_exames.map((linha) => ({ ...linha, id: linha.id ?? _autoId++, consulta_id: id }))
+  if (
+    novosExames.some((linha) =>
+      getTable('exames').some((existente) => existente.id === linha.id && existente.consulta_id !== id),
+    )
+  )
+    return { data: null, error: { message: 'Exame duplicado' } }
+  removerOnde('consultas', (linha) => linha.id === id)
+  removerOnde('exames', (linha) => linha.consulta_id === id)
+  consultas.push({ ...p_consulta, id, situacao: p_finalizar ? 'finalizado' : 'aberto' })
+  getTable('exames').push(...novosExames)
+  return { data: id, error: null }
+}
+
+function descartarAtendimentoMock(id: number) {
+  const atual = getTable('consultas').find((linha) => linha.id === id)
+  if (!atual || atual.situacao !== 'aberto')
+    return { data: null, error: { message: 'Só atendimentos em andamento podem ser descartados' } }
+  removerOnde('exames', (linha) => linha.consulta_id === id)
+  removerOnde('consultas', (linha) => linha.id === id)
+  return { data: null, error: null }
+}
+
 export const supabaseMock = {
-  async rpc(name: string, args: { p_consulta: Row; p_exames: Row[] }) {
-    if (name !== 'salvar_consulta_com_exames') return { error: { message: 'RPC desconhecida' } }
-    if (getTable('consultas').some((row) => row.id === args.p_consulta.id))
-      return { error: { message: 'Consulta duplicada' } }
-    const rows = args.p_exames.map((row) => ({ ...row, id: row.id ?? _autoId++, consulta_id: args.p_consulta.id }))
-    if (rows.some((row) => getTable('exames').some((existing) => existing.id === row.id)))
-      return { error: { message: 'Exame duplicado' } }
-    getTable('consultas').push({ ...args.p_consulta })
-    getTable('exames').push(...rows)
-    return { error: null }
+  async rpc(name: string, args: Record<string, unknown>) {
+    if (name === 'salvar_atendimento') return salvarAtendimentoMock(args as unknown as ArgumentosSalvar)
+    if (name === 'descartar_atendimento') return descartarAtendimentoMock(args.p_consulta as number)
+    return { data: null, error: { message: 'RPC desconhecida' } }
   },
   from(table: string) {
     return {

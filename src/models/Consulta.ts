@@ -32,7 +32,10 @@ export type Alta = {
   prognostico?: string
 }
 
+export type SituacaoConsulta = 'aberto' | 'finalizado'
+
 export type ParticipanteConsulta = {
+  idPerfil: string
   nome: string
   papel: 'registrou' | 'participante' | 'supervisor'
 }
@@ -56,6 +59,8 @@ export class Consulta {
   versao = 1
   retificadoEm: Date | null = null
   retificadoPorNome = ''
+  situacao: SituacaoConsulta = 'finalizado'
+  agendamentoId: number | null = null
 
   constructor(
     id: number,
