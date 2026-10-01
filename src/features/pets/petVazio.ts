@@ -9,4 +9,7 @@ export const PET_VAZIO: DadosFormularioPet = {
   tutor: '',
   contato: '',
   historico: '',
+  tipoResponsavel: 'pessoa',
+  setor: '',
+  observacoesResponsavel: '',
 }

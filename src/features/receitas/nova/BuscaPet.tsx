@@ -24,7 +24,7 @@ export function BuscaPet({
           <div>
             <strong>{selecionado.nome}</strong>
             <span>
-              Tutor: {selecionado.tutor} · #{selecionado.id}
+              Responsável: {selecionado.tutor} · #{selecionado.id}
             </span>
           </div>
           <button
@@ -47,7 +47,7 @@ export function BuscaPet({
               autoComplete="off"
               value={busca}
               onChange={(evento) => setBusca(evento.target.value)}
-              placeholder="Nome do animal, tutor ou identificação"
+              placeholder="Nome do animal, responsável ou identificação"
               aria-describedby="rx-animal-help"
             />
           </label>
@@ -71,7 +71,7 @@ export function BuscaPet({
                   >
                     <strong>{pet.nome}</strong>
                     <span>
-                      Tutor: {pet.tutor} · #{pet.id}
+                      Responsável: {pet.tutor} · #{pet.id}
                     </span>
                   </button>
                 </li>

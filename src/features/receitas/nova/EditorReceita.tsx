@@ -71,7 +71,7 @@ export function EditorReceita({ valor, aoAlterar, ocultarCrmv = false }: Props) 
       </button>
       <div className="consultation-textareas">
         <label>
-          Orientações ao tutor
+          Orientações ao responsável
           <textarea
             value={valor.orientacoes}
             onChange={(evento) => aoAlterar({ ...valor, orientacoes: evento.target.value })}

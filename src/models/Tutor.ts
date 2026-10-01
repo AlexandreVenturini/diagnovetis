@@ -2,11 +2,25 @@ import { Pessoa } from './Pessoa'
 import type { Endereco } from './Endereco'
 import type { Pet } from './Pet'
 
+export type TipoResponsavel = 'pessoa' | 'instituicao' | 'ifes' | 'sem_responsavel'
+
+export const NOME_IFES = 'IFES - Campus Santa Teresa'
+export const NOME_SEM_RESPONSAVEL = 'Sem responsável identificado'
+
+export function nomeDoSetorIfes(setor: string): string {
+  return `${NOME_IFES} (${setor.trim()})`
+}
+
 export class Tutor extends Pessoa {
   private _dataCadastro: Date
-  private _endereco: Endereco
+  private _endereco: Endereco | null
   private _pets: Pet[]
   cpf: string
+  tipo: TipoResponsavel = 'pessoa'
+  cnpj = ''
+  contato = ''
+  setor = ''
+  observacoes = ''
 
   constructor(
     id: number,
@@ -14,7 +28,7 @@ export class Tutor extends Pessoa {
     telefone: string,
     email: string,
     dataCadastro: Date,
-    endereco: Endereco,
+    endereco: Endereco | null,
     pets: Pet[] = [],
     cpf: string = '',
   ) {
@@ -38,19 +52,19 @@ export class Tutor extends Pessoa {
     this._dataCadastro = dataCadastro
   }
 
-  get endereco(): Endereco {
+  get endereco(): Endereco | null {
     return this._endereco
   }
 
-  obterEndereco(): Endereco {
+  obterEndereco(): Endereco | null {
     return this._endereco
   }
 
-  set endereco(endereco: Endereco) {
+  set endereco(endereco: Endereco | null) {
     this._endereco = endereco
   }
 
-  setEndereco(endereco: Endereco): void {
+  setEndereco(endereco: Endereco | null): void {
     this._endereco = endereco
   }
 

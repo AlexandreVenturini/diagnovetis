@@ -34,7 +34,7 @@ export function AtendimentosEmAndamento({
                 Nº {item.id} · {item.nomePet}
               </strong>
               <span>
-                Tutor: {item.nomeTutor || 'não informado'} · Veterinário: {item.veterinario || 'não informado'}
+                Responsável: {item.nomeTutor || 'não informado'} · Veterinário: {item.veterinario || 'não informado'}
               </span>
               <small>
                 Iniciado por {item.iniciadoPor || 'não informado'} · Última alteração{' '}

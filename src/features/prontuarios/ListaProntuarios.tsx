@@ -30,7 +30,7 @@ export function ListaProntuarios({
           <div className="patient-card-top">
             <div>
               <h3>{paciente.nomePet}</h3>
-              <p>Tutor: {paciente.nomeTutor}</p>
+              <p>Responsável: {paciente.nomeTutor}</p>
             </div>
             <span>{paciente.totalAtendimentos} atendimento(s)</span>
           </div>

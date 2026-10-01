@@ -44,7 +44,7 @@ export function ListaPets({ pets, aoCriar, aoEditar, aoDetalhar }: ListaPetsProp
           <input
             value={busca}
             onChange={(evento) => setBusca(evento.target.value)}
-            placeholder="Animal, tutor ou raça"
+            placeholder="Animal, responsável ou raça"
           />
         </label>
       </FiltroPeriodo>
@@ -87,7 +87,7 @@ export function ListaPets({ pets, aoCriar, aoEditar, aoDetalhar }: ListaPetsProp
             <p className="breed">{pet.raca}</p>
             <p>Idade: {formatarIdadePet(pet.idade)}</p>
             <p>Peso: {pet.peso} kg</p>
-            <p>Tutor: {pet.tutor}</p>
+            <p>Responsável: {pet.tutor}</p>
           </article>
         ))}
       </div>

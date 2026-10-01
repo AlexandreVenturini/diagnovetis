@@ -1,22 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Endereco } from '../../models/Endereco'
 import { Pet } from '../../models/Pet'
-import { Tutor } from '../../models/Tutor'
 import { PetService } from '../../services/PetService'
 import { TutorService } from '../../services/TutorService'
 import { dataParaCampo } from '../shared/periodo'
 import type { DadosFormularioTutor } from '../tutores/tutorTipos'
 import type { PetResumo, DadosFormularioPet } from './petTipos'
+import { formularioParaTutor, resolverResponsavel } from './resolverResponsavel'
 
 const petService = new PetService()
 const tutorService = new TutorService()
-
-export class TutorNaoEncontradoError extends Error {
-  constructor(nome: string) {
-    super(`Tutor '${nome}' não encontrado. Cadastre o tutor completo antes de registrar o cão.`)
-    this.name = 'TutorNotFoundError'
-  }
-}
 
 function petParaResumo(pet: Pet): PetResumo {
   return {
@@ -29,35 +21,12 @@ function petParaResumo(pet: Pet): PetResumo {
     tutor: pet.tutor.nome,
     contato: pet.tutor.telefone,
     historico: pet.historico,
+    tipoResponsavel: pet.tutor.tipo,
+    setor: pet.tutor.setor,
+    observacoesResponsavel: pet.tutor.observacoes,
     cadastradoEm: pet.criadoEm ? dataParaCampo(new Date(pet.criadoEm)) : '',
     obitoEm: pet.obitoEm ? dataParaCampo(new Date(pet.obitoEm)) : '',
   }
-}
-
-function formularioParaTutor(id: number, formulario: DadosFormularioTutor): Tutor {
-  return new Tutor(
-    id,
-    formulario.nome.trim(),
-    formulario.telefone.trim(),
-    formulario.email.trim(),
-    new Date(`${formulario.dataCadastro}T12:00:00`),
-    new Endereco(
-      formulario.rua.trim(),
-      Number(formulario.numero),
-      formulario.bairro.trim(),
-      formulario.cidade.trim(),
-      formulario.estado.trim().toUpperCase(),
-      formulario.cep.trim(),
-    ),
-    [],
-    formulario.cpf?.trim() ?? '',
-  )
-}
-
-async function encontrarTutor(nome: string): Promise<Tutor> {
-  const [tutor] = await tutorService.buscarPorNome(nome)
-  if (!tutor) throw new TutorNaoEncontradoError(nome)
-  return tutor
 }
 
 const proximoId = (itens: { id: number }[]) => Math.max(0, ...itens.map((item) => item.id)) + 1
@@ -90,7 +59,7 @@ export function usePets() {
   }, [])
 
   async function criarPet(formulario: DadosFormularioPet) {
-    const tutor = await encontrarTutor(formulario.tutor)
+    const tutor = await resolverResponsavel(formulario)
     const pets = await petService.listarPets()
     const pet = new Pet(
       proximoId(pets),
@@ -114,6 +83,8 @@ export function usePets() {
   }
 
   async function atualizarPet(id: number, formulario: DadosFormularioPet) {
+    const atual = await petService.buscarPorId(id)
+    const tutor = await resolverResponsavel(formulario, atual?.tutor)
     await petService.atualizarPet(id, {
       nome: formulario.nome,
       raca: formulario.raca,
@@ -121,6 +92,7 @@ export function usePets() {
       peso: formulario.peso,
       sexo: formulario.sexo,
       historico: formulario.historico,
+      tutor_id: tutor.id,
     })
     await recarregar()
   }

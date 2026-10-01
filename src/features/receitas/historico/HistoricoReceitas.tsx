@@ -20,7 +20,7 @@ export function HistoricoReceitas({ linhas, visao, buscando, aoSelecionar }: His
         {linhas.map((linha) => (
           <article className="content-card" key={linha.id}>
             <h3>{linha.snapshot.paciente.nomePet}</h3>
-            <p>Tutor: {linha.snapshot.paciente.nomeTutor}</p>
+            <p>Responsável: {linha.snapshot.paciente.nomeTutor}</p>
             <p>
               {new Date(linha.snapshot.emitidaEm).toLocaleDateString('pt-BR')} · {linha.snapshot.paciente.veterinario}
             </p>

@@ -5,8 +5,39 @@ import type { CampoFicha } from './SecaoFicha'
 import { formatarDataAtendimento } from './formatarDataAtendimento'
 import type { RegistroClinico, RegistroExameFisico, Prontuario } from '../prontuarioTipos'
 import type { Exame } from '../../../models/Exame'
+import { NOME_IFES, NOME_SEM_RESPONSAVEL } from '../../../models/Tutor'
 
 type ItemExameFisico = [label: string, key: keyof RegistroExameFisico, unit?: string]
+
+function camposResponsavel(paciente: Prontuario): CampoFicha[] {
+  const contato: CampoFicha[] = [
+    { rotulo: 'Telefone', valor: paciente.telefoneTutor },
+    { rotulo: 'E-mail', valor: paciente.emailTutor },
+    { rotulo: 'Endereço', valor: paciente.enderecoTutor, largo: true },
+    { rotulo: 'Cidade/UF', valor: paciente.cidadeTutor, largo: true },
+  ]
+  switch (paciente.tipoResponsavel) {
+    case 'instituicao':
+      return [
+        { rotulo: 'Instituição', valor: paciente.nomeTutor },
+        { rotulo: 'CNPJ', valor: paciente.cnpjTutor },
+        { rotulo: 'Pessoa de contato', valor: paciente.contatoTutor, largo: true },
+        ...contato,
+      ]
+    case 'ifes':
+      return [
+        { rotulo: 'Responsável', valor: NOME_IFES, largo: true },
+        { rotulo: 'Setor', valor: paciente.setorTutor, largo: true },
+      ]
+    case 'sem_responsavel':
+      return [
+        { rotulo: 'Responsável', valor: NOME_SEM_RESPONSAVEL, largo: true },
+        { rotulo: 'Como o animal chegou', valor: paciente.observacoesTutor, largo: true, multilinha: true },
+      ]
+    default:
+      return [{ rotulo: 'Nome', valor: paciente.nomeTutor }, { rotulo: 'CPF', valor: paciente.cpfTutor }, ...contato]
+  }
+}
 
 const COLUNAS_EXAME_FISICO: ItemExameFisico[][] = [
   [
@@ -91,17 +122,8 @@ export function FichaProntuario({ ref, paciente, atendimento, podeEditarExames, 
           />
         </SecaoFicha>
 
-        <SecaoFicha numero="2" titulo="Dados do tutor" className="half">
-          <CamposFicha
-            campos={[
-              { rotulo: 'Nome', valor: paciente.nomeTutor },
-              { rotulo: 'CPF', valor: paciente.cpfTutor },
-              { rotulo: 'Telefone', valor: paciente.telefoneTutor },
-              { rotulo: 'E-mail', valor: paciente.emailTutor },
-              { rotulo: 'Endereço', valor: paciente.enderecoTutor, largo: true },
-              { rotulo: 'Cidade/UF', valor: paciente.cidadeTutor, largo: true },
-            ]}
-          />
+        <SecaoFicha numero="2" titulo="Dados do responsável" className="half">
+          <CamposFicha campos={camposResponsavel(paciente)} />
         </SecaoFicha>
 
         <SecaoFicha numero="3" titulo="Histórico clínico" className="half">
@@ -160,7 +182,7 @@ export function FichaProntuario({ ref, paciente, atendimento, podeEditarExames, 
           />
           <CamposFicha
             variante="single compact"
-            campos={[{ rotulo: 'Procedimentos', valor: atendimento.conduta }, { rotulo: 'Orientações ao tutor' }]}
+            campos={[{ rotulo: 'Procedimentos', valor: atendimento.conduta }, { rotulo: 'Orientações ao responsável' }]}
           />
         </SecaoFicha>
 

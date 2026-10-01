@@ -73,7 +73,7 @@ export function EtapaDiagnostico({ dados, atualizar, aoVoltar }: EtapaDiagnostic
           </select>
         </label>
         <label className="full-field">
-          Orientações ao tutor
+          Orientações ao responsável
           <textarea
             value={dados.orientacoesAlta}
             onChange={(e) => atualizar('orientacoesAlta', e.target.value)}

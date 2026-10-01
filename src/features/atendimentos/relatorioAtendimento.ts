@@ -72,7 +72,7 @@ export function gerarRelatorioAtendimento(dados: DadosAtendimento, exames: Rascu
         ${campoLaudo('Nome do cão', dados.nomePet)}
         ${campoLaudo('Idade', dados.idade)}
         ${campoLaudo('Raça', dados.raca)}
-        ${campoLaudo('Tutor responsável', dados.nomeTutor)}
+        ${campoLaudo('Responsável', dados.nomeTutor)}
         ${campoLaudo('Veterinário responsável', dados.veterinario)}
       </div>
     </section>
@@ -115,7 +115,7 @@ export function gerarRelatorioAtendimento(dados: DadosAtendimento, exames: Rascu
         <span>Assinatura e CRMV</span>
       </div>
       <div class="signature">
-        <strong>${valorOuPadrao(dados.nomeTutor, 'Tutor responsável')}</strong>
+        <strong>${valorOuPadrao(dados.nomeTutor, 'Responsável')}</strong>
         <span>Assinatura do responsável</span>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import type { TipoResponsavel } from '../../models/Tutor'
+
 export type PetResumo = {
   id: number
   nome: string
@@ -8,6 +10,9 @@ export type PetResumo = {
   tutor: string
   contato: string
   historico: string
+  tipoResponsavel?: TipoResponsavel
+  setor?: string
+  observacoesResponsavel?: string
   cadastradoEm?: string
   obitoEm?: string
 }

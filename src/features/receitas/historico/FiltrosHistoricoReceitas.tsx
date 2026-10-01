@@ -31,7 +31,7 @@ export function FiltrosHistoricoReceitas({
         <input
           value={valor.busca}
           onChange={(evento) => aoAlterar({ ...valor, busca: evento.target.value })}
-          placeholder="Animal, tutor, veterinário ou medicamento"
+          placeholder="Animal, responsável, veterinário ou medicamento"
         />
       </label>
       <label>

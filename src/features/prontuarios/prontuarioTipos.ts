@@ -1,3 +1,4 @@
+import type { TipoResponsavel } from '../../models/Tutor'
 import type { Exame } from '../../models/Exame'
 import type { RegistroObito } from './obito/obitoTipos'
 
@@ -59,6 +60,11 @@ export type Prontuario = {
   emailTutor: string
   enderecoTutor: string
   cidadeTutor: string
+  tipoResponsavel?: TipoResponsavel
+  cnpjTutor?: string
+  contatoTutor?: string
+  setorTutor?: string
+  observacoesTutor?: string
   raca: string
   idade: string
   sexo: string

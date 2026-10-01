@@ -14,11 +14,11 @@ export function SecaoPet({ pets, medicos, rascunho, ehEstudante }: SecaoPetProps
   const { pet } = rascunho
   return (
     <section className="content-card consultation-panel">
-      <h3>1. Animal, tutor e veterinário</h3>
+      <h3>1. Animal, responsável e veterinário</h3>
       <div className="consultation-form-grid">
         <BuscaPet pets={pets} selecionado={pet} aoSelecionar={rascunho.selecionarPet} />
         <label>
-          Tutor
+          Responsável
           <input readOnly value={pet?.tutor ?? ''} />
         </label>
         <label>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AtendimentoEmAndamento } from '../../services/ConsultaService'
+import { nomesResponsaveis } from '../pets/responsavelPet'
 import { SupervisaoService } from '../../services/SupervisaoService'
 import type { Papel } from '../acesso/perfil'
 import type { Agendamento } from '../agenda/agendaTipos'
@@ -315,6 +316,7 @@ export function ModuloAtendimento({
           <EtapaIdentificacao
             dados={dados}
             agendamentos={agendamentosAbertos(agendamentos)}
+            responsaveis={nomesResponsaveis(pets)}
             idAgendamentoSelecionado={idAgendamentoSelecionado}
             aoSelecionarAgendamento={selecionarAgendamento}
             atualizar={atualizar}

@@ -93,7 +93,11 @@ export function ListaAgendamentos({
       <FiltroPeriodo rotulo="Visualização da agenda" valor={periodo} aoAlterar={setPeriodo} buscando={buscando}>
         <label className="agenda-search">
           <span>Buscar</span>
-          <input value={busca} onChange={(evento) => setBusca(evento.target.value)} placeholder="Tutor ou animal" />
+          <input
+            value={busca}
+            onChange={(evento) => setBusca(evento.target.value)}
+            placeholder="Responsável ou animal"
+          />
         </label>
         <label>
           <span>Veterinário</span>

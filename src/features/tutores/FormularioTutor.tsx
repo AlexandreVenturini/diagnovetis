@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import type { DadosFormularioTutor } from './tutorTipos'
+import type { DadosFormularioTutor, TipoCadastroCompleto } from './tutorTipos'
 
 type FormularioTutorProps = {
+  tipo: TipoCadastroCompleto
   nomeInicial: string
   telefoneInicial: string
   aoSalvar: (dados: DadosFormularioTutor) => Promise<void>
@@ -15,10 +16,14 @@ function hoje() {
   return new Date(data.getTime() - deslocamento * 60_000).toISOString().slice(0, 10)
 }
 
-export function FormularioTutor({ nomeInicial, telefoneInicial, aoSalvar, aoCancelar }: FormularioTutorProps) {
+export function FormularioTutor({ tipo, nomeInicial, telefoneInicial, aoSalvar, aoCancelar }: FormularioTutorProps) {
+  const ehInstituicao = tipo === 'instituicao'
   const [formulario, setFormulario] = useState<DadosFormularioTutor>({
+    tipo,
     nome: nomeInicial,
     cpf: '',
+    cnpj: '',
+    contato: '',
     telefone: telefoneInicial,
     email: '',
     dataCadastro: hoje(),
@@ -43,7 +48,7 @@ export function FormularioTutor({ nomeInicial, telefoneInicial, aoSalvar, aoCanc
     try {
       await aoSalvar(formulario)
     } catch (causa) {
-      setErro(causa instanceof Error ? causa.message : 'Não foi possível cadastrar o tutor.')
+      setErro(causa instanceof Error ? causa.message : 'Não foi possível cadastrar o responsável.')
     } finally {
       setSalvando(false)
     }
@@ -52,21 +57,42 @@ export function FormularioTutor({ nomeInicial, telefoneInicial, aoSalvar, aoCanc
   return (
     <form className="dog-form tutor-form" onSubmit={enviar}>
       <div className="tutor-form-notice full-field" role="status">
-        <strong>Tutor não encontrado</strong>
+        <strong>{ehInstituicao ? 'Instituição não encontrada' : 'Responsável não encontrado'}</strong>
         <p>Preencha o cadastro completo. Depois disso, o cão será salvo automaticamente.</p>
       </div>
       <label>
-        Nome
+        {ehInstituicao ? 'Nome da instituição' : 'Nome'}
         <input value={formulario.nome} onChange={(evento) => atualizar('nome', evento.target.value)} required />
       </label>
-      <label>
-        CPF
-        <input
-          value={formulario.cpf}
-          onChange={(evento) => atualizar('cpf', evento.target.value)}
-          placeholder="000.000.000-00"
-        />
-      </label>
+      {ehInstituicao ? (
+        <>
+          <label>
+            CNPJ (opcional)
+            <input
+              value={formulario.cnpj}
+              onChange={(evento) => atualizar('cnpj', evento.target.value)}
+              placeholder="00.000.000/0000-00"
+            />
+          </label>
+          <label>
+            Pessoa de contato
+            <input
+              value={formulario.contato}
+              onChange={(evento) => atualizar('contato', evento.target.value)}
+              placeholder="Ex: Ana Souza"
+            />
+          </label>
+        </>
+      ) : (
+        <label>
+          CPF
+          <input
+            value={formulario.cpf}
+            onChange={(evento) => atualizar('cpf', evento.target.value)}
+            placeholder="000.000.000-00"
+          />
+        </label>
+      )}
       <label>
         Telefone
         <input
@@ -148,7 +174,7 @@ export function FormularioTutor({ nomeInicial, telefoneInicial, aoSalvar, aoCanc
       )}
       <div className="form-actions full-field">
         <button className="primary-button" type="submit" disabled={salvando}>
-          {salvando ? 'Cadastrando...' : 'Cadastrar tutor e salvar cão'}
+          {salvando ? 'Cadastrando...' : 'Cadastrar responsável e salvar cão'}
         </button>
         <button className="secondary-button" type="button" onClick={aoCancelar} disabled={salvando}>
           Voltar

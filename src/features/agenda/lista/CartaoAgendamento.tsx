@@ -30,7 +30,7 @@ export function CartaoAgendamento({
             <strong>{agendamento.nomePet}</strong>
             <span className={`status-badge status-${agendamento.status}`}>{ROTULOS_SITUACAO[agendamento.status]}</span>
           </div>
-          <p>Tutor: {agendamento.nomeTutor}</p>
+          <p>Responsável: {agendamento.nomeTutor}</p>
           <div className="appointment-meta">
             <span>▣ {formatarDataAgenda(agendamento.data)}</span>
             <span>◷ {agendamento.horario || 'Horário não informado'}</span>

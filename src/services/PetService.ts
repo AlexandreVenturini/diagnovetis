@@ -23,7 +23,8 @@ interface PetRow {
   obito_em?: string | null
 }
 
-export type AtualizacaoPet = Pick<PetRow, 'nome' | 'raca' | 'idade' | 'peso' | 'sexo' | 'historico'>
+export type AtualizacaoPet = Pick<PetRow, 'nome' | 'raca' | 'idade' | 'peso' | 'sexo' | 'historico'> &
+  Partial<Pick<PetRow, 'tutor_id'>>
 
 function montarPets(linhas: PetRow[], tutores: Tutor[]): Pet[] {
   const tutoresPorId = new Map(tutores.map((t) => [t.id, t]))

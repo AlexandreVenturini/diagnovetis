@@ -116,7 +116,7 @@ export function EditorRetificacao({ consultaId, papel, aoConcluir, aoCancelar }:
       <header className="consultation-header content-card">
         <h2>Retificar atendimento nº {consultaId}</h2>
         <p>
-          {dados.nomePet} · Tutor: {dados.nomeTutor} · Veterinário: {dados.veterinario}
+          {dados.nomePet} · Responsável: {dados.nomeTutor} · Veterinário: {dados.veterinario}
         </p>
         <p className="retification-hint">
           A versão atual será arquivada e continuará visível no prontuário. Exames complementares são atualizados pelo

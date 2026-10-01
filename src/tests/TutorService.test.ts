@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import './setup'
-import { Tutor } from '../models/Tutor'
+import { Tutor, NOME_SEM_RESPONSAVEL } from '../models/Tutor'
 import { Endereco } from '../models/Endereco'
 import { TutorService } from '../services/TutorService'
 import { ValidacaoError } from '../services/validation/ValidacaoError'
@@ -70,5 +70,77 @@ describe('TutorService.atualizarTutor', () => {
     )
     await servico.atualizarTutor(atualizado)
     expect((await servico.buscarPorId(1))?.nome).toBe('Ana Oliveira')
+  })
+})
+
+describe('Tipos de responsável', () => {
+  function instituicao(id = 1): Tutor {
+    const tutor = new Tutor(id, 'ONG Patas', '27999990000', 'ong@patas.org', new Date(), criarEndereco())
+    tutor.tipo = 'instituicao'
+    tutor.cnpj = '12.345.678/0001-90'
+    tutor.contato = 'Ana'
+    return tutor
+  }
+
+  it('tutor antigo, sem tipo gravado, é pessoa física', async () => {
+    await servico.adicionarTutor(novoTutor())
+    const [tutor] = await servico.listarTutores()
+    expect(tutor.tipo).toBe('pessoa')
+  })
+
+  it('instituição guarda CNPJ e pessoa de contato', async () => {
+    await servico.adicionarTutor(instituicao())
+    const salvo = await servico.buscarPorId(1)
+    expect(salvo?.tipo).toBe('instituicao')
+    expect(salvo?.cnpj).toBe('12.345.678/0001-90')
+    expect(salvo?.contato).toBe('Ana')
+  })
+
+  it('instituição continua exigindo telefone e endereço', async () => {
+    const semTelefone = instituicao()
+    semTelefone.telefone = ''
+    await expect(servico.adicionarTutor(semTelefone)).rejects.toThrow(ValidacaoError)
+    const semEndereco = instituicao()
+    semEndereco.endereco = null
+    await expect(servico.adicionarTutor(semEndereco)).rejects.toThrow(ValidacaoError)
+  })
+
+  it('setor do IFES é criado uma vez e reaproveitado', async () => {
+    const primeiro = await servico.obterSetorIfes('Bovinocultura')
+    const segundo = await servico.obterSetorIfes('  bovinocultura ')
+    expect(segundo.id).toBe(primeiro.id)
+    expect(primeiro.nome).toBe('IFES - Campus Santa Teresa (Bovinocultura)')
+    expect(primeiro.endereco).toBeNull()
+    expect((await servico.listarTutores()).filter((t) => t.tipo === 'ifes')).toHaveLength(1)
+  })
+
+  it('setor do IFES é obrigatório', async () => {
+    await expect(servico.obterSetorIfes('  ')).rejects.toThrow(ValidacaoError)
+  })
+
+  it('animal sem responsável ganha registro próprio com as observações', async () => {
+    const primeiro = await servico.criarSemResponsavel('Resgatado na BR-259 por Ana')
+    const segundo = await servico.criarSemResponsavel('')
+    expect(primeiro.id).not.toBe(segundo.id)
+    const salvo = await servico.buscarPorId(primeiro.id)
+    expect(salvo?.nome).toBe(NOME_SEM_RESPONSAVEL)
+    expect(salvo?.tipo).toBe('sem_responsavel')
+    expect(salvo?.observacoes).toBe('Resgatado na BR-259 por Ana')
+  })
+
+  it('busca o responsável pelo nome exato e pelo tipo', async () => {
+    await servico.adicionarTutor(novoTutor(1))
+    await servico.adicionarTutor(instituicao(2))
+    expect((await servico.buscarResponsavel('pessoa', ' ana costa '))?.id).toBe(1)
+    expect(await servico.buscarResponsavel('pessoa', 'Ana')).toBeUndefined()
+    expect(await servico.buscarResponsavel('pessoa', 'ONG Patas')).toBeUndefined()
+    expect((await servico.buscarResponsavel('instituicao', 'ong patas'))?.id).toBe(2)
+  })
+
+  it('atualiza as observações de quem chegou sem responsável', async () => {
+    const tutor = await servico.criarSemResponsavel('Resgatado')
+    tutor.observacoes = 'Resgatado na feira, trazido pela Ana'
+    await servico.atualizarTutor(tutor)
+    expect((await servico.buscarPorId(tutor.id))?.observacoes).toBe('Resgatado na feira, trazido pela Ana')
   })
 })

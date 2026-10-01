@@ -246,14 +246,14 @@ describe('Tutor getters e setters', () => {
     const tutor = criarTutor()
     const novoEndereco = new Endereco('Av. Nova', 500, 'Bairro Novo', 'Serra', 'ES', '29100200')
     tutor.setEndereco(novoEndereco)
-    expect(tutor.endereco.rua).toBe('Av. Nova')
+    expect(tutor.endereco?.rua).toBe('Av. Nova')
   })
 
   it('endereco setter altera o endereço', () => {
     const tutor = criarTutor()
     const novoEndereco = new Endereco('Rua X', 1, 'B', 'C', 'ES', '29000000')
     tutor.endereco = novoEndereco
-    expect(tutor.obterEndereco().rua).toBe('Rua X')
+    expect(tutor.obterEndereco()?.rua).toBe('Rua X')
   })
 
   it('getPets retorna a lista de pets', () => {

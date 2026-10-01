@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { usePets } from './usePets'
 import { DetalhesPet } from './DetalhesPet'
 import { FormularioPet } from './FormularioPet'
 import { ListaPets } from './ListaPets'
+import { sugestoesResponsavel } from './responsavelPet'
 import type { PetResumo, DadosFormularioPet, TelaPets } from './petTipos'
 
 type ModuloPetsProps = {
@@ -18,6 +19,7 @@ export function ModuloPets({ petsApi, telaInicial, aviso, podeRemover = false }:
   const [tela, setTela] = useState<TelaPets>(telaInicial)
   const [selecionado, setSelecionado] = useState<PetResumo | null>(null)
   const [erroRemocao, setErroRemocao] = useState('')
+  const sugestoes = useMemo(() => sugestoesResponsavel(pets), [pets])
 
   function aberto(proximo: TelaPets, pet: PetResumo) {
     setSelecionado(pet)
@@ -58,12 +60,18 @@ export function ModuloPets({ petsApi, telaInicial, aviso, podeRemover = false }:
         />
       )}
       {tela === 'cadastro' && (
-        <FormularioPet aoSalvar={tratarCriacao} aoCriarTutor={criarTutor} aoCancelar={() => setTela('lista')} />
+        <FormularioPet
+          sugestoes={sugestoes}
+          aoSalvar={tratarCriacao}
+          aoCriarTutor={criarTutor}
+          aoCancelar={() => setTela('lista')}
+        />
       )}
       {tela === 'edicao' && selecionado && (
         <FormularioPet
           pet={selecionado}
           editando
+          sugestoes={sugestoes}
           aoSalvar={tratarEdicao}
           aoCriarTutor={criarTutor}
           aoCancelar={() => setTela('lista')}

@@ -120,7 +120,7 @@ export function FormularioAgendamento({ aoSalvar, aoCancelar, erro, pets }: Form
                   <span>
                     <strong>{pet.nome}</strong>
                     <small>
-                      {pet.raca} · Tutor: {pet.tutor}
+                      {pet.raca} · Responsável: {pet.tutor}
                     </small>
                   </span>
                 </button>
@@ -133,7 +133,7 @@ export function FormularioAgendamento({ aoSalvar, aoCancelar, erro, pets }: Form
           )}
         </label>
         <label className="appointment-search-field">
-          Buscar tutor
+          Buscar responsável
           <input
             value={buscaTutor}
             onFocus={() => setBuscaTutorAberta(true)}
@@ -143,7 +143,7 @@ export function FormularioAgendamento({ aoSalvar, aoCancelar, erro, pets }: Form
               if (evento.target.value !== formulario.nomeTutor)
                 setFormulario((atual) => ({ ...atual, petId: undefined, nomePet: '', nomeTutor: evento.target.value }))
             }}
-            placeholder="Digite o nome ou contato do tutor"
+            placeholder="Digite o nome ou contato do responsável"
             autoComplete="off"
             required
           />
@@ -165,7 +165,7 @@ export function FormularioAgendamento({ aoSalvar, aoCancelar, erro, pets }: Form
                   </span>
                 </button>
               ))}
-              {tutoresEncontrados.length === 0 && <p>Nenhum tutor encontrado para esta busca.</p>}
+              {tutoresEncontrados.length === 0 && <p>Nenhum responsável encontrado para esta busca.</p>}
             </div>
           )}
         </label>
@@ -192,7 +192,7 @@ export function FormularioAgendamento({ aoSalvar, aoCancelar, erro, pets }: Form
                   {pet.peso} kg
                 </span>
                 <span>
-                  <b>Tutor</b>
+                  <b>Responsável</b>
                   {pet.tutor}
                 </span>
                 <span>

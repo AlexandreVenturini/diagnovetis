@@ -57,7 +57,7 @@ export function TelaListaProntuarios({
             <input
               value={busca}
               onChange={(evento) => aoAlterarBusca(evento.target.value)}
-              placeholder="Nome do animal ou tutor"
+              placeholder="Nome do animal ou responsável"
             />
           </span>
         </label>

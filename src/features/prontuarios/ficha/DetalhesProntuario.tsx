@@ -80,7 +80,7 @@ export function DetalhesProntuario({
             )}
           </h2>
           <p>
-            Tutor: {selecionado.nomeTutor} · {selecionado.raca} · {selecionado.idade}
+            Responsável: {selecionado.nomeTutor} · {selecionado.raca} · {selecionado.idade}
           </p>
         </div>
         <div className="record-header-actions">

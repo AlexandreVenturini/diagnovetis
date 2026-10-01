@@ -142,7 +142,7 @@ export async function salvarConsulta(
     if (!pet)
       return {
         sucesso: false,
-        erro: 'Não foi possível identificar um único paciente. Confira o nome do animal e do tutor cadastrados.',
+        erro: 'Não foi possível identificar um único paciente. Confira o nome do animal e do responsável cadastrados.',
       }
 
     const consulta = paraConsulta(dados, exames, medico, pet, opcoes.inicio ?? agoraComoInicio())

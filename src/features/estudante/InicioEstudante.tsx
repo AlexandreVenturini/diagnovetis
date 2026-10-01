@@ -79,7 +79,7 @@ export function InicioEstudante({ pets, aoAbrirPets, aoAbrirAgenda, aoNovoPet, a
             <b>＋</b>
             <span>
               <strong>Cadastrar novo cão</strong>
-              <small>Adicionar paciente e tutor</small>
+              <small>Adicionar paciente e responsável</small>
             </span>
           </button>
           <button onClick={aoNovoAgendamento}>
@@ -145,7 +145,7 @@ export function InicioEstudante({ pets, aoAbrirPets, aoAbrirAgenda, aoNovoPet, a
                   <span>
                     <strong>{pet.nome}</strong>
                     <small>
-                      {pet.raca || 'Raça não informada'} · Tutor: {pet.tutor}
+                      {pet.raca || 'Raça não informada'} · Responsável: {pet.tutor}
                     </small>
                   </span>
                   <b>›</b>

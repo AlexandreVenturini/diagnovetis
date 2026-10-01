@@ -7,6 +7,7 @@ import { SeletorParticipantes } from '../../shared/SeletorParticipantes'
 type EtapaIdentificacaoProps = {
   dados: DadosAtendimento
   agendamentos: Agendamento[]
+  responsaveis: string[]
   idAgendamentoSelecionado: number | null
   aoSelecionarAgendamento: (id: number | null) => void
   atualizar: (key: keyof DadosAtendimento, valor: string) => void
@@ -28,6 +29,7 @@ function formatarDataAgendamento(data: string) {
 export function EtapaIdentificacao({
   dados,
   agendamentos,
+  responsaveis,
   idAgendamentoSelecionado,
   aoSelecionarAgendamento,
   atualizar,
@@ -87,7 +89,7 @@ export function EtapaIdentificacao({
               setBuscaAgendamento(evento.target.value)
               setBuscaAberta(true)
             }}
-            placeholder="Digite o cão, tutor, data, horário ou serviço"
+            placeholder="Digite o cão, responsável, data, horário ou serviço"
             autoComplete="off"
           />
           {buscaAberta && buscaNormalizada && (
@@ -102,7 +104,7 @@ export function EtapaIdentificacao({
                   <span>
                     <strong>{item.nomePet}</strong>
                     <small>
-                      Tutor: {item.nomeTutor} · {item.tipoServico}
+                      Responsável: {item.nomeTutor} · {item.tipoServico}
                     </small>
                   </span>
                   <time>
@@ -135,7 +137,7 @@ export function EtapaIdentificacao({
                 {agendamentoSelecionado.nomePet}
               </span>
               <span>
-                <b>Tutor</b>
+                <b>Responsável</b>
                 {agendamentoSelecionado.nomeTutor}
               </span>
               <span>
@@ -180,12 +182,18 @@ export function EtapaIdentificacao({
           </select>
         </label>
         <label>
-          Nome do Tutor *
+          Responsável *
           <input
+            list="responsaveis-atendimento"
             value={dados.nomeTutor}
             onChange={(evento) => atualizar('nomeTutor', evento.target.value)}
             placeholder="Ex: Maria Silva"
           />
+          <datalist id="responsaveis-atendimento">
+            {responsaveis.map((nome) => (
+              <option key={nome} value={nome} />
+            ))}
+          </datalist>
         </label>
         <label>
           {veterinarioBloqueado ? 'Professor supervisor' : 'Veterinário que Atendeu *'}

@@ -3,27 +3,52 @@ import type { FormEvent } from 'react'
 import { PET_VAZIO } from './petVazio'
 import { interpretarIdadePet, serializarIdadePet } from './idadePet'
 import type { PetResumo, DadosFormularioPet } from './petTipos'
-import { TutorNaoEncontradoError } from './usePets'
+import { MENSAGEM_CADASTRAR_RESPONSAVEL, TutorNaoEncontradoError } from './resolverResponsavel'
+import { tipoDoPet, type SugestoesResponsavel } from './responsavelPet'
+import type { TipoResponsavel } from '../../models/Tutor'
 import { FormularioTutor } from '../tutores/FormularioTutor'
-import type { DadosFormularioTutor } from '../tutores/tutorTipos'
+import { ROTULOS_TIPO_RESPONSAVEL, type DadosFormularioTutor } from '../tutores/tutorTipos'
 
 type FormularioPetProps = {
   pet?: PetResumo
   editando?: boolean
+  sugestoes: SugestoesResponsavel
   aoSalvar: (dados: DadosFormularioPet) => Promise<void>
   aoCriarTutor: (dados: DadosFormularioTutor) => Promise<void>
   aoCancelar: () => void
 }
 
-export function FormularioPet({ pet, editando = false, aoSalvar, aoCriarTutor, aoCancelar }: FormularioPetProps) {
+const TIPOS_RESPONSAVEL = Object.keys(ROTULOS_TIPO_RESPONSAVEL) as TipoResponsavel[]
+
+export function FormularioPet({
+  pet,
+  editando = false,
+  sugestoes,
+  aoSalvar,
+  aoCriarTutor,
+  aoCancelar,
+}: FormularioPetProps) {
   const [formulario, setFormulario] = useState<DadosFormularioPet>(pet ? { ...pet } : PET_VAZIO)
   const [idade, setIdade] = useState(() => interpretarIdadePet(pet?.idade ?? ''))
   const [precisaTutor, setPrecisaTutor] = useState(false)
   const [erro, setErro] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const tipo = tipoDoPet(formulario)
 
   function atualizar(key: keyof DadosFormularioPet, valor: string) {
     setFormulario((atual) => ({ ...atual, [key]: valor }))
+  }
+
+  function escolherTipo(novoTipo: TipoResponsavel) {
+    const origem = pet && tipoDoPet(pet) === novoTipo ? pet : PET_VAZIO
+    setFormulario((atual) => ({
+      ...atual,
+      tipoResponsavel: novoTipo,
+      tutor: origem.tutor,
+      contato: origem.contato,
+      setor: origem.setor ?? '',
+      observacoesResponsavel: origem.observacoesResponsavel ?? '',
+    }))
   }
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
@@ -35,7 +60,7 @@ export function FormularioPet({ pet, editando = false, aoSalvar, aoCriarTutor, a
     } catch (causa) {
       if (
         causa instanceof TutorNaoEncontradoError ||
-        (causa instanceof Error && causa.message.includes('Cadastre o tutor completo antes de registrar o cão.'))
+        (causa instanceof Error && causa.message.includes(MENSAGEM_CADASTRAR_RESPONSAVEL))
       ) {
         setPrecisaTutor(true)
       } else {
@@ -63,6 +88,7 @@ export function FormularioPet({ pet, editando = false, aoSalvar, aoCriarTutor, a
       <h2>{editando ? 'Editar Cão' : 'Cadastrar Novo Cão'}</h2>
       {precisaTutor ? (
         <FormularioTutor
+          tipo={tipo === 'instituicao' ? 'instituicao' : 'pessoa'}
           nomeInicial={formulario.tutor}
           telefoneInicial={formulario.contato}
           aoSalvar={criarTutorEContinuar}
@@ -138,23 +164,70 @@ export function FormularioPet({ pet, editando = false, aoSalvar, aoCriarTutor, a
             </select>
           </label>
           <label>
-            Nome do Tutor
-            <input
-              value={formulario.tutor}
-              onChange={(evento) => atualizar('tutor', evento.target.value)}
-              placeholder="Ex: João Silva"
-              required
-            />
+            Tipo de responsável
+            <select value={tipo} onChange={(evento) => escolherTipo(evento.target.value as TipoResponsavel)}>
+              {TIPOS_RESPONSAVEL.map((opcao) => (
+                <option key={opcao} value={opcao}>
+                  {ROTULOS_TIPO_RESPONSAVEL[opcao]}
+                </option>
+              ))}
+            </select>
           </label>
-          <label>
-            Contato do Tutor
-            <input
-              value={formulario.contato}
-              onChange={(evento) => atualizar('contato', evento.target.value)}
-              placeholder="(27) 99999-9999"
-              required
-            />
-          </label>
+          {(tipo === 'pessoa' || tipo === 'instituicao') && (
+            <>
+              <label>
+                {tipo === 'pessoa' ? 'Nome do responsável' : 'Nome da instituição'}
+                <input
+                  list="responsaveis-cadastrados"
+                  value={formulario.tutor}
+                  onChange={(evento) => atualizar('tutor', evento.target.value)}
+                  placeholder={tipo === 'pessoa' ? 'Ex: João Silva' : 'Ex: ONG Patas Amigas'}
+                  required
+                />
+                <datalist id="responsaveis-cadastrados">
+                  {sugestoes[tipo].map((nome) => (
+                    <option key={nome} value={nome} />
+                  ))}
+                </datalist>
+              </label>
+              <label>
+                Contato do responsável
+                <input
+                  value={formulario.contato}
+                  onChange={(evento) => atualizar('contato', evento.target.value)}
+                  placeholder="(27) 99999-9999"
+                  required
+                />
+              </label>
+            </>
+          )}
+          {tipo === 'ifes' && (
+            <label>
+              Setor do IFES
+              <input
+                list="setores-ifes"
+                value={formulario.setor ?? ''}
+                onChange={(evento) => atualizar('setor', evento.target.value)}
+                placeholder="Ex: Bovinocultura"
+                required
+              />
+              <datalist id="setores-ifes">
+                {sugestoes.ifes.map((setor) => (
+                  <option key={setor} value={setor} />
+                ))}
+              </datalist>
+            </label>
+          )}
+          {tipo === 'sem_responsavel' && (
+            <label className="full-field">
+              Como o animal chegou
+              <textarea
+                value={formulario.observacoesResponsavel ?? ''}
+                onChange={(evento) => atualizar('observacoesResponsavel', evento.target.value)}
+                placeholder="Data e local do resgate, quem trouxe o animal..."
+              />
+            </label>
+          )}
           <label className="full-field">
             Histórico de Saúde
             <textarea

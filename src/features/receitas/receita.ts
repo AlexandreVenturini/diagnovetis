@@ -31,7 +31,7 @@ export function temReceita(receita: Receita): boolean {
 
 export function validarReceita(dados: DadosAtendimento, receita: Receita): string {
   if (![dados.nomePet, dados.nomeTutor, dados.veterinario].every((valor) => valor.trim()))
-    return 'Preencha o paciente, o tutor e o veterinário na etapa de identificação.'
+    return 'Preencha o paciente, o responsável e o veterinário na etapa de identificação.'
   if (!receita.crmv.trim()) return 'Informe o CRMV e a UF do veterinário.'
   if (!receita.itens.length || receita.itens.some((item) => Object.values(item).some((valor) => !valor.trim())))
     return 'Preencha medicamento, dose, via, frequência, duração e quantidade de todos os itens.'
@@ -61,7 +61,7 @@ export function htmlReceita(dados: DadosAtendimento, receita: Receita, emitidaEm
         <p><b>Quantidade a dispensar:</b> ${escapar(medicamento.quantidade)}</p>
       </section>`
   const orientacoes = receita.orientacoes.trim()
-    ? `<h2>Orientações ao tutor</h2>
+    ? `<h2>Orientações ao responsável</h2>
       <p class="instructions">${escapar(receita.orientacoes)}</p>`
     : ''
 
@@ -83,7 +83,7 @@ export function htmlReceita(dados: DadosAtendimento, receita: Receita, emitidaEm
       <p>Data: ${escapar(emitidaEm.toLocaleDateString('pt-BR'))}</p>
       <section class="patient">
         ${campo('Paciente', dados.nomePet)}
-        ${campo('Tutor', dados.nomeTutor)}
+        ${campo('Responsável', dados.nomeTutor)}
         ${campo('Espécie', 'Canina')}
         ${campo('Raça', dados.raca)}
         ${campo('Peso (kg)', dados.peso || '')}
