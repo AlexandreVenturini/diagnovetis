@@ -36,9 +36,9 @@ function criarExame(id = 1): Exame {
 }
 
 function dataFutura(dias = 1): Date {
-  const data = new Date()
-  data.setDate(data.getDate() + dias)
-  return data
+  const dados = new Date()
+  dados.setDate(dados.getDate() + dias)
+  return dados
 }
 
 function criarConsulta(medico: Medico, pet: Pet, id = 1, exames: Exame[] = []): Consulta {
@@ -120,11 +120,11 @@ describe('ExameService', () => {
 
 describe('Exame model', () => {
   it('cria exame com dados corretos', () => {
-    const data = new Date('2025-01-01')
-    const exame = new Exame(1, 'Hemograma', data, 'Normal')
+    const dados = new Date('2025-01-01')
+    const exame = new Exame(1, 'Hemograma', dados, 'Normal')
     expect(exame.id).toBe(1)
     expect(exame.nomeExame).toBe('Hemograma')
-    expect(exame.dataExame).toEqual(data)
+    expect(exame.dataExame).toEqual(dados)
     expect(exame.resultado).toBe('Normal')
   })
 
@@ -137,59 +137,62 @@ describe('Exame model', () => {
 
 describe('Exames complementares no atendimento', () => {
   it('salva solicitações sem resultado e preserva o vínculo com a consulta', async () => {
-    const { newExam } = await import('../features/consultations/examTypes')
-    const exams = exameService.criarSolicitacoes([
-      newExam('Hemograma', 'laboratorial'),
-      newExam('Radiografia', 'imagem'),
+    const { novoExame } = await import('../features/atendimentos/exameTipos')
+    const exames = exameService.criarSolicitacoes([
+      novoExame('Hemograma', 'laboratorial'),
+      novoExame('Radiografia', 'imagem'),
     ])
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, exams))
-    const saved = await exameService.listarPorConsulta(1)
-    expect(saved).toHaveLength(2)
+    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, exames))
+    const salvo = await exameService.listarPorConsulta(1)
+    expect(salvo).toHaveLength(2)
     expect(
-      saved.every(
-        (exam) =>
-          exam.consultaId === 1 &&
-          exam.id > 0 &&
-          exam.status === 'solicitado' &&
-          !exam.resultado &&
-          !exam.dataRealizacao,
+      salvo.every(
+        (exame) =>
+          exame.consultaId === 1 &&
+          exame.id > 0 &&
+          exame.status === 'solicitado' &&
+          !exame.resultado &&
+          !exame.dataRealizacao,
       ),
     ).toBe(true)
-    expect(saved.map((exam) => exam.categoria)).toEqual(['laboratorial', 'imagem'])
+    expect(salvo.map((exame) => exame.categoria)).toEqual(['laboratorial', 'imagem'])
   })
 
   it('registra o resultado dias depois sem alterar os outros dados da consulta', async () => {
-    const { newExam, examToDraft, localDate } = await import('../features/consultations/examTypes')
-    const draft = {
-      ...newExam('Hemograma', 'laboratorial'),
+    const { novoExame, exameParaRascunho, dataLocal } = await import('../features/atendimentos/exameTipos')
+    const rascunho = {
+      ...novoExame('Hemograma', 'laboratorial'),
       dataSolicitacao: '2025-01-01',
       laudo: 'Laudo inicial',
       laudoAnexo: { nome: 'exame.pdf', tipo: 'application/pdf', dados: 'data:application/pdf;base64,JVBERi0xLjc=' },
     }
-    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([draft])))
-    const before = await consultaService.buscarPorId(1)
-    const [exam] = await exameService.listarPorConsulta(1)
-    expect(exam.laudo).toBe('Laudo inicial')
-    expect(exam.laudoAnexo).toEqual(draft.laudoAnexo)
-    await exameService.atualizarResultado(exam, {
-      ...examToDraft(exam),
+    await consultaService.adicionarConsulta(criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([rascunho])))
+    const antes = await consultaService.buscarPorId(1)
+    const [exame] = await exameService.listarPorConsulta(1)
+    expect(exame.laudo).toBe('Laudo inicial')
+    expect(exame.laudoAnexo).toEqual(rascunho.laudoAnexo)
+    await exameService.atualizarResultado(exame, {
+      ...exameParaRascunho(exame),
       status: 'concluido',
-      dataRealizacao: localDate(),
+      dataRealizacao: dataLocal(),
       resultado: 'Resultado cadastrado',
       laudo: 'Laudo revisado',
       interpretacao: 'Interpretação registrada',
     })
-    const after = await consultaService.buscarPorId(1)
-    expect(after?.diagnostico).toBe(before?.diagnostico)
-    expect(after?.observacoes).toBe(before?.observacoes)
-    expect(after?.responsavel.id).toBe(before?.responsavel.id)
-    expect(after?.exames[0].laudo).toBe('Laudo revisado')
-    expect(after?.exames[0].laudoAnexo).toEqual(draft.laudoAnexo)
-    await exameService.atualizarResultado(after!.exames[0], { ...examToDraft(after!.exames[0]), laudoAnexo: null })
-    expect((await exameService.buscarPorId(exam.id))?.laudoAnexo).toBeNull()
-    expect(after?.exames[0].status).toBe('concluido')
-    expect(after?.exames[0].interpretacao).toBe('Interpretação registrada')
-    expect(after?.exames[0].dataSolicitacao.getFullYear()).toBe(2025)
+    const depois = await consultaService.buscarPorId(1)
+    expect(depois?.diagnostico).toBe(antes?.diagnostico)
+    expect(depois?.observacoes).toBe(antes?.observacoes)
+    expect(depois?.responsavel.id).toBe(antes?.responsavel.id)
+    expect(depois?.exames[0].laudo).toBe('Laudo revisado')
+    expect(depois?.exames[0].laudoAnexo).toEqual(rascunho.laudoAnexo)
+    await exameService.atualizarResultado(depois!.exames[0], {
+      ...exameParaRascunho(depois!.exames[0]),
+      laudoAnexo: null,
+    })
+    expect((await exameService.buscarPorId(exame.id))?.laudoAnexo).toBeNull()
+    expect(depois?.exames[0].status).toBe('concluido')
+    expect(depois?.exames[0].interpretacao).toBe('Interpretação registrada')
+    expect(depois?.exames[0].dataSolicitacao.getFullYear()).toBe(2025)
   })
 
   it('não deixa uma segunda consulta salva quando um exame da transação falha', async () => {
@@ -203,14 +206,14 @@ describe('Exames complementares no atendimento', () => {
   })
 
   it('mantém o resultado salvo quando uma atualização inválida é rejeitada', async () => {
-    const { newExam, examToDraft } = await import('../features/consultations/examTypes')
+    const { novoExame, exameParaRascunho } = await import('../features/atendimentos/exameTipos')
     await consultaService.adicionarConsulta(
-      criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([newExam('PCR', 'laboratorial')])),
+      criarConsulta(medico, pet, 1, exameService.criarSolicitacoes([novoExame('PCR', 'laboratorial')])),
     )
-    const [exam] = await exameService.listarPorConsulta(1)
-    await expect(exameService.atualizarResultado(exam, { ...examToDraft(exam), status: 'concluido' })).rejects.toThrow(
-      'resultado',
-    )
-    expect((await exameService.buscarPorId(exam.id))?.status).toBe('solicitado')
+    const [exame] = await exameService.listarPorConsulta(1)
+    await expect(
+      exameService.atualizarResultado(exame, { ...exameParaRascunho(exame), status: 'concluido' }),
+    ).rejects.toThrow('resultado')
+    expect((await exameService.buscarPorId(exame.id))?.status).toBe('solicitado')
   })
 })

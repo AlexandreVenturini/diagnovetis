@@ -33,32 +33,32 @@ interface TutorRow {
 
 const TUTOR_COM_ENDERECO = '*, enderecos(*)'
 
-function rowToTutor(row: TutorRow): Tutor {
-  const e = row.enderecos
+function linhaParaTutor(linha: TutorRow): Tutor {
+  const e = linha.enderecos
   return new Tutor(
-    row.id,
-    row.nome,
-    row.telefone,
-    row.email,
-    new Date(row.data_cadastro),
+    linha.id,
+    linha.nome,
+    linha.telefone,
+    linha.email,
+    new Date(linha.data_cadastro),
     new Endereco(e.rua, e.numero, e.bairro, e.cidade, e.uf, e.cep),
     [],
-    row.cpf ?? '',
+    linha.cpf ?? '',
   )
 }
 
 export class TutorService {
   async listarTutores(): Promise<Tutor[]> {
-    const { data, error } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO)
-    if (error) throw new Error(error.message)
-    return ((data ?? []) as TutorRow[]).map(rowToTutor)
+    const { data: dados, error: erro } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO)
+    if (erro) throw new Error(erro.message)
+    return ((dados ?? []) as TutorRow[]).map(linhaParaTutor)
   }
 
   async listarPorIds(ids: number[]): Promise<Tutor[]> {
     if (ids.length === 0) return []
-    const { data, error } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO).in('id', ids)
-    if (error) throw new Error(error.message)
-    return ((data ?? []) as TutorRow[]).map(rowToTutor)
+    const { data: dados, error: erro } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO).in('id', ids)
+    if (erro) throw new Error(erro.message)
+    return ((dados ?? []) as TutorRow[]).map(linhaParaTutor)
   }
 
   async adicionarTutor(tutor: Tutor): Promise<void> {
@@ -73,7 +73,7 @@ export class TutorService {
     validarObrigatorio(tutor.endereco.uf, 'uf')
     validarCep(tutor.endereco.cep, 'cep')
 
-    const { data: endData, error: endError } = await supabase
+    const { data: dadosEndereco, error: erroEndereco } = await supabase
       .from('enderecos')
       .insert({
         rua: tutor.endereco.rua,
@@ -85,24 +85,24 @@ export class TutorService {
       })
       .select()
       .single()
-    if (endError) throw new Error(endError.message)
+    if (erroEndereco) throw new Error(erroEndereco.message)
 
-    const { error } = await supabase.from('tutores').insert({
+    const { error: erro } = await supabase.from('tutores').insert({
       id: tutor.id,
       nome: tutor.nome,
       telefone: tutor.telefone,
       email: tutor.email,
       cpf: tutor.cpf ?? '',
       data_cadastro: tutor.dataCadastro.toISOString(),
-      endereco_id: endData.id,
+      endereco_id: dadosEndereco.id,
     })
-    if (error) throw new Error(error.message)
+    if (erro) throw new Error(erro.message)
   }
 
   async buscarPorId(id: number): Promise<Tutor | undefined> {
-    const { data, error } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO).eq('id', id).single()
-    if (error || !data) return undefined
-    return rowToTutor(data as TutorRow)
+    const { data: dados, error: erro } = await supabase.from('tutores').select(TUTOR_COM_ENDERECO).eq('id', id).single()
+    if (erro || !dados) return undefined
+    return linhaParaTutor(dados as TutorRow)
   }
 
   async buscarPorNome(nome: string): Promise<Tutor[]> {

@@ -15,7 +15,7 @@ export abstract class Pessoa {
     return this._id
   }
 
-  getId(): number {
+  obterId(): number {
     return this._id
   }
 
@@ -23,7 +23,7 @@ export abstract class Pessoa {
     return this._nome
   }
 
-  getNome(): string {
+  obterNome(): string {
     return this._nome
   }
 
@@ -39,7 +39,7 @@ export abstract class Pessoa {
     return this._telefone
   }
 
-  getTelefone(): string {
+  obterTelefone(): string {
     return this._telefone
   }
 
@@ -55,7 +55,7 @@ export abstract class Pessoa {
     return this._email
   }
 
-  getEmail(): string {
+  obterEmail(): string {
     return this._email
   }
 

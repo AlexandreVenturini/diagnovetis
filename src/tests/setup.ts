@@ -242,6 +242,7 @@ export function inserirMedico(medico: {
 
 vi.mock('../services/storage/supabaseClient', () => ({
   supabase: supabaseMock,
+  supabaseConfigurado: true,
 }))
 
 beforeEach(async () => {

@@ -1,10 +1,9 @@
-import type { ConsultationData } from '../features/consultations/consultationTypes'
-import type { Prescription } from '../features/prescriptions/prescriptionReport'
+import type { DadosAtendimento } from '../features/atendimentos/atendimentoTipos'
+import type { Receita } from '../features/receitas/receita'
 
-/** Cópia dos dados no momento da finalização, preservada para reimpressão. */
 export type PrescricaoSalva = {
-  version: 1
-  issuedAt: string
-  patient: ConsultationData
-  prescription: Prescription
+  versao: 1
+  emitidaEm: string
+  paciente: DadosAtendimento
+  receita: Receita
 }

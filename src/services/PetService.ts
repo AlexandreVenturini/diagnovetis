@@ -20,12 +20,12 @@ interface PetRow {
   obito_em?: string | null
 }
 
-export type PetUpdate = Pick<PetRow, 'nome' | 'raca' | 'idade' | 'peso' | 'sexo' | 'historico'>
+export type AtualizacaoPet = Pick<PetRow, 'nome' | 'raca' | 'idade' | 'peso' | 'sexo' | 'historico'>
 
-function montarPets(rows: PetRow[], tutores: Tutor[]): Pet[] {
+function montarPets(linhas: PetRow[], tutores: Tutor[]): Pet[] {
   const tutoresPorId = new Map(tutores.map((t) => [t.id, t]))
   const pets: Pet[] = []
-  for (const r of rows) {
+  for (const r of linhas) {
     const tutor = tutoresPorId.get(r.tutor_id)
     if (!tutor) continue
     const pet = new Pet(
@@ -50,21 +50,21 @@ function montarPets(rows: PetRow[], tutores: Tutor[]): Pet[] {
 
 export class PetService {
   async listarPets(): Promise<Pet[]> {
-    const [{ data, error }, tutores] = await Promise.all([
+    const [{ data: dados, error: erro }, tutores] = await Promise.all([
       supabase.from('pets').select('*'),
       tutorService.listarTutores(),
     ])
-    if (error) throw new Error(error.message)
-    return montarPets((data ?? []) as PetRow[], tutores)
+    if (erro) throw new Error(erro.message)
+    return montarPets((dados ?? []) as PetRow[], tutores)
   }
 
   async listarPorIds(ids: number[]): Promise<Pet[]> {
     if (ids.length === 0) return []
-    const { data, error } = await supabase.from('pets').select('*').in('id', ids)
-    if (error) throw new Error(error.message)
-    const rows = (data ?? []) as PetRow[]
-    const tutores = await tutorService.listarPorIds([...new Set(rows.map((r) => r.tutor_id))])
-    return montarPets(rows, tutores)
+    const { data: dados, error: erro } = await supabase.from('pets').select('*').in('id', ids)
+    if (erro) throw new Error(erro.message)
+    const linhas = (dados ?? []) as PetRow[]
+    const tutores = await tutorService.listarPorIds([...new Set(linhas.map((r) => r.tutor_id))])
+    return montarPets(linhas, tutores)
   }
 
   async adicionarPet(pet: Pet): Promise<void> {
@@ -73,7 +73,7 @@ export class PetService {
     validarObrigatorio(pet.nome, 'nome')
     validarObrigatorio(pet.especie, 'especie')
     validarObrigatorio(pet.raca, 'raca')
-    const { error } = await supabase.from('pets').insert({
+    const { error: erro } = await supabase.from('pets').insert({
       id: pet.id,
       nome: pet.nome,
       especie: pet.especie,
@@ -84,26 +84,26 @@ export class PetService {
       sexo: pet.sexo,
       historico: pet.historico,
     })
-    if (error) throw new Error(error.message)
+    if (erro) throw new Error(erro.message)
     pet.tutor.adicionarPet(pet)
   }
 
   async buscarPorId(id: number): Promise<Pet | undefined> {
-    const { data, error } = await supabase.from('pets').select('*').eq('id', id).single()
-    if (error || !data) return undefined
-    const tutor = await tutorService.buscarPorId(data.tutor_id)
+    const { data: dados, error: erro } = await supabase.from('pets').select('*').eq('id', id).single()
+    if (erro || !dados) return undefined
+    const tutor = await tutorService.buscarPorId(dados.tutor_id)
     if (!tutor) return undefined
     return new Pet(
-      data.id,
-      data.nome,
-      data.especie,
-      data.raca,
+      dados.id,
+      dados.nome,
+      dados.especie,
+      dados.raca,
       tutor,
       [],
-      data.idade ?? '',
-      data.peso ?? '',
-      data.sexo ?? '',
-      data.historico ?? '',
+      dados.idade ?? '',
+      dados.peso ?? '',
+      dados.sexo ?? '',
+      dados.historico ?? '',
     )
   }
 
@@ -112,11 +112,11 @@ export class PetService {
     return todos.filter((p) => p.nome.toLowerCase().includes(nome.toLowerCase()))
   }
 
-  async atualizarPet(id: number, dados: PetUpdate): Promise<void> {
+  async atualizarPet(id: number, dados: AtualizacaoPet): Promise<void> {
     validarObrigatorio(dados.nome, 'nome')
     validarObrigatorio(dados.raca, 'raca')
-    const { error } = await supabase.from('pets').update(dados).eq('id', id)
-    if (error) throw new Error(error.message)
+    const { error: erro } = await supabase.from('pets').update(dados).eq('id', id)
+    if (erro) throw new Error(erro.message)
   }
 
   async removerPet(id: number): Promise<void> {

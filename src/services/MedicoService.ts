@@ -1,5 +1,5 @@
 import { Medico } from '../models/Medico'
-import { SupabaseRepository } from './storage/SupabaseRepository'
+import { RepositorioSupabase } from './storage/RepositorioSupabase'
 
 interface MedicoRow {
   id: number
@@ -10,7 +10,7 @@ interface MedicoRow {
   crmv: string
 }
 
-export const medicoRepository = new SupabaseRepository<Medico>(
+export const repositorioMedico = new RepositorioSupabase<Medico>(
   'medicos',
   (medico) => ({
     id: medico.id,
@@ -20,18 +20,18 @@ export const medicoRepository = new SupabaseRepository<Medico>(
     especialidade: medico.especialidade,
     crmv: medico.crmv,
   }),
-  (raw) => {
-    const r = raw as MedicoRow
+  (bruto) => {
+    const r = bruto as MedicoRow
     return new Medico(r.id, r.nome, r.telefone, r.email, r.especialidade, r.crmv)
   },
 )
 
 export class MedicoService {
   async listarMedicos(): Promise<Medico[]> {
-    return medicoRepository.getAll()
+    return repositorioMedico.listarTodos()
   }
 
   async buscarPorId(id: number): Promise<Medico | undefined> {
-    return medicoRepository.getById(id)
+    return repositorioMedico.getById(id)
   }
 }

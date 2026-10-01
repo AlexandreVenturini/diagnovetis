@@ -30,7 +30,7 @@ export class Tutor extends Pessoa {
     return this._dataCadastro
   }
 
-  getDataCadastro(): Date {
+  obterDataCadastro(): Date {
     return this._dataCadastro
   }
 
@@ -42,7 +42,7 @@ export class Tutor extends Pessoa {
     return this._endereco
   }
 
-  getEndereco(): Endereco {
+  obterEndereco(): Endereco {
     return this._endereco
   }
 
@@ -58,7 +58,7 @@ export class Tutor extends Pessoa {
     return [...this._pets]
   }
 
-  getPets(): Pet[] {
+  obterPets(): Pet[] {
     return [...this._pets]
   }
 

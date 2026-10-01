@@ -1,7 +1,7 @@
-import type { ClinicalMetadata } from '../features/zoonoses/zoonosisTypes'
+import type { DadosClinicos } from '../features/condicoes/condicaoTipos'
 
 export class Zoonose {
-  clinical: ClinicalMetadata | null = null
+  dadosClinicos: DadosClinicos | null = null
   private _id: number
   private _nome: string
   private _agenteEtiologico: string
@@ -33,11 +33,11 @@ export class Zoonose {
     return this._id
   }
 
-  getId(): number {
+  obterId(): number {
     return this._id
   }
 
-  getNome(): string {
+  obterNome(): string {
     return this._nome
   }
 
@@ -45,7 +45,7 @@ export class Zoonose {
     return this._agenteEtiologico
   }
 
-  getAgenteEtiologico(): string {
+  obterAgenteEtiologico(): string {
     return this._agenteEtiologico
   }
 
@@ -53,7 +53,7 @@ export class Zoonose {
     return this._sintomas
   }
 
-  getSintomas(): string {
+  obterSintomas(): string {
     return this._sintomas
   }
 
@@ -61,7 +61,7 @@ export class Zoonose {
     return this._medidasPreventivas
   }
 
-  getMedidasPreventivas(): string {
+  obterMedidasPreventivas(): string {
     return this._medidasPreventivas
   }
 
@@ -69,11 +69,11 @@ export class Zoonose {
     return this._grauRisco
   }
 
-  getGrauRisco(): string {
+  obterGrauRisco(): string {
     return this._grauRisco
   }
 
-  isAltoRisco(): boolean {
+  ehAltoRisco(): boolean {
     return this._grauRisco.toLowerCase() === 'alto'
   }
 }

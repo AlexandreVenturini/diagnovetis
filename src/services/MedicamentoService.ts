@@ -14,7 +14,7 @@ interface MedicamentoRow {
   tipo_uso: string
 }
 
-function rowToMedicamento(r: MedicamentoRow): Medicamento {
+function linhaParaMedicamento(r: MedicamentoRow): Medicamento {
   return new Medicamento(
     r.id,
     r.nome_comercial,
@@ -30,9 +30,9 @@ function rowToMedicamento(r: MedicamentoRow): Medicamento {
 
 export class MedicamentoService {
   async listarMedicamentos(): Promise<Medicamento[]> {
-    const { data, error } = await supabase.from('medicamentos').select('*')
-    if (error) throw new Error(error.message)
-    return (data ?? []).map((r) => rowToMedicamento(r as MedicamentoRow))
+    const { data: dados, error: erro } = await supabase.from('medicamentos').select('*')
+    if (erro) throw new Error(erro.message)
+    return (dados ?? []).map((r) => linhaParaMedicamento(r as MedicamentoRow))
   }
 
   async adicionarMedicamento(medicamento: Medicamento): Promise<void> {
@@ -43,7 +43,7 @@ export class MedicamentoService {
     validarObrigatorio(medicamento.formaFarmaceutica, 'formaFarmaceutica')
     validarObrigatorio(medicamento.viaAdministracao, 'viaAdministracao')
     validarPositivo(medicamento.concentracao, 'concentracao')
-    const { error } = await supabase.from('medicamentos').insert({
+    const { error: erro } = await supabase.from('medicamentos').insert({
       id: medicamento.id,
       nome_comercial: medicamento.nome,
       principio_ativo: medicamento.principioAtivo,
@@ -54,13 +54,13 @@ export class MedicamentoService {
       via_administracao: medicamento.viaAdministracao,
       tipo_uso: medicamento.tipo,
     })
-    if (error) throw new Error(error.message)
+    if (erro) throw new Error(erro.message)
   }
 
   async buscarPorId(id: number): Promise<Medicamento | undefined> {
-    const { data, error } = await supabase.from('medicamentos').select('*').eq('id', id).single()
-    if (error || !data) return undefined
-    return rowToMedicamento(data as MedicamentoRow)
+    const { data: dados, error: erro } = await supabase.from('medicamentos').select('*').eq('id', id).single()
+    if (erro || !dados) return undefined
+    return linhaParaMedicamento(dados as MedicamentoRow)
   }
 
   async buscarPorNome(nome: string): Promise<Medicamento[]> {

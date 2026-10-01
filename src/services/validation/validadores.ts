@@ -30,17 +30,17 @@ export function validarCep(cep: string, campo = 'cep'): void {
   }
 }
 
-export function validarData(data: Date, campo = 'data'): void {
-  if (!(data instanceof Date) || isNaN(data.getTime())) {
+export function validarData(dados: Date, campo = 'data'): void {
+  if (!(dados instanceof Date) || isNaN(dados.getTime())) {
     throw new ValidacaoError(campo, `O campo "${campo}" deve conter uma data válida.`)
   }
 }
 
-export function validarDataFutura(data: Date, campo = 'data'): void {
-  validarData(data, campo)
+export function validarDataFutura(dados: Date, campo = 'data'): void {
+  validarData(dados, campo)
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
-  if (data < hoje) {
+  if (dados < hoje) {
     throw new ValidacaoError(campo, `O campo "${campo}" não pode ser uma data no passado.`)
   }
 }

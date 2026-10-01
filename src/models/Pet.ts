@@ -43,7 +43,7 @@ export class Pet {
     return this._id
   }
 
-  getId(): number {
+  obterId(): number {
     return this._id
   }
 
@@ -51,7 +51,7 @@ export class Pet {
     return this._nome
   }
 
-  getNome(): string {
+  obterNome(): string {
     return this._nome
   }
 
@@ -59,7 +59,7 @@ export class Pet {
     return this._especie
   }
 
-  getEspecie(): string {
+  obterEspecie(): string {
     return this._especie
   }
 
@@ -75,7 +75,7 @@ export class Pet {
     return this._raca
   }
 
-  getRaca(): string {
+  obterRaca(): string {
     return this._raca
   }
 
@@ -91,7 +91,7 @@ export class Pet {
     return this._tutor
   }
 
-  getTutor(): Tutor {
+  obterTutor(): Tutor {
     return this._tutor
   }
 
@@ -99,7 +99,7 @@ export class Pet {
     return [...this._historicoConsulta]
   }
 
-  getHistoricoConsulta(): Consulta[] {
+  obterHistoricoConsulta(): Consulta[] {
     return [...this._historicoConsulta]
   }
 

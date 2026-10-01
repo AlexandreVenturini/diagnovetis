@@ -15,7 +15,7 @@ export class Medico extends Pessoa {
     return this._especialidade
   }
 
-  getEspecialidade(): string {
+  obterEspecialidade(): string {
     return this._especialidade
   }
 
@@ -31,7 +31,7 @@ export class Medico extends Pessoa {
     return this._crmv
   }
 
-  getCrmv(): string {
+  obterCrmv(): string {
     return this._crmv
   }
 

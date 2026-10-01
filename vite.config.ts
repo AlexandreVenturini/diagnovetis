@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     setupFiles: ['src/tests/setup.ts'],
-    css: { include: [/\/print\/.+\.css/] },
+    css: { include: [/\/impressao\/.+\.css/] },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

@@ -13,7 +13,7 @@ export class DiagnosticoZoonose {
     return this._status
   }
 
-  getStatus(): string {
+  obterStatus(): string {
     return this._status
   }
 
@@ -21,7 +21,7 @@ export class DiagnosticoZoonose {
     return this._observacoes
   }
 
-  getObservacoes(): string {
+  obterObservacoes(): string {
     return this._observacoes
   }
 
@@ -29,7 +29,7 @@ export class DiagnosticoZoonose {
     return this._dataConfirmacao
   }
 
-  getDataConfirmacao(): Date {
+  obterDataConfirmacao(): Date {
     return this._dataConfirmacao
   }
 }

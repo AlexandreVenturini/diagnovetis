@@ -26,7 +26,7 @@ export type ExameFisico = {
 }
 
 export type Alta = {
-  data?: string
+  dados?: string
   condicao?: string
   orientacoes?: string
   prognostico?: string
@@ -87,7 +87,7 @@ export class Consulta {
     return this._id
   }
 
-  getId(): number {
+  obterId(): number {
     return this._id
   }
 
@@ -95,7 +95,7 @@ export class Consulta {
     return this._dataConsulta
   }
 
-  getDataConsulta(): Date {
+  obterDataConsulta(): Date {
     return this._dataConsulta
   }
 
@@ -103,7 +103,7 @@ export class Consulta {
     return this._horario
   }
 
-  getHorario(): string {
+  obterHorario(): string {
     return this._horario
   }
 
@@ -111,7 +111,7 @@ export class Consulta {
     return this._diagnostico
   }
 
-  getDiagnostico(): string {
+  obterDiagnostico(): string {
     return this._diagnostico
   }
 
@@ -127,7 +127,7 @@ export class Consulta {
     return this._observacoes
   }
 
-  getObservacoes(): string {
+  obterObservacoes(): string {
     return this._observacoes
   }
 
@@ -143,7 +143,7 @@ export class Consulta {
     return this._responsavel
   }
 
-  getResponsavel(): Pessoa {
+  obterResponsavel(): Pessoa {
     return this._responsavel
   }
 
@@ -151,7 +151,7 @@ export class Consulta {
     return this._pet
   }
 
-  getPet(): Pet {
+  obterPet(): Pet {
     return this._pet
   }
 
@@ -159,7 +159,7 @@ export class Consulta {
     return [...this._exames]
   }
 
-  getExames(): Exame[] {
+  obterExames(): Exame[] {
     return [...this._exames]
   }
 
@@ -167,7 +167,7 @@ export class Consulta {
     return this._diagnosticoZoonose
   }
 
-  getDiagnosticoZoonose(): DiagnosticoZoonose {
+  obterDiagnosticoZoonose(): DiagnosticoZoonose {
     return this._diagnosticoZoonose
   }
 }

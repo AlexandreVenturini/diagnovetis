@@ -35,16 +35,16 @@ function criarDiagnostico(): DiagnosticoZoonose {
 }
 
 function dataFutura(dias = 1): Date {
-  const data = new Date()
-  data.setDate(data.getDate() + dias)
-  return data
+  const dados = new Date()
+  dados.setDate(dados.getDate() + dias)
+  return dados
 }
 
 function novaConsulta(medico: Medico, pet: Pet, id = 1): Consulta {
   return new Consulta(id, dataFutura(), '09:00', 'Diagnóstico inicial', 'Nenhuma', medico, pet, criarDiagnostico())
 }
 
-let service: ConsultaService
+let servico: ConsultaService
 let tutorService: TutorService
 let petService: PetService
 let medico: Medico
@@ -52,7 +52,7 @@ let tutor: Tutor
 let pet: Pet
 
 beforeEach(async () => {
-  service = new ConsultaService()
+  servico = new ConsultaService()
   tutorService = new TutorService()
   petService = new PetService()
 
@@ -67,49 +67,49 @@ beforeEach(async () => {
 
 describe('ConsultaService.adicionarConsulta', () => {
   it('adiciona consulta válida com sucesso', async () => {
-    await service.adicionarConsulta(novaConsulta(medico, pet))
-    expect(await service.buscarPorId(1)).toBeDefined()
+    await servico.adicionarConsulta(novaConsulta(medico, pet))
+    expect(await servico.buscarPorId(1)).toBeDefined()
   })
 
   it('vincula consulta ao pet após adicionar', async () => {
     const consulta = novaConsulta(medico, pet)
-    await service.adicionarConsulta(consulta)
+    await servico.adicionarConsulta(consulta)
     expect(pet.historicoConsulta).toHaveLength(1)
   })
 
   it('lança erro para id duplicado', async () => {
-    await service.adicionarConsulta(novaConsulta(medico, pet, 1))
-    await expect(service.adicionarConsulta(novaConsulta(medico, pet, 1))).rejects.toThrow(ValidacaoError)
+    await servico.adicionarConsulta(novaConsulta(medico, pet, 1))
+    await expect(servico.adicionarConsulta(novaConsulta(medico, pet, 1))).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para data no passado', async () => {
     const ontem = new Date()
     ontem.setDate(ontem.getDate() - 1)
     const consulta = new Consulta(1, ontem, '09:00', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
-    await expect(service.adicionarConsulta(consulta)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarConsulta(consulta)).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para horário vazio', async () => {
     const consulta = new Consulta(1, dataFutura(), '', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
-    await expect(service.adicionarConsulta(consulta)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarConsulta(consulta)).rejects.toThrow(ValidacaoError)
   })
 
   it('aceita consulta para hoje', async () => {
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
     const consulta = new Consulta(1, hoje, '09:00', 'Diagnóstico', 'Nenhuma', medico, pet, criarDiagnostico())
-    await expect(service.adicionarConsulta(consulta)).resolves.not.toThrow()
+    await expect(servico.adicionarConsulta(consulta)).resolves.not.toThrow()
   })
 })
 
 describe('ConsultaService.buscarPorId', () => {
   it('retorna consulta existente', async () => {
-    await service.adicionarConsulta(novaConsulta(medico, pet))
-    expect((await service.buscarPorId(1))?.horario).toBe('09:00')
+    await servico.adicionarConsulta(novaConsulta(medico, pet))
+    expect((await servico.buscarPorId(1))?.horario).toBe('09:00')
   })
 
   it('retorna undefined para id inexistente', async () => {
-    expect(await service.buscarPorId(99)).toBeUndefined()
+    expect(await servico.buscarPorId(99)).toBeUndefined()
   })
 })
 
@@ -120,12 +120,12 @@ describe('ConsultaService.listarPorPet', () => {
     await tutorService.adicionarTutor(tutor2)
     await petService.adicionarPet(pet2)
 
-    await service.adicionarConsulta(novaConsulta(medico, pet, 1))
-    await service.adicionarConsulta(
+    await servico.adicionarConsulta(novaConsulta(medico, pet, 1))
+    await servico.adicionarConsulta(
       new Consulta(2, dataFutura(2), '10:00', 'Diag', 'Obs', medico, pet2, criarDiagnostico()),
     )
 
-    expect(await service.listarPorPet(1)).toHaveLength(1)
-    expect(await service.listarPorPet(2)).toHaveLength(1)
+    expect(await servico.listarPorPet(1)).toHaveLength(1)
+    expect(await servico.listarPorPet(2)).toHaveLength(1)
   })
 })

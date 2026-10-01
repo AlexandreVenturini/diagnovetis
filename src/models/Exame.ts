@@ -8,7 +8,7 @@ export const EXAME_STATUS = [
 ] as const
 export type ExameStatus = (typeof EXAME_STATUS)[number]
 export type ExameCategoria = 'laboratorial' | 'imagem' | 'outro'
-export const EXAME_STATUS_LABEL: Record<ExameStatus, string> = {
+export const ROTULOS_STATUS_EXAME: Record<ExameStatus, string> = {
   solicitado: 'Solicitado',
   agendado: 'Agendado',
   coletado: 'Coletado',
@@ -51,11 +51,11 @@ export class Exame {
     return this._id
   }
 
-  getId(): number {
+  obterId(): number {
     return this._id
   }
 
-  getNomeExame(): string {
+  obterNomeExame(): string {
     return this._nomeExame
   }
 
@@ -63,7 +63,7 @@ export class Exame {
     return this._dataExame
   }
 
-  getDataExame(): Date {
+  obterDataExame(): Date {
     return this._dataExame
   }
 
@@ -71,7 +71,7 @@ export class Exame {
     return this._resultado
   }
 
-  getResultado(): string {
+  obterResultado(): string {
     return this._resultado
   }
 

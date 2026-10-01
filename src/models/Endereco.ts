@@ -19,7 +19,7 @@ export class Endereco {
     return this._rua
   }
 
-  getRua(): string {
+  obterRua(): string {
     return this._rua
   }
 
@@ -35,7 +35,7 @@ export class Endereco {
     return this._numero
   }
 
-  getNumero(): number {
+  obterNumero(): number {
     return this._numero
   }
 
@@ -51,7 +51,7 @@ export class Endereco {
     return this._bairro
   }
 
-  getBairro(): string {
+  obterBairro(): string {
     return this._bairro
   }
 
@@ -67,7 +67,7 @@ export class Endereco {
     return this._cidade
   }
 
-  getCidade(): string {
+  obterCidade(): string {
     return this._cidade
   }
 
@@ -83,7 +83,7 @@ export class Endereco {
     return this._uf
   }
 
-  getUf(): string {
+  obterUf(): string {
     return this._uf
   }
 
@@ -99,7 +99,7 @@ export class Endereco {
     return this._cep
   }
 
-  getCep(): string {
+  obterCep(): string {
     return this._cep
   }
 

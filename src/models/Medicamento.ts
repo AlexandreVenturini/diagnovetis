@@ -35,7 +35,7 @@ export class Medicamento {
     return this._id
   }
 
-  getId(): number {
+  obterId(): number {
     return this._id
   }
 
@@ -43,7 +43,7 @@ export class Medicamento {
     return this._nomeComercial
   }
 
-  getNome(): string {
+  obterNome(): string {
     return this._nomeComercial
   }
 
@@ -51,7 +51,7 @@ export class Medicamento {
     return this._descricao
   }
 
-  getDescricao(): string {
+  obterDescricao(): string {
     return this._descricao
   }
 
@@ -59,7 +59,7 @@ export class Medicamento {
     return this._principioAtivo
   }
 
-  getPrincipioAtivo(): string {
+  obterPrincipioAtivo(): string {
     return this._principioAtivo
   }
 
@@ -67,7 +67,7 @@ export class Medicamento {
     return this._concentracao
   }
 
-  getConcentracao(): number {
+  obterConcentracao(): number {
     return this._concentracao
   }
 
@@ -75,7 +75,7 @@ export class Medicamento {
     return this._unidadeConcentracao
   }
 
-  getUnidadeConcentracao(): string {
+  obterUnidadeConcentracao(): string {
     return this._unidadeConcentracao
   }
 
@@ -83,7 +83,7 @@ export class Medicamento {
     return this._formaFarmaceutica
   }
 
-  getFormaFarmaceutica(): string {
+  obterFormaFarmaceutica(): string {
     return this._formaFarmaceutica
   }
 
@@ -91,7 +91,7 @@ export class Medicamento {
     return this._viaAdministracao
   }
 
-  getViaAdministracao(): string {
+  obterViaAdministracao(): string {
     return this._viaAdministracao
   }
 
@@ -99,7 +99,7 @@ export class Medicamento {
     return this._tipoUso
   }
 
-  getTipo(): string {
+  obterTipo(): string {
     return this._tipoUso
   }
 }

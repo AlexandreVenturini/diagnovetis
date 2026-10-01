@@ -1,77 +1,77 @@
 import { useEffect, useRef, useState } from 'react'
-import { LoginPage } from './features/auth/LoginPage'
-import { RegisterPage } from './features/auth/RegisterPage'
-import { checkAccess, type UserRole } from './features/auth/profile'
-import { VeterinarianDashboard } from './features/veterinarian/VeterinarianDashboard'
-import { AttendantDashboard } from './features/attendant/AttendantDashboard'
-import { AuthService, type SessionUser } from './services/AuthService'
+import { PaginaLogin } from './features/acesso/PaginaLogin'
+import { PaginaCadastro } from './features/acesso/PaginaCadastro'
+import { verificarAcesso, type Papel } from './features/acesso/perfil'
+import { PainelVeterinario } from './features/veterinario/PainelVeterinario'
+import { PainelEstudante } from './features/estudante/PainelEstudante'
+import { AutenticacaoService, type UsuarioSessao } from './services/AutenticacaoService'
 
-type AuthUser = { email: string; name: string; isAdmin: boolean }
+type UsuarioAutenticado = { email: string; nome: string; ehAdmin: boolean }
 
-const authService = new AuthService()
+const autenticacaoService = new AutenticacaoService()
 
 function App() {
-  const [role, setRole] = useState<UserRole | null>(null)
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [checkingSession, setCheckingSession] = useState(true)
-  const [registering, setRegistering] = useState(false)
-  const [notice, setNotice] = useState('')
-  const requestId = useRef(0)
+  const [papel, setPapel] = useState<Papel | null>(null)
+  const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(null)
+  const [verificandoSessao, setVerificandoSessao] = useState(true)
+  const [cadastrando, setCadastrando] = useState(false)
+  const [aviso, setAviso] = useState('')
+  const idRequisicao = useRef(0)
 
-  async function applySession(sessionUser: SessionUser | null) {
-    const current = ++requestId.current
+  async function aplicarSessao(usuarioSessao: UsuarioSessao | null) {
+    const atual = ++idRequisicao.current
 
-    if (!sessionUser) {
-      setRole(null)
-      setUser(null)
-      setCheckingSession(false)
+    if (!usuarioSessao) {
+      setPapel(null)
+      setUsuario(null)
+      setVerificandoSessao(false)
       return
     }
 
-    const access = await checkAccess(sessionUser.id)
-    if (current !== requestId.current) return
+    const acesso = await verificarAcesso(usuarioSessao.id)
+    if (atual !== idRequisicao.current) return
 
-    if (!access.ok) {
-      setRole(null)
-      setUser(null)
-      setNotice(access.message)
-      setCheckingSession(false)
-      await authService.sair()
+    if (!acesso.ok) {
+      setPapel(null)
+      setUsuario(null)
+      setAviso(acesso.mensagem)
+      setVerificandoSessao(false)
+      await autenticacaoService.sair()
       return
     }
 
-    setNotice('')
-    setRegistering(false)
-    setRole(access.role)
-    setUser({ email: access.profile.email, name: access.profile.name, isAdmin: access.profile.is_admin })
-    setCheckingSession(false)
+    setAviso('')
+    setCadastrando(false)
+    setPapel(acesso.papel)
+    setUsuario({ email: acesso.perfil.email, nome: acesso.perfil.nome, ehAdmin: acesso.perfil.ehAdmin })
+    setVerificandoSessao(false)
   }
 
   useEffect(() => {
-    let active = true
+    let ativo = true
 
-    authService.usuarioDaSessao().then((sessionUser) => {
-      if (active) void applySession(sessionUser)
+    autenticacaoService.usuarioDaSessao().then((usuarioSessao) => {
+      if (ativo) void aplicarSessao(usuarioSessao)
     })
 
-    const stop = authService.observarSessao((event, sessionUser) => {
-      if (!active || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') return
+    const parar = autenticacaoService.observarSessao((evento, usuarioSessao) => {
+      if (!ativo || evento === 'TOKEN_REFRESHED' || evento === 'INITIAL_SESSION') return
       setTimeout(() => {
-        if (active) void applySession(sessionUser)
+        if (ativo) void aplicarSessao(usuarioSessao)
       }, 0)
     })
 
     return () => {
-      active = false
-      stop()
+      ativo = false
+      parar()
     }
   }, [])
 
-  async function logout() {
-    await authService.sair()
+  async function sair() {
+    await autenticacaoService.sair()
   }
 
-  if (checkingSession) {
+  if (verificandoSessao) {
     return (
       <main className="auth-loading" role="status">
         Verificando sessão...
@@ -79,25 +79,25 @@ function App() {
     )
   }
 
-  if (role === 'veterinarian') {
-    return <VeterinarianDashboard onLogout={logout} user={user} />
+  if (papel === 'veterinarian') {
+    return <PainelVeterinario aoSair={sair} usuario={usuario} />
   }
 
-  if (role === 'attendant') {
-    return <AttendantDashboard onLogout={logout} user={user} />
+  if (papel === 'attendant') {
+    return <PainelEstudante aoSair={sair} usuario={usuario} />
   }
 
-  if (registering) {
-    return <RegisterPage onBack={() => setRegistering(false)} />
+  if (cadastrando) {
+    return <PaginaCadastro aoVoltar={() => setCadastrando(false)} />
   }
 
   return (
-    <LoginPage
-      notice={notice}
-      onDismissNotice={() => setNotice('')}
-      onRegister={() => {
-        setNotice('')
-        setRegistering(true)
+    <PaginaLogin
+      aviso={aviso}
+      aoDispensarAviso={() => setAviso('')}
+      aoCadastrar={() => {
+        setAviso('')
+        setCadastrando(true)
       }}
     />
   )

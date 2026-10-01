@@ -15,65 +15,65 @@ function novaZoonose(id = 1, grau = 'alto'): Zoonose {
   )
 }
 
-let service: ZoonoseService
+let servico: ZoonoseService
 
 beforeEach(() => {
-  service = new ZoonoseService()
+  servico = new ZoonoseService()
 })
 
 describe('ZoonoseService.adicionarZoonose', () => {
   it('adiciona zoonose válida com sucesso', async () => {
-    await service.adicionarZoonose(novaZoonose())
-    expect(await service.listarZoonoses()).toHaveLength(1)
+    await servico.adicionarZoonose(novaZoonose())
+    expect(await servico.listarZoonoses()).toHaveLength(1)
   })
 
   it('lança erro para id duplicado', async () => {
-    await service.adicionarZoonose(novaZoonose(1))
-    await expect(service.adicionarZoonose(novaZoonose(1))).rejects.toThrow(ValidacaoError)
+    await servico.adicionarZoonose(novaZoonose(1))
+    await expect(servico.adicionarZoonose(novaZoonose(1))).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para nome vazio', async () => {
     const z = new Zoonose(1, '', 'Leishmania infantum', 'Febre', 'Vacinação', 'alto')
-    await expect(service.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para agente etiológico vazio', async () => {
     const z = new Zoonose(1, 'Leishmaniose', '', 'Febre', 'Vacinação', 'alto')
-    await expect(service.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para sintomas vazios', async () => {
     const z = new Zoonose(1, 'Leishmaniose', 'Leishmania infantum', '', 'Vacinação', 'alto')
-    await expect(service.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para medidas preventivas vazias', async () => {
     const z = new Zoonose(1, 'Leishmaniose', 'Leishmania infantum', 'Febre', '', 'alto')
-    await expect(service.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para grau de risco inválido', async () => {
     const z = new Zoonose(1, 'Leishmaniose', 'Leishmania infantum', 'Febre', 'Vacinação', 'crítico')
-    await expect(service.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarZoonose(z)).rejects.toThrow(ValidacaoError)
   })
 
   it('aceita grau de risco "baixo"', async () => {
-    await expect(service.adicionarZoonose(novaZoonose(1, 'baixo'))).resolves.not.toThrow()
+    await expect(servico.adicionarZoonose(novaZoonose(1, 'baixo'))).resolves.not.toThrow()
   })
 
   it('aceita grau de risco "medio"', async () => {
-    await expect(service.adicionarZoonose(novaZoonose(1, 'medio'))).resolves.not.toThrow()
+    await expect(servico.adicionarZoonose(novaZoonose(1, 'medio'))).resolves.not.toThrow()
   })
 })
 
 describe('ZoonoseService.buscarPorNome', () => {
   it('encontra zoonose pelo nome parcial', async () => {
-    await service.adicionarZoonose(novaZoonose())
-    expect(await service.buscarPorNome('leish')).toHaveLength(1)
+    await servico.adicionarZoonose(novaZoonose())
+    expect(await servico.buscarPorNome('leish')).toHaveLength(1)
   })
 
   it('retorna lista vazia para nome inexistente', async () => {
-    await service.adicionarZoonose(novaZoonose())
-    expect(await service.buscarPorNome('raiva')).toHaveLength(0)
+    await servico.adicionarZoonose(novaZoonose())
+    expect(await servico.buscarPorNome('raiva')).toHaveLength(0)
   })
 })

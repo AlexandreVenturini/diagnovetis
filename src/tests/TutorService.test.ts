@@ -13,53 +13,53 @@ function novoTutor(id = 1): Tutor {
   return new Tutor(id, 'Ana Costa', '27933001234', 'ana@email.com', new Date('2024-01-01'), criarEndereco())
 }
 
-let service: TutorService
+let servico: TutorService
 
 beforeEach(() => {
-  service = new TutorService()
+  servico = new TutorService()
 })
 
 describe('TutorService.adicionarTutor', () => {
   it('adiciona tutor válido com sucesso', async () => {
-    await service.adicionarTutor(novoTutor())
-    expect(await service.listarTutores()).toHaveLength(1)
+    await servico.adicionarTutor(novoTutor())
+    expect(await servico.listarTutores()).toHaveLength(1)
   })
 
   it('lança erro para id duplicado', async () => {
-    await service.adicionarTutor(novoTutor(1))
-    await expect(service.adicionarTutor(novoTutor(1))).rejects.toThrow(ValidacaoError)
+    await servico.adicionarTutor(novoTutor(1))
+    await expect(servico.adicionarTutor(novoTutor(1))).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para nome vazio', async () => {
     const tutor = new Tutor(1, '', '27933001234', 'ana@email.com', new Date(), criarEndereco())
-    await expect(service.adicionarTutor(tutor)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarTutor(tutor)).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para e-mail inválido', async () => {
     const tutor = new Tutor(1, 'Ana', '27933001234', 'email-invalido', new Date(), criarEndereco())
-    await expect(service.adicionarTutor(tutor)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarTutor(tutor)).rejects.toThrow(ValidacaoError)
   })
 
   it('lança erro para CEP inválido', async () => {
     const endereco = new Endereco('Rua A', 1, 'Bairro', 'Cidade', 'ES', '123')
     const tutor = new Tutor(1, 'Ana', '27933001234', 'ana@email.com', new Date(), endereco)
-    await expect(service.adicionarTutor(tutor)).rejects.toThrow(ValidacaoError)
+    await expect(servico.adicionarTutor(tutor)).rejects.toThrow(ValidacaoError)
   })
 })
 
 describe('TutorService.buscarPorNome', () => {
   it('encontra tutores pelo nome parcial', async () => {
-    await service.adicionarTutor(novoTutor(1))
-    await service.adicionarTutor(
+    await servico.adicionarTutor(novoTutor(1))
+    await servico.adicionarTutor(
       new Tutor(2, 'Carlos Souza', '27988880000', 'carlos@email.com', new Date(), criarEndereco()),
     )
-    expect(await service.buscarPorNome('ana')).toHaveLength(1)
+    expect(await servico.buscarPorNome('ana')).toHaveLength(1)
   })
 })
 
 describe('TutorService.atualizarTutor', () => {
   it('atualiza tutor existente', async () => {
-    await service.adicionarTutor(novoTutor())
+    await servico.adicionarTutor(novoTutor())
     const atualizado = new Tutor(
       1,
       'Ana Oliveira',
@@ -68,7 +68,7 @@ describe('TutorService.atualizarTutor', () => {
       new Date('2024-01-01'),
       criarEndereco(),
     )
-    await service.atualizarTutor(atualizado)
-    expect((await service.buscarPorId(1))?.nome).toBe('Ana Oliveira')
+    await servico.atualizarTutor(atualizado)
+    expect((await servico.buscarPorId(1))?.nome).toBe('Ana Oliveira')
   })
 })
