@@ -188,3 +188,9 @@
   display: flex;
   gap: 0.5rem;
 }
+
+.details-error {
+  margin: -8px 0 20px;
+  color: #a42b2b;
+  font-size: 13px;
+}

@@ -10,15 +10,18 @@ type ModuloPetsProps = {
   petsApi: ReturnType<typeof usePets>
   telaInicial: TelaPets
   aviso?: ReactNode
+  podeRemover?: boolean
 }
 
-export function ModuloPets({ petsApi, telaInicial, aviso }: ModuloPetsProps) {
+export function ModuloPets({ petsApi, telaInicial, aviso, podeRemover = false }: ModuloPetsProps) {
   const { pets, criarPet, criarTutor, atualizarPet, removerPet } = petsApi
   const [tela, setTela] = useState<TelaPets>(telaInicial)
   const [selecionado, setSelecionado] = useState<PetResumo | null>(null)
+  const [erroRemocao, setErroRemocao] = useState('')
 
   function aberto(proximo: TelaPets, pet: PetResumo) {
     setSelecionado(pet)
+    setErroRemocao('')
     setTela(proximo)
   }
 
@@ -34,8 +37,13 @@ export function ModuloPets({ petsApi, telaInicial, aviso }: ModuloPetsProps) {
   }
 
   async function tratarRemocao(pet: PetResumo) {
-    await removerPet(pet.id)
-    setTela('lista')
+    if (!window.confirm(`Remover ${pet.nome} do cadastro? Essa ação não pode ser desfeita.`)) return
+    try {
+      await removerPet(pet.id)
+      setTela('lista')
+    } catch (falha) {
+      setErroRemocao((falha as Error).message)
+    }
   }
 
   return (
@@ -62,7 +70,12 @@ export function ModuloPets({ petsApi, telaInicial, aviso }: ModuloPetsProps) {
         />
       )}
       {tela === 'detalhes' && selecionado && (
-        <DetalhesPet pet={selecionado} aoVoltar={() => setTela('lista')} aoRemover={() => tratarRemocao(selecionado)} />
+        <DetalhesPet
+          pet={selecionado}
+          erro={erroRemocao}
+          aoVoltar={() => setTela('lista')}
+          aoRemover={podeRemover ? () => tratarRemocao(selecionado) : undefined}
+        />
       )}
     </>
   )

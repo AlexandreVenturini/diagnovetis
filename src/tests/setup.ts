@@ -250,11 +250,13 @@ export const supabaseMock = {
         return chain
       },
 
-      delete() {
+      delete(opcoes?: { count?: string }) {
         return {
           eq(col: string, val: unknown) {
+            const antes = getTable(table).length
             supabaseTables[table] = getTable(table).filter((r) => r[col] !== val)
-            return Promise.resolve({ error: null })
+            const removidos = antes - supabaseTables[table].length
+            return Promise.resolve({ error: null, count: opcoes?.count ? removidos : null })
           },
         }
       },

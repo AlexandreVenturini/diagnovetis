@@ -54,6 +54,7 @@ export function PainelVeterinario({ aoSair, usuario }: PainelVeterinarioProps) {
           petsApi={petsApi}
           telaInicial={navegacao.entradaPets.tela}
           aviso={AVISO_VETERINARIO}
+          podeRemover
         />
       )}
       {navegacao.moduloAtivo === 'agenda' && (

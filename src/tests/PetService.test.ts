@@ -3,7 +3,7 @@ import './setup'
 import { Pet } from '../models/Pet'
 import { Tutor } from '../models/Tutor'
 import { Endereco } from '../models/Endereco'
-import { PetService } from '../services/PetService'
+import { PetService, PET_NAO_REMOVIVEL } from '../services/PetService'
 import { TutorService } from '../services/TutorService'
 import { ValidacaoError } from '../services/validation/ValidacaoError'
 
@@ -78,6 +78,12 @@ describe('PetService.removerPet', () => {
     await petService.adicionarPet(novoPet(tutor))
     await petService.removerPet(1)
     expect(await petService.listarPets()).toHaveLength(0)
+  })
+
+  it('avisa quando o banco não remove o pet', async () => {
+    await petService.adicionarPet(novoPet(tutor))
+    await expect(petService.removerPet(99)).rejects.toThrow(PET_NAO_REMOVIVEL)
+    expect(await petService.listarPets()).toHaveLength(1)
   })
 })
 

@@ -3,6 +3,7 @@ import { formatarIdadePet } from './idadePet'
 
 type DetalhesPetProps = {
   pet: PetResumo
+  erro?: string
   aoVoltar: () => void
   aoRemover?: () => void
 }
@@ -16,7 +17,7 @@ function ItemDetalhe({ rotulo, valor }: { rotulo: string; valor: string }) {
   )
 }
 
-export function DetalhesPet({ pet, aoVoltar, aoRemover }: DetalhesPetProps) {
+export function DetalhesPet({ pet, erro, aoVoltar, aoRemover }: DetalhesPetProps) {
   return (
     <section className="content-card details-card">
       <div className="section-heading">
@@ -32,6 +33,11 @@ export function DetalhesPet({ pet, aoVoltar, aoRemover }: DetalhesPetProps) {
           </button>
         </div>
       </div>
+      {erro && (
+        <p className="details-error" role="alert">
+          {erro}
+        </p>
+      )}
       <div className="details-grid">
         <ItemDetalhe rotulo="Nome" valor={pet.nome} />
         <ItemDetalhe rotulo="Espécie" valor="Cão" />

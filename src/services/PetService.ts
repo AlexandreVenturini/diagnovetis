@@ -6,6 +6,9 @@ import { validarObrigatorio, validarIdUnico } from './validation/validadores'
 
 const tutorService = new TutorService()
 
+export const PET_NAO_REMOVIVEL =
+  'Este animal não pode ser removido: só veterinários removem, e apenas animais sem histórico na clínica (atendimento, agendamento, receita ou óbito).'
+
 interface PetRow {
   id: number
   nome: string
@@ -120,6 +123,8 @@ export class PetService {
   }
 
   async removerPet(id: number): Promise<void> {
-    await supabase.from('pets').delete().eq('id', id)
+    const { error: erro, count: removidos } = await supabase.from('pets').delete({ count: 'exact' }).eq('id', id)
+    if (erro) throw new Error(erro.message)
+    if (!removidos) throw new Error(PET_NAO_REMOVIVEL)
   }
 }
