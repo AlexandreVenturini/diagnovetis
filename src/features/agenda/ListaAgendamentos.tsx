@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Icone } from '../../components/common/Icone'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
+import { CampoBusca } from '../../components/common/CampoBusca'
+import { CampoSelecao } from '../../components/common/CampoSelecao'
+import { CabecalhoLista } from '../../components/common/CabecalhoLista'
 import { FiltroPeriodo } from '../shared/FiltroPeriodo'
 import { nomePeriodo, intervaloPeriodo, type Periodo } from '../shared/periodo'
 import type { Agendamento, SituacaoAgendamento } from './agendaTipos'
@@ -76,66 +79,42 @@ export function ListaAgendamentos({
 
   return (
     <section className="appointment-list">
-      <div className="section-heading appointment-title-row">
-        <div>
-          <h2>Agenda de Consultas</h2>
-          <p className="section-subtitle">Organize atendimentos, retornos e vacinações.</p>
-        </div>
-        <button className="primary-button new-button" onClick={aoCriar}>
-          <Icone>
-            <rect x="3" y="5" width="18" height="16" rx="2" />
-            <path d="M7 3v4m10-4v4M3 10h18" />
-          </Icone>
-          Novo Agendamento
-        </button>
-      </div>
+      <CabecalhoTela
+        titulo="Agenda de Consultas"
+        descricao="Organize atendimentos, retornos e vacinações."
+        acoes={
+          <button className="primary-button new-button" onClick={aoCriar}>
+            <span>＋</span> Novo Agendamento
+          </button>
+        }
+      />
 
       <FiltroPeriodo rotulo="Visualização da agenda" valor={periodo} aoAlterar={setPeriodo} buscando={buscando}>
-        <label className="agenda-search">
-          <span>Buscar</span>
-          <input
-            value={busca}
-            onChange={(evento) => setBusca(evento.target.value)}
-            placeholder="Responsável ou animal"
-          />
-        </label>
-        <label>
-          <span>Veterinário</span>
-          <select value={veterinario} onChange={(evento) => setVeterinario(evento.target.value)}>
-            <option value="todos">Todos</option>
-            {veterinarios.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Serviço</span>
-          <select value={servico} onChange={(evento) => setServico(evento.target.value)}>
-            <option value="todos">Todos</option>
-            {servicos.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Situação</span>
-          <select value={status} onChange={(evento) => setStatus(evento.target.value as SituacaoAgendamento | 'todos')}>
-            <option value="todos">Todas</option>
-            {Object.entries(ROTULOS_SITUACAO).map(([valor, rotulo]) => (
-              <option value={valor} key={valor}>
-                {rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CampoBusca valor={busca} aoAlterar={setBusca} placeholder="Animal ou responsável" />
+        <CampoSelecao
+          rotulo="Veterinário"
+          valor={veterinario}
+          aoAlterar={setVeterinario}
+          opcoes={veterinarios}
+          valorTodos="todos"
+        />
+        <CampoSelecao rotulo="Serviço" valor={servico} aoAlterar={setServico} opcoes={servicos} valorTodos="todos" />
+        <CampoSelecao
+          rotulo="Situação"
+          valor={status}
+          aoAlterar={(valor) => setStatus(valor as SituacaoAgendamento | 'todos')}
+          opcoes={Object.entries(ROTULOS_SITUACAO).map(([valor, rotulo]) => ({ valor, rotulo }))}
+          rotuloTodos="Todas"
+          valorTodos="todos"
+        />
       </FiltroPeriodo>
 
       <div className="agenda-grid enhanced-agenda-grid">
         <div className="upcoming-column">
-          <div className="agenda-list-heading">
-            <h3>{buscando ? 'Resultado da busca' : `Consultas ${nomePeriodo(periodo.visao)}`}</h3>
-            <span>{agendamentosVisiveis.length} resultado(s)</span>
-          </div>
+          <CabecalhoLista
+            titulo={buscando ? 'Resultado da busca' : `Consultas ${nomePeriodo(periodo.visao)}`}
+            contagem={`${agendamentosVisiveis.length} resultado(s)`}
+          />
           <div className="appointment-cards">
             {carregando && <div className="empty-appointments">Carregando agenda...</div>}
             {!carregando && agendamentosVisiveis.length === 0 && (

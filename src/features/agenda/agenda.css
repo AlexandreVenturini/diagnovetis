@@ -1,20 +1,6 @@
-.appointment-list {
-  margin-top: 34px;
-}
-
-.appointment-title-row h2 {
-  color: var(--green-dark);
-}
-
-.section-subtitle {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .enhanced-agenda-grid {
   grid-template-columns: minmax(0, 2.3fr) minmax(300px, 0.9fr);
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 .agenda-grid {
@@ -22,11 +8,6 @@
   grid-template-columns: minmax(0, 2.05fr) minmax(285px, 1fr);
   gap: 22px;
   margin-top: 25px;
-}
-
-.agenda-grid h3 {
-  margin: 0 0 16px;
-  font-size: 16px;
 }
 
 .appointment-cards {
@@ -327,7 +308,6 @@
 }
 
 .appointment-form-card {
-  margin-top: 31px;
   padding: 27px 24px 23px;
 }
 
@@ -486,54 +466,14 @@
   text-align: center;
 }
 
-.appointment-input-with-icon .ui-icon {
-  position: absolute;
-  top: 10px;
-  left: 12px;
-  width: 20px;
-  height: 20px;
-  color: #555;
-}
-
 .appointment-form .form-actions {
   margin-top: -1px;
-}
-
-.record-search .ui-icon {
-  color: #555;
-}
-
-.sheet-history-entry.expanded .appointment-chevron {
-  transform: rotate(180deg);
-}
-
-.record-file-entries article.expanded .appointment-chevron {
-  transform: rotate(180deg);
-}
-
-.zoonosis-search-input .ui-icon {
-  color: #667068;
-}
-
-.zoonosis-detail-section.warning h4,
-.zoonosis-detail-section.warning h4 span {
-  color: #b33c35;
-}
-
-.medications-header h2 .ui-icon {
-  width: 23px;
-  height: 23px;
-}
-
-.medication-search .ui-icon {
-  color: #555;
 }
 
 @media (max-width: 900px) {
   .dog-form,
   .appointment-form,
-  .consultation-form-grid,
-  .record-form {
+  .consultation-form-grid {
     grid-template-columns: 1fr;
   }
 
@@ -547,14 +487,6 @@
 }
 
 @media (max-width: 620px) {
-  .appointment-list {
-    margin-top: 25px;
-  }
-
-  .appointment-title-row {
-    align-items: center;
-  }
-
   .appointment-card-summary {
     min-height: 0;
     flex-direction: column;

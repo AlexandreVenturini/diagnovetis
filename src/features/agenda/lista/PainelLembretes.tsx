@@ -1,3 +1,4 @@
+import { CabecalhoLista } from '../../../components/common/CabecalhoLista'
 import type { Agendamento, LembreteAgendamento } from '../agendaTipos'
 import { formatarDataAgenda } from './filtrosAgenda'
 
@@ -9,7 +10,7 @@ type PainelLembretesProps = {
 export function PainelLembretes({ lembretes, aoConcluir }: PainelLembretesProps) {
   return (
     <aside className="reminders-column">
-      <h3>Lembretes</h3>
+      <CabecalhoLista titulo="Lembretes" contagem={`${lembretes.length} pendente(s)`} />
       <div className="reminders-panel">
         {lembretes.length === 0 && <p className="empty-reminders">Nenhum lembrete pendente.</p>}
         {lembretes.slice(0, 6).map(({ agendamento, lembrete }) => (

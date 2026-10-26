@@ -1,4 +1,6 @@
 import type { ReceitaEmitida } from '../../../services/ReceitaService'
+import { CampoBusca } from '../../../components/common/CampoBusca'
+import { CampoSelecao } from '../../../components/common/CampoSelecao'
 import { FiltroPeriodo } from '../../shared/FiltroPeriodo'
 import type { FiltrosHistorico } from './filtrosHistorico'
 
@@ -26,42 +28,23 @@ export function FiltrosHistoricoReceitas({
       aoAlterar={(periodo) => aoAlterar({ ...valor, ...periodo })}
       buscando={Boolean(valor.busca.trim())}
     >
-      <label>
-        <span>Buscar receitas</span>
-        <input
-          value={valor.busca}
-          onChange={(evento) => aoAlterar({ ...valor, busca: evento.target.value })}
-          placeholder="Animal, responsável, veterinário ou medicamento"
-        />
-      </label>
-      <label>
-        <span>Veterinário</span>
-        <select
-          value={valor.veterinario}
-          onChange={(evento) => aoAlterar({ ...valor, veterinario: evento.target.value })}
-        >
-          <option value="">Todos</option>
-          {veterinarios.map((nome) => (
-            <option key={nome} value={nome}>
-              {nome}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        <span>Medicamento</span>
-        <select
-          value={valor.medicamento}
-          onChange={(evento) => aoAlterar({ ...valor, medicamento: evento.target.value })}
-        >
-          <option value="">Todos</option>
-          {medicamentos.map((nome) => (
-            <option key={nome} value={nome}>
-              {nome}
-            </option>
-          ))}
-        </select>
-      </label>
+      <CampoBusca
+        valor={valor.busca}
+        aoAlterar={(busca) => aoAlterar({ ...valor, busca })}
+        placeholder="Animal, responsável, veterinário ou medicamento"
+      />
+      <CampoSelecao
+        rotulo="Veterinário"
+        valor={valor.veterinario}
+        aoAlterar={(veterinario) => aoAlterar({ ...valor, veterinario })}
+        opcoes={veterinarios}
+      />
+      <CampoSelecao
+        rotulo="Medicamento"
+        valor={valor.medicamento}
+        aoAlterar={(medicamento) => aoAlterar({ ...valor, medicamento })}
+        opcoes={medicamentos}
+      />
     </FiltroPeriodo>
   )
 }

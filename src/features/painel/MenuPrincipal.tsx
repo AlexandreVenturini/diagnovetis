@@ -50,12 +50,14 @@ const TRACOS: Record<NomeIcone, ReactNode> = {
 type MenuPrincipalProps = {
   moduloAtivo: ModuloPainel
   aoSelecionar: (modulo: ModuloPainel) => void
+  modulos?: ModuloPainel[]
 }
 
-export function MenuPrincipal({ moduloAtivo, aoSelecionar }: MenuPrincipalProps) {
+export function MenuPrincipal({ moduloAtivo, aoSelecionar, modulos }: MenuPrincipalProps) {
+  const itens = modulos ? ITENS_MENU.filter((item) => modulos.includes(item.modulo)) : ITENS_MENU
   return (
     <nav className="main-nav" aria-label="Módulos do sistema">
-      {ITENS_MENU.map(({ rotulo, icone, modulo }) => (
+      {itens.map(({ rotulo, icone, modulo }) => (
         <button
           className={modulo === moduloAtivo ? 'active' : ''}
           key={rotulo}

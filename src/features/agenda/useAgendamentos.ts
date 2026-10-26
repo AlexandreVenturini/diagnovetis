@@ -12,7 +12,9 @@ export function useAgendamentos(intervalo: Intervalo | null = null) {
     itens: agendamentos,
     carregando,
     erro,
+    atualizadoEm,
     recarregar,
+    reiniciar,
     inserirOuAtualizar,
   } = useDadosPorIntervalo(buscarAgendamentos, (item: Agendamento) => item.id, intervalo)
   const [agendamentosComLembrete, setAgendamentosComLembrete] = useState<Agendamento[]>([])
@@ -63,11 +65,18 @@ export function useAgendamentos(intervalo: Intervalo | null = null) {
     [agendamentos, inserirOuAtualizar, recarregar, recarregarLembretes],
   )
 
+  const atualizarTudo = useCallback(() => {
+    reiniciar()
+    void recarregarLembretes()
+  }, [reiniciar, recarregarLembretes])
+
   return {
     agendamentos,
     agendamentosComLembrete,
     carregando,
     erro,
+    atualizadoEm,
+    atualizarTudo,
     temConflito,
     criarAgendamento,
     atualizarAgendamento,

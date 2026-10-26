@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react'
+import { Abas } from '../../components/common/Abas'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
+import { StatusAtualizacao } from '../../components/common/StatusAtualizacao'
 import { useCondicoes } from './useCondicoes'
 import { CatalogoCondicoes } from './CatalogoCondicoes'
 import { FiltrosCondicoes } from './FiltrosCondicoes'
@@ -31,11 +34,6 @@ function indicadoresCondicoes(itens: Condicao[]) {
   ]
 }
 
-function textoSituacao(carregando: boolean, erro: string) {
-  if (carregando) return 'Atualizando…'
-  return erro ? 'Falha na atualização' : 'Sistema conectado'
-}
-
 export function ModuloCondicoes() {
   const { zoonoses: itens, carregando, erro, atualizadoEm, recarregar, criarCondicao } = useCondicoes()
   const [filtros, setFiltros] = useState<FiltrosClinicos>(FILTROS_VAZIOS)
@@ -52,31 +50,29 @@ export function ModuloCondicoes() {
 
   return (
     <section className="conditions-module">
-      <header className="conditions-heading">
-        <div>
-          <span className="conditions-eyebrow">BASE CLÍNICA CANINA</span>
-          <h2>Condições clínicas</h2>
-          <p>Consulte doenças, síndromes, zoonoses e protocolos voltados à clínica de cães.</p>
-        </div>
-        <div className="conditions-sync">
-          <div className={`conditions-status${erro ? ' offline' : ''}`} role="status">
-            <strong>
-              <i />
-              {textoSituacao(carregando, erro)}
-            </strong>
-            <small>
-              {atualizadoEm
-                ? `Atualizado às ${atualizadoEm.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-                : 'Aguardando dados'}
-            </small>
-          </div>
-          <button className="outline-button" disabled={carregando} onClick={() => void recarregar()}>
-            Atualizar dados
-          </button>
-        </div>
-      </header>
+      <CabecalhoTela
+        titulo="Condições Clínicas"
+        descricao="Consulte doenças, síndromes, zoonoses e protocolos voltados à clínica de cães."
+        acoes={
+          <StatusAtualizacao
+            carregando={carregando}
+            erro={erro}
+            atualizadoEm={atualizadoEm}
+            aoAtualizar={() => void recarregar()}
+          />
+        }
+      />
+      <Abas
+        rotulo="Condições clínicas"
+        abas={[
+          { id: 'consulta', rotulo: 'Consultar' },
+          { id: 'cadastro', rotulo: 'Cadastrar Condição' },
+        ]}
+        ativa={tela}
+        aoSelecionar={setTela}
+      />
       {erro && (
-        <p className="conditions-error" role="alert">
+        <p className="page-error" role="alert">
           {erro}
           {atualizadoEm && ' Os últimos dados carregados foram mantidos.'}
         </p>

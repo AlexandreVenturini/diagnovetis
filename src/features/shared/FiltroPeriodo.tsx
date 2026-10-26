@@ -13,7 +13,7 @@ type FiltroPeriodoProps = {
 export function FiltroPeriodo({ valor, aoAlterar, rotulo, buscando = false, children }: FiltroPeriodoProps) {
   const mostrarTodos = valor.visao === 'tudo'
   return (
-    <div className="agenda-toolbar content-card">
+    <div className="period-filter content-card">
       <div className="view-switch" aria-label={rotulo}>
         {VISOES_PERIODO.map(({ visao, rotulo: texto }) => (
           <button
@@ -57,9 +57,9 @@ export function FiltroPeriodo({ valor, aoAlterar, rotulo, buscando = false, chil
           Hoje
         </button>
       </div>
-      <div className="agenda-filters">
+      <div className="filter-fields">
         {children}
-        <label>
+        <label className="filter-field">
           <span>Ir para data</span>
           <input
             type="date"

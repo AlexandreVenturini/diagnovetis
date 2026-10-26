@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Abas } from '../../components/common/Abas'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
 import { CartaoUsuarioPendente, CartaoUsuario } from './CartoesUsuario'
 import { useUsuariosAdmin } from './useUsuariosAdmin'
 
@@ -50,28 +52,26 @@ export function PainelAdmin({ aoFechar }: PainelAdminProps) {
 
   return (
     <div className="admin-panel">
-      <div className="admin-header">
-        <div>
-          <p className="admin-eyebrow">Área restrita</p>
-          <h2>Painel Administrativo</h2>
-        </div>
-        <button className="admin-back-button" onClick={aoFechar}>
-          ← Voltar
-        </button>
-      </div>
+      <CabecalhoTela
+        voltar={{ rotulo: 'Voltar ao painel', aoClicar: aoFechar }}
+        titulo="Painel Administrativo"
+        descricao="Área restrita: aprove os cadastros e gerencie os usuários do sistema."
+      />
+      <Abas
+        rotulo="Usuários"
+        abas={[
+          { id: 'pendentes', rotulo: 'Pendentes', contador: pendentes.length },
+          { id: 'usuarios', rotulo: 'Usuários' },
+        ]}
+        ativa={aba}
+        aoSelecionar={setAba}
+      />
 
-      <div className="admin-tabs">
-        {(['pendentes', 'usuarios'] as const).map((item) => (
-          <button key={item} className={`admin-tab${aba === item ? ' active' : ''}`} onClick={() => setAba(item)}>
-            {item === 'pendentes' && pendentes.length > 0 && (
-              <span className="admin-tab-count">{pendentes.length}</span>
-            )}
-            {item === 'pendentes' ? 'Pendentes' : 'Usuários'}
-          </button>
-        ))}
-      </div>
-
-      {admin.mensagem && <div className="admin-error">{admin.mensagem}</div>}
+      {admin.mensagem && (
+        <p className="page-error" role="alert">
+          {admin.mensagem}
+        </p>
+      )}
 
       {renderizarConteudo()}
     </div>

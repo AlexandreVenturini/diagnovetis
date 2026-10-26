@@ -23,12 +23,14 @@
 }
 
 .receituario-module {
-  display: grid;
-  gap: 20px;
-  padding-block: 24px;
+  padding-bottom: 24px;
 }
 
-.rx-filters,
+.rx-content {
+  display: grid;
+  gap: 20px;
+}
+
 .rx-details {
   padding: 24px;
 }

@@ -1,4 +1,5 @@
-import { Icone } from '../../components/common/Icone'
+import { CampoBusca } from '../../components/common/CampoBusca'
+import { CampoSelecao } from '../../components/common/CampoSelecao'
 import { FAIXAS_ETARIAS, CATEGORIAS, ETIOLOGIAS, SISTEMAS, type FiltrosClinicos } from './catalogoClinico'
 import { SimboloCao } from './SimboloCao'
 
@@ -7,52 +8,14 @@ type FiltrosCondicoesProps = {
   aoAlterar: (key: keyof FiltrosClinicos, valor: string) => void
 }
 
-function Filtro({
-  rotulo,
-  valor,
-  opcoes,
-  vazio,
-  aoAlterar,
-}: {
-  rotulo: string
-  valor: string
-  opcoes: string[]
-  vazio: string
-  aoAlterar: (valor: string) => void
-}) {
-  return (
-    <label>
-      {rotulo}
-      <select value={valor} onChange={(evento) => aoAlterar(evento.target.value)}>
-        <option value="">{vazio}</option>
-        {opcoes.map((opcao) => (
-          <option key={opcao}>{opcao}</option>
-        ))}
-      </select>
-    </label>
-  )
-}
+const OPCOES_ZOONOSE = [
+  { valor: 'yes', rotulo: 'Sim' },
+  { valor: 'no', rotulo: 'Não' },
+]
 
 export function FiltrosCondicoes({ filtros, aoAlterar }: FiltrosCondicoesProps) {
   return (
-    <>
-      <div className="conditions-search content-card">
-        <Icone>
-          <circle cx="11" cy="11" r="7" />
-          <path d="m16 16 5 5" />
-        </Icone>
-        <input
-          aria-label="Buscar condições clínicas"
-          value={filtros.busca}
-          onChange={(evento) => aoAlterar('busca', evento.target.value)}
-          placeholder="Buscar doenças, sinal clínico, agente etiológico…"
-        />
-        {filtros.busca && (
-          <button aria-label="Limpar busca" onClick={() => aoAlterar('busca', '')}>
-            ×
-          </button>
-        )}
-      </div>
+    <div className="filter-bar content-card">
       <div className="conditions-categories">
         <div role="group" aria-label="Categorias">
           {['', ...CATEGORIAS].map((categoria) => (
@@ -71,37 +34,40 @@ export function FiltrosCondicoes({ filtros, aoAlterar }: FiltrosCondicoesProps) 
           Somente cães
         </span>
       </div>
-      <div className="conditions-filters">
-        <Filtro
+      <div className="filter-fields">
+        <CampoBusca
+          valor={filtros.busca}
+          aoAlterar={(valor) => aoAlterar('busca', valor)}
+          placeholder="Doença, sinal clínico ou agente etiológico"
+        />
+        <CampoSelecao
           rotulo="Sistema"
           valor={filtros.sistema}
-          opcoes={SISTEMAS}
-          vazio="Todos os sistemas"
           aoAlterar={(valor) => aoAlterar('sistema', valor)}
+          opcoes={SISTEMAS}
         />
-        <Filtro
+        <CampoSelecao
           rotulo="Etiologia"
           valor={filtros.etiologia}
-          opcoes={ETIOLOGIAS}
-          vazio="Todas as etiologias"
           aoAlterar={(valor) => aoAlterar('etiologia', valor)}
+          opcoes={ETIOLOGIAS}
+          rotuloTodos="Todas"
         />
-        <label>
-          Zoonose
-          <select value={filtros.condicao} onChange={(evento) => aoAlterar('condicao', evento.target.value)}>
-            <option value="">Todas</option>
-            <option value="yes">Sim</option>
-            <option value="no">Não</option>
-          </select>
-        </label>
-        <Filtro
+        <CampoSelecao
+          rotulo="Zoonose"
+          valor={filtros.condicao}
+          aoAlterar={(valor) => aoAlterar('condicao', valor)}
+          opcoes={OPCOES_ZOONOSE}
+          rotuloTodos="Todas"
+        />
+        <CampoSelecao
           rotulo="Faixa etária"
           valor={filtros.idade}
-          opcoes={FAIXAS_ETARIAS}
-          vazio="Todas as idades"
           aoAlterar={(valor) => aoAlterar('idade', valor)}
+          opcoes={FAIXAS_ETARIAS}
+          rotuloTodos="Todas"
         />
       </div>
-    </>
+    </div>
   )
 }

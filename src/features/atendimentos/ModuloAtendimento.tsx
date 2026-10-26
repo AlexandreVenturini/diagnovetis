@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
 import type { AtendimentoEmAndamento } from '../../services/ConsultaService'
 import { nomesResponsaveis } from '../pets/responsavelPet'
 import { SupervisaoService } from '../../services/SupervisaoService'
@@ -264,16 +265,26 @@ export function ModuloAtendimento({
     setMensagem('')
   }
 
+  const cabecalho = (
+    <CabecalhoTela
+      titulo="Atendimento Clínico"
+      descricao="Registre o atendimento completo: identificação, histórico clínico, exame físico, exames complementares e diagnóstico."
+    />
+  )
+
   if (concluido)
     return (
-      <AtendimentoConcluido
-        concluido={concluido}
-        mensagem={mensagem}
-        aoMensagem={setMensagem}
-        aoNovo={iniciarNova}
-        novoDesabilitado={salvando}
-        aoAbrirProntuario={aoAbrirProntuario}
-      />
+      <section className="clinical-care-module">
+        {cabecalho}
+        <AtendimentoConcluido
+          concluido={concluido}
+          mensagem={mensagem}
+          aoMensagem={setMensagem}
+          aoNovo={iniciarNova}
+          novoDesabilitado={salvando}
+          aoAbrirProntuario={aoAbrirProntuario}
+        />
+      </section>
     )
 
   const listaEmAndamento = (
@@ -290,6 +301,7 @@ export function ModuloAtendimento({
   if (ehEstudante && !liberacao && idRascunho === null)
     return (
       <section className="clinical-care-module">
+        {cabecalho}
         {listaEmAndamento}
         {mensagem && (
           <p className="consultation-message" role="status">
@@ -302,6 +314,7 @@ export function ModuloAtendimento({
 
   return (
     <section className="clinical-care-module">
+      {cabecalho}
       {listaEmAndamento}
       {idRascunho !== null ? (
         <AvisoRascunho id={idRascunho} inicio={inicio} supervisorNome={supervisorRascunho} />

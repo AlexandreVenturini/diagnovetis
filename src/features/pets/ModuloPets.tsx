@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import type { usePets } from './usePets'
 import { DetalhesPet } from './DetalhesPet'
 import { FormularioPet } from './FormularioPet'
@@ -10,11 +9,10 @@ import type { PetResumo, DadosFormularioPet, TelaPets } from './petTipos'
 type ModuloPetsProps = {
   petsApi: ReturnType<typeof usePets>
   telaInicial: TelaPets
-  aviso?: ReactNode
   podeRemover?: boolean
 }
 
-export function ModuloPets({ petsApi, telaInicial, aviso, podeRemover = false }: ModuloPetsProps) {
+export function ModuloPets({ petsApi, telaInicial, podeRemover = false }: ModuloPetsProps) {
   const { pets, criarPet, criarTutor, atualizarPet, removerPet } = petsApi
   const [tela, setTela] = useState<TelaPets>(telaInicial)
   const [selecionado, setSelecionado] = useState<PetResumo | null>(null)
@@ -50,7 +48,6 @@ export function ModuloPets({ petsApi, telaInicial, aviso, podeRemover = false }:
 
   return (
     <>
-      {aviso}
       {tela === 'lista' && (
         <ListaPets
           pets={pets}

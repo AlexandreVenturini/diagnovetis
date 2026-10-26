@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { Icone } from '../../components/common/Icone'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
+import { CampoBusca } from '../../components/common/CampoBusca'
+import { CabecalhoLista } from '../../components/common/CabecalhoLista'
 import type { PetResumo } from './petTipos'
 import { formatarIdadePet } from './idadePet'
 import { FiltroPeriodo } from '../shared/FiltroPeriodo'
@@ -26,12 +29,15 @@ export function ListaPets({ pets, aoCriar, aoEditar, aoDetalhar }: ListaPetsProp
 
   return (
     <section className="dog-list">
-      <div className="section-heading">
-        <h2>Cães Cadastrados</h2>
-        <button className="primary-button new-button" onClick={aoCriar}>
-          <span>＋</span> Novo Cadastro
-        </button>
-      </div>
+      <CabecalhoTela
+        titulo="Cães Cadastrados"
+        descricao="Cadastre os animais e seus responsáveis e consulte os dados de cada um."
+        acoes={
+          <button className="primary-button new-button" onClick={aoCriar}>
+            <span>＋</span> Novo Cadastro
+          </button>
+        }
+      />
 
       <FiltroPeriodo
         rotulo="Período de cadastro"
@@ -39,22 +45,13 @@ export function ListaPets({ pets, aoCriar, aoEditar, aoDetalhar }: ListaPetsProp
         aoAlterar={setPeriodo}
         buscando={Boolean(buscaNormalizada)}
       >
-        <label className="agenda-search">
-          <span>Buscar</span>
-          <input
-            value={busca}
-            onChange={(evento) => setBusca(evento.target.value)}
-            placeholder="Animal, responsável ou raça"
-          />
-        </label>
+        <CampoBusca valor={busca} aoAlterar={setBusca} placeholder="Animal, responsável ou raça" />
       </FiltroPeriodo>
 
-      <div className="agenda-list-heading">
-        <h3>{buscaNormalizada ? 'Resultado da busca' : `Cadastrados ${nomePeriodo(periodo.visao)}`}</h3>
-        <span>
-          {petsVisiveis.length} de {pets.length} animal(is)
-        </span>
-      </div>
+      <CabecalhoLista
+        titulo={buscaNormalizada ? 'Resultado da busca' : `Cadastrados ${nomePeriodo(periodo.visao)}`}
+        contagem={`${petsVisiveis.length} de ${pets.length} animal(is)`}
+      />
 
       {petsVisiveis.length === 0 && (
         <div className="empty-appointments">

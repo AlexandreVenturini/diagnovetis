@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { CabecalhoTela } from '../../../components/common/CabecalhoTela'
 import { VersoesAtendimento } from './VersoesAtendimento'
 import { SeletorAtendimento } from './SeletorAtendimento'
 import { FichaProntuario } from './FichaProntuario'
@@ -66,34 +67,32 @@ export function DetalhesProntuario({
 
   return (
     <section className="record-details-module">
-      <div className="records-heading record-detail-heading">
-        <div>
-          <button className="text-back-button" onClick={aoVoltar}>
-            ‹ Prontuários
-          </button>
-          <h2>
+      <CabecalhoTela
+        voltar={{ rotulo: 'Prontuários', aoClicar: aoVoltar }}
+        titulo={
+          <>
             {selecionado.nomePet}
             {selecionado.obito && (
               <span className="pill pill--dark record-death-pill">
                 Óbito em {new Date(selecionado.obito.dataHora).toLocaleDateString('pt-BR')}
               </span>
             )}
-          </h2>
-          <p>
-            Responsável: {selecionado.nomeTutor} · {selecionado.raca} · {selecionado.idade}
-          </p>
-        </div>
-        <div className="record-header-actions">
-          <button className="outline-button" onClick={exportarPdf}>
-            ⇩ Exportar PDF
-          </button>
-          {!selecionado.obito && (
-            <button className="secondary-button" onClick={aoRegistrarObito}>
-              Registrar óbito
+          </>
+        }
+        descricao={`Responsável: ${selecionado.nomeTutor} · ${selecionado.raca} · ${selecionado.idade}`}
+        acoes={
+          <>
+            <button className="outline-button" onClick={exportarPdf}>
+              ⇩ Exportar PDF
             </button>
-          )}
-        </div>
-      </div>
+            {!selecionado.obito && (
+              <button className="secondary-button" onClick={aoRegistrarObito}>
+                Registrar óbito
+              </button>
+            )}
+          </>
+        }
+      />
 
       {aviso && (
         <p className="record-notice" role="status">

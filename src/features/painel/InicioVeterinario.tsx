@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
+import { StatusAtualizacao } from '../../components/common/StatusAtualizacao'
 import { useAgendamentos } from '../agenda/useAgendamentos'
 import type { Agendamento, SituacaoAgendamento } from '../agenda/agendaTipos'
 import type { PetResumo } from '../pets/petTipos'
@@ -47,8 +49,7 @@ function CartaoIndicador({
 }
 
 export function InicioVeterinario({ pets, aoAbrirModulo, aoNovoPet, aoNovoAgendamento }: InicioVeterinarioProps) {
-  const { agendamentos } = useAgendamentos()
-  const [atualizadoEm, setAtualizadoEm] = useState(new Date())
+  const { agendamentos, carregando, erro, atualizadoEm, atualizarTudo } = useAgendamentos()
   const [status, setStatus] = useState<SituacaoAgendamento | 'todos'>('todos')
   const hoje = chaveHoje()
   const agendamentosHoje = useMemo(
@@ -68,23 +69,18 @@ export function InicioVeterinario({ pets, aoAbrirModulo, aoNovoPet, aoNovoAgenda
 
   return (
     <section className="dashboard-home">
-      <header className="dashboard-hero">
-        <div>
-          <span>Centro de comando operacional</span>
-          <h1>Equipe DiagnoVetis.</h1>
-          <p>Veja o que acontece agora, o que exige atenção e qual é o próximo passo.</p>
-        </div>
-        <div className="dashboard-sync">
-          <div>
-            <i />{' '}
-            <span>
-              <b>Sistema conectado</b>
-              <small>Atualizado às {formatarHorario(atualizadoEm)}</small>
-            </span>
-          </div>
-          <button onClick={() => setAtualizadoEm(new Date())}>Atualizar dados</button>
-        </div>
-      </header>
+      <CabecalhoTela
+        titulo="Dashboard"
+        descricao="Veja o que acontece agora, o que exige atenção e qual é o próximo passo."
+        acoes={
+          <StatusAtualizacao
+            carregando={carregando}
+            erro={erro}
+            atualizadoEm={atualizadoEm}
+            aoAtualizar={atualizarTudo}
+          />
+        }
+      />
 
       <div className="dashboard-stats">
         <CartaoIndicador
@@ -207,7 +203,7 @@ export function InicioVeterinario({ pets, aoAbrirModulo, aoNovoPet, aoNovoAgenda
             <span>Resumo operacional</span>
             <h2>O estado do atendimento agora</h2>
           </div>
-          <small>Atualizado às {formatarHorario(atualizadoEm)}</small>
+          {atualizadoEm && <small>Atualizado às {formatarHorario(atualizadoEm)}</small>}
         </div>
         <div>
           <article>

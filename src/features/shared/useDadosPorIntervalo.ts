@@ -10,6 +10,7 @@ export function useDadosPorIntervalo<T>(
   const [itens, setItens] = useState<T[]>([])
   const [chaveCarregada, setChaveCarregada] = useState('')
   const [erro, setErro] = useState('')
+  const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null)
   const [versao, setVersao] = useState(0)
   const cache = useRef<CacheIntervalos>({ todos: false, intervalos: [] })
   const buscadorRef = useRef(buscador)
@@ -43,6 +44,7 @@ export function useDadosPorIntervalo<T>(
         cache.current = marcarCarregado(cache.current, alvo)
         mesclar(resultados.flat())
         setErro('')
+        setAtualizadoEm(new Date())
         setChaveCarregada(chaveRequisicao)
       })
       .catch((falha: Error) => {
@@ -72,6 +74,7 @@ export function useDadosPorIntervalo<T>(
     itens,
     carregando: chaveCarregada !== chaveRequisicao,
     erro,
+    atualizadoEm,
     recarregar,
     reiniciar,
     inserirOuAtualizar: mesclar,

@@ -39,6 +39,7 @@ export function PainelVeterinario({ aoSair, usuario }: PainelVeterinarioProps) {
       acoesCabecalho={<SinoPedidos />}
     >
       <MenuPrincipal moduloAtivo={navegacao.moduloAtivo} aoSelecionar={navegacao.selecionarModulo} />
+      {navegacao.moduloAtivo === 'inicio' && AVISO_VETERINARIO}
 
       {navegacao.moduloAtivo === 'inicio' && (
         <InicioVeterinario
@@ -53,7 +54,6 @@ export function PainelVeterinario({ aoSair, usuario }: PainelVeterinarioProps) {
           key={navegacao.entradaPets.key}
           petsApi={petsApi}
           telaInicial={navegacao.entradaPets.tela}
-          aviso={AVISO_VETERINARIO}
           podeRemover
         />
       )}

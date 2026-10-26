@@ -1,3 +1,4 @@
+import { CabecalhoLista } from '../../../components/common/CabecalhoLista'
 import type { ReceitaEmitida } from '../../../services/ReceitaService'
 import { nomePeriodo, type VisaoPeriodo } from '../../shared/periodo'
 
@@ -11,10 +12,10 @@ type HistoricoReceitasProps = {
 export function HistoricoReceitas({ linhas, visao, buscando, aoSelecionar }: HistoricoReceitasProps) {
   return (
     <>
-      <div className="agenda-list-heading">
-        <h3>{buscando ? 'Resultado da busca' : `Receitas ${nomePeriodo(visao)}`}</h3>
-        <span>{linhas.length} resultado(s)</span>
-      </div>
+      <CabecalhoLista
+        titulo={buscando ? 'Resultado da busca' : `Receitas ${nomePeriodo(visao)}`}
+        contagem={`${linhas.length} resultado(s)`}
+      />
       <div className="rx-history">
         {!linhas.length && <p>Nenhuma receita encontrada neste período com os filtros selecionados.</p>}
         {linhas.map((linha) => (

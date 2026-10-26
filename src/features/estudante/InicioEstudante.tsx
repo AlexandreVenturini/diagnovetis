@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
+import { StatusAtualizacao } from '../../components/common/StatusAtualizacao'
 import { useAgendamentos } from '../agenda/useAgendamentos'
 import type { PetResumo } from '../pets/petTipos'
 
@@ -17,7 +19,7 @@ const dataExibida = (valor: string) =>
   new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date(`${valor}T12:00:00`))
 
 export function InicioEstudante({ pets, aoAbrirPets, aoAbrirAgenda, aoNovoPet, aoNovoAgendamento }: Props) {
-  const { agendamentos } = useAgendamentos()
+  const { agendamentos, carregando, erro, atualizadoEm, atualizarTudo } = useAgendamentos()
   const hoje = dataLocal()
   const itensHoje = useMemo(
     () =>
@@ -38,16 +40,18 @@ export function InicioEstudante({ pets, aoAbrirPets, aoAbrirAgenda, aoNovoPet, a
 
   return (
     <section className="attendant-home">
-      <header className="attendant-hero">
-        <div>
-          <span>Painel administrativo</span>
-          <h1>Olá, equipe de atendimento!</h1>
-          <p>Organize os cadastros e mantenha a agenda da clínica sempre em dia.</p>
-        </div>
-        <div>
-          <i /> Operação disponível
-        </div>
-      </header>
+      <CabecalhoTela
+        titulo="Dashboard"
+        descricao="Organize os cadastros e mantenha a agenda da clínica sempre em dia."
+        acoes={
+          <StatusAtualizacao
+            carregando={carregando}
+            erro={erro}
+            atualizadoEm={atualizadoEm}
+            aoAtualizar={atualizarTudo}
+          />
+        }
+      />
       <div className="attendant-metrics">
         <article>
           <span>🐾</span>

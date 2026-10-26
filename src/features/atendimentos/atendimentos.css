@@ -330,31 +330,6 @@
   margin: 20px 0;
 }
 
-.conditions-search .ui-icon {
-  width: 19px;
-  color: #315647;
-}
-
-.conditions-search input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  padding: 12px 0;
-  font-size: 12px;
-}
-
-.conditions-search:focus-within {
-  outline: 2px solid #267943;
-  outline-offset: 2px;
-}
-
-.conditions-search button {
-  border: 0;
-  background: transparent;
-  font-size: 22px;
-}
-
 .condition-row.selected {
   background: #edf6f0;
   border-color: transparent;

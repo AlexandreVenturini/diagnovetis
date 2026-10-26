@@ -1,4 +1,6 @@
-import { Icone } from '../../components/common/Icone'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
+import { CampoBusca } from '../../components/common/CampoBusca'
+import { CabecalhoLista } from '../../components/common/CabecalhoLista'
 import type { Papel } from '../acesso/perfil'
 import { FiltroPeriodo } from '../shared/FiltroPeriodo'
 import { nomePeriodo, type Periodo } from '../shared/periodo'
@@ -31,38 +33,23 @@ export function TelaListaProntuarios({
   const buscando = Boolean(busca.trim())
   return (
     <section className="records-module">
-      <div className="records-heading">
-        <div>
-          <h2>Prontuários Clínicos</h2>
-          <p>
-            {papel === 'attendant'
-              ? 'Consulte o histórico completo dos pacientes. Correções em atendimentos precisam da autorização de um professor.'
-              : 'Consulte o histórico completo dos pacientes.'}
-          </p>
-        </div>
-        <div className="records-stat">
-          <strong>{pacientes.length}</strong>
-          <span>{buscando ? 'pacientes encontrados' : `pacientes atendidos ${nomePeriodo(periodo.visao)}`}</span>
-        </div>
-      </div>
+      <CabecalhoTela
+        titulo="Prontuários Clínicos"
+        descricao={
+          papel === 'attendant'
+            ? 'Consulte o histórico completo dos pacientes. Correções em atendimentos precisam da autorização de um professor.'
+            : 'Consulte o histórico completo dos pacientes.'
+        }
+      />
 
       <FiltroPeriodo rotulo="Período dos atendimentos" valor={periodo} aoAlterar={aoAlterarPeriodo} buscando={buscando}>
-        <label className="agenda-search">
-          <span>Buscar paciente</span>
-          <span className="record-search record-search--inline">
-            <Icone>
-              <circle cx="11" cy="11" r="7" />
-              <path d="m16 16 5 5" />
-            </Icone>
-            <input
-              value={busca}
-              onChange={(evento) => aoAlterarBusca(evento.target.value)}
-              placeholder="Nome do animal ou responsável"
-            />
-          </span>
-        </label>
+        <CampoBusca valor={busca} aoAlterar={aoAlterarBusca} placeholder="Animal ou responsável" />
       </FiltroPeriodo>
 
+      <CabecalhoLista
+        titulo={buscando ? 'Resultado da busca' : `Atendidos ${nomePeriodo(periodo.visao)}`}
+        contagem={`${pacientes.length} paciente(s)`}
+      />
       {erro && <div className="empty-appointments">{erro}</div>}
       {carregando ? (
         <div className="empty-appointments">Carregando prontuários...</div>

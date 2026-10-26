@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
 import type { FormEvent } from 'react'
 import { AGENDAMENTO_VAZIO } from './agendamentoVazio'
 import type { DadosFormularioAgendamento } from './agendaTipos'
@@ -94,182 +95,193 @@ export function FormularioAgendamento({ aoSalvar, aoCancelar, erro, pets }: Form
   }
 
   return (
-    <section className="content-card appointment-form-card">
-      <h2>Agendar Consulta</h2>
-      <form className="appointment-form" onSubmit={enviar}>
-        <label className="appointment-search-field">
-          Buscar cão
-          <input
-            value={buscaPet}
-            onFocus={() => setBuscaPetAberta(true)}
-            onChange={(evento) => buscarPet(evento.target.value)}
-            placeholder="Digite o nome ou a raça do cão"
-            autoComplete="off"
-            required
-          />
-          {buscaPetAberta && buscaPetNormalizada && (
-            <div className="appointment-search-results">
-              {petsEncontrados.map((pet) => (
-                <button
-                  type="button"
-                  key={pet.id}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => selecionarPet(pet)}
-                >
-                  <i>{pet.nome.charAt(0).toUpperCase()}</i>
-                  <span>
-                    <strong>{pet.nome}</strong>
-                    <small>
-                      {pet.raca} · Responsável: {pet.tutor}
-                    </small>
-                  </span>
-                </button>
-              ))}
-              {petsEncontrados.length === 0 && <p>Nenhum cão encontrado para esta busca.</p>}
-            </div>
-          )}
-          {pets.length === 0 && (
-            <small className="field-help warning">Cadastre um cão antes de criar o agendamento.</small>
-          )}
-        </label>
-        <label className="appointment-search-field">
-          Buscar responsável
-          <input
-            value={buscaTutor}
-            onFocus={() => setBuscaTutorAberta(true)}
-            onChange={(evento) => {
-              setBuscaTutor(evento.target.value)
-              setBuscaTutorAberta(true)
-              if (evento.target.value !== formulario.nomeTutor)
-                setFormulario((atual) => ({ ...atual, petId: undefined, nomePet: '', nomeTutor: evento.target.value }))
-            }}
-            placeholder="Digite o nome ou contato do responsável"
-            autoComplete="off"
-            required
-          />
-          {buscaTutorAberta && buscaTutorNormalizada && (
-            <div className="appointment-search-results">
-              {tutoresEncontrados.map((tutor) => (
-                <button
-                  type="button"
-                  key={tutor.nome}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => selecionarTutor(tutor.nome)}
-                >
-                  <i>{tutor.nome.charAt(0).toUpperCase()}</i>
-                  <span>
-                    <strong>{tutor.nome}</strong>
-                    <small>
-                      {tutor.contato} · {pets.filter((pet) => pet.tutor === tutor.nome).length} cão(ões)
-                    </small>
-                  </span>
-                </button>
-              ))}
-              {tutoresEncontrados.length === 0 && <p>Nenhum responsável encontrado para esta busca.</p>}
-            </div>
-          )}
-        </label>
-
-        {formulario.petId &&
-          (() => {
-            const pet = pets.find((item) => item.id === formulario.petId)
-            return pet ? (
-              <div className="scheduled-dog-summary full-field">
-                <span>
-                  <b>Paciente selecionado</b>
-                  {pet.nome}
-                </span>
-                <span>
-                  <b>Raça</b>
-                  {pet.raca}
-                </span>
-                <span>
-                  <b>Idade</b>
-                  {formatarIdadePet(pet.idade)}
-                </span>
-                <span>
-                  <b>Peso</b>
-                  {pet.peso} kg
-                </span>
-                <span>
-                  <b>Responsável</b>
-                  {pet.tutor}
-                </span>
-                <span>
-                  <b>Contato</b>
-                  {pet.contato}
-                </span>
+    <>
+      <CabecalhoTela
+        voltar={{ rotulo: 'Agenda de Consultas', aoClicar: aoCancelar }}
+        titulo="Agendar Consulta"
+        descricao="Escolha o animal, o veterinário, a data e o horário do atendimento."
+      />
+      <section className="content-card appointment-form-card">
+        <form className="appointment-form" onSubmit={enviar}>
+          <label className="appointment-search-field">
+            Buscar cão
+            <input
+              value={buscaPet}
+              onFocus={() => setBuscaPetAberta(true)}
+              onChange={(evento) => buscarPet(evento.target.value)}
+              placeholder="Digite o nome ou a raça do cão"
+              autoComplete="off"
+              required
+            />
+            {buscaPetAberta && buscaPetNormalizada && (
+              <div className="appointment-search-results">
+                {petsEncontrados.map((pet) => (
+                  <button
+                    type="button"
+                    key={pet.id}
+                    onMouseDown={(evento) => evento.preventDefault()}
+                    onClick={() => selecionarPet(pet)}
+                  >
+                    <i>{pet.nome.charAt(0).toUpperCase()}</i>
+                    <span>
+                      <strong>{pet.nome}</strong>
+                      <small>
+                        {pet.raca} · Responsável: {pet.tutor}
+                      </small>
+                    </span>
+                  </button>
+                ))}
+                {petsEncontrados.length === 0 && <p>Nenhum cão encontrado para esta busca.</p>}
               </div>
-            ) : null
-          })()}
+            )}
+            {pets.length === 0 && (
+              <small className="field-help warning">Cadastre um cão antes de criar o agendamento.</small>
+            )}
+          </label>
+          <label className="appointment-search-field">
+            Buscar responsável
+            <input
+              value={buscaTutor}
+              onFocus={() => setBuscaTutorAberta(true)}
+              onChange={(evento) => {
+                setBuscaTutor(evento.target.value)
+                setBuscaTutorAberta(true)
+                if (evento.target.value !== formulario.nomeTutor)
+                  setFormulario((atual) => ({
+                    ...atual,
+                    petId: undefined,
+                    nomePet: '',
+                    nomeTutor: evento.target.value,
+                  }))
+              }}
+              placeholder="Digite o nome ou contato do responsável"
+              autoComplete="off"
+              required
+            />
+            {buscaTutorAberta && buscaTutorNormalizada && (
+              <div className="appointment-search-results">
+                {tutoresEncontrados.map((tutor) => (
+                  <button
+                    type="button"
+                    key={tutor.nome}
+                    onMouseDown={(evento) => evento.preventDefault()}
+                    onClick={() => selecionarTutor(tutor.nome)}
+                  >
+                    <i>{tutor.nome.charAt(0).toUpperCase()}</i>
+                    <span>
+                      <strong>{tutor.nome}</strong>
+                      <small>
+                        {tutor.contato} · {pets.filter((pet) => pet.tutor === tutor.nome).length} cão(ões)
+                      </small>
+                    </span>
+                  </button>
+                ))}
+                {tutoresEncontrados.length === 0 && <p>Nenhum responsável encontrado para esta busca.</p>}
+              </div>
+            )}
+          </label>
 
-        <label>
-          Data
-          <input
-            type="date"
-            value={formulario.data}
-            onChange={(evento) => atualizar('data', evento.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Horário
-          <input
-            type="time"
-            value={formulario.horario}
-            onChange={(evento) => atualizar('horario', evento.target.value)}
-            required
-          />
-        </label>
+          {formulario.petId &&
+            (() => {
+              const pet = pets.find((item) => item.id === formulario.petId)
+              return pet ? (
+                <div className="scheduled-dog-summary full-field">
+                  <span>
+                    <b>Paciente selecionado</b>
+                    {pet.nome}
+                  </span>
+                  <span>
+                    <b>Raça</b>
+                    {pet.raca}
+                  </span>
+                  <span>
+                    <b>Idade</b>
+                    {formatarIdadePet(pet.idade)}
+                  </span>
+                  <span>
+                    <b>Peso</b>
+                    {pet.peso} kg
+                  </span>
+                  <span>
+                    <b>Responsável</b>
+                    {pet.tutor}
+                  </span>
+                  <span>
+                    <b>Contato</b>
+                    {pet.contato}
+                  </span>
+                </div>
+              ) : null
+            })()}
 
-        <label>
-          Tipo de Atendimento
-          <select
-            value={formulario.tipoServico}
-            onChange={(evento) => atualizar('tipoServico', evento.target.value)}
-            required
-          >
-            <option value="">Selecione</option>
-            <option>Consulta de Rotina</option>
-            <option>Vacinação</option>
-            <option>Retorno</option>
-            <option>Emergência</option>
-            <option>Exames</option>
-          </select>
-        </label>
-        <div aria-hidden="true" />
-        <label>
-          Veterinário Responsável
-          <input
-            value={formulario.veterinario}
-            onChange={(evento) => atualizar('veterinario', evento.target.value)}
-            placeholder="Nome do veterinário"
-            required
-          />
-        </label>
-        <label>
-          Observações
-          <input
-            value={formulario.observacoes}
-            onChange={(evento) => atualizar('observacoes', evento.target.value)}
-            placeholder="Observações sobre o agendamento"
-          />
-        </label>
+          <label>
+            Data
+            <input
+              type="date"
+              value={formulario.data}
+              onChange={(evento) => atualizar('data', evento.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Horário
+            <input
+              type="time"
+              value={formulario.horario}
+              onChange={(evento) => atualizar('horario', evento.target.value)}
+              required
+            />
+          </label>
 
-        {(erro || erroBusca) && (
-          <p className="form-message error full-field" role="alert">
-            {erro || erroBusca}
-          </p>
-        )}
-        <div className="form-actions full-field">
-          <button className="primary-button" type="submit">
-            Confirmar Agendamento
-          </button>
-          <button className="secondary-button" type="button" onClick={aoCancelar}>
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </section>
+          <label>
+            Tipo de Atendimento
+            <select
+              value={formulario.tipoServico}
+              onChange={(evento) => atualizar('tipoServico', evento.target.value)}
+              required
+            >
+              <option value="">Selecione</option>
+              <option>Consulta de Rotina</option>
+              <option>Vacinação</option>
+              <option>Retorno</option>
+              <option>Emergência</option>
+              <option>Exames</option>
+            </select>
+          </label>
+          <div aria-hidden="true" />
+          <label>
+            Veterinário Responsável
+            <input
+              value={formulario.veterinario}
+              onChange={(evento) => atualizar('veterinario', evento.target.value)}
+              placeholder="Nome do veterinário"
+              required
+            />
+          </label>
+          <label>
+            Observações
+            <input
+              value={formulario.observacoes}
+              onChange={(evento) => atualizar('observacoes', evento.target.value)}
+              placeholder="Observações sobre o agendamento"
+            />
+          </label>
+
+          {(erro || erroBusca) && (
+            <p className="form-message error full-field" role="alert">
+              {erro || erroBusca}
+            </p>
+          )}
+          <div className="form-actions full-field">
+            <button className="primary-button" type="submit">
+              Confirmar Agendamento
+            </button>
+            <button className="secondary-button" type="button" onClick={aoCancelar}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </section>
+    </>
   )
 }

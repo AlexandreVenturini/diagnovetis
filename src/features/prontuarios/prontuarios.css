@@ -1,44 +1,3 @@
-.records-module,
-.record-details-module {
-  margin-top: 30px;
-}
-
-.records-stat {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 13px;
-  border-radius: 9px;
-  background: #e4ede7;
-  color: var(--green-dark);
-}
-
-.records-stat strong {
-  font-size: 18px;
-}
-
-.records-stat span {
-  font-size: 11px;
-}
-
-.record-search {
-  height: 62px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 20px;
-  padding: 10px 14px;
-}
-
-.record-search input {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  font-size: 14px;
-}
-
 .patient-record-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -108,11 +67,6 @@
   font-size: 10px;
 }
 
-.patient-clinical-flags .alert-flag {
-  background: #f8e4e2;
-  color: #a13c35;
-}
-
 .latest-record {
   display: flex;
   align-items: center;
@@ -155,11 +109,6 @@
   font-size: 10px;
 }
 
-.record-header-actions {
-  display: flex;
-  gap: 9px;
-}
-
 .record-notice {
   margin: 15px 0 0;
   padding: 11px 14px;
@@ -168,11 +117,6 @@
   background: #edf6ef;
   color: #245d34;
   font-size: 12px;
-}
-
-.timeline-marker .record-kind-icon {
-  width: 36px;
-  height: 36px;
 }
 
 .animal-record-form {
@@ -302,8 +246,7 @@
   margin-top: 9px;
 }
 
-.paper-fields label,
-.paper-textarea {
+.paper-fields label {
   min-width: 0;
   display: flex;
   align-items: end;
@@ -318,8 +261,7 @@
 }
 
 .paper-fields input,
-.paper-fields textarea,
-.paper-textarea textarea {
+.paper-fields textarea {
   min-width: 0;
   flex: 1;
   padding: 2px 3px;
@@ -335,15 +277,13 @@
   height: 22px;
 }
 
-.paper-fields textarea,
-.paper-textarea textarea {
+.paper-fields textarea {
   min-height: 36px;
   resize: vertical;
 }
 
 .paper-fields input:focus,
-.paper-fields textarea:focus,
-.paper-textarea textarea:focus {
+.paper-fields textarea:focus {
   border-bottom-color: #08716a;
   background: #f4fbfa;
   box-shadow: none;
@@ -385,31 +325,6 @@
   border-left: 1px solid #9badaa;
 }
 
-.check-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.check-list label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #273d3a;
-  font-size: 8px;
-}
-
-.check-list input {
-  accent-color: #08716a;
-}
-
-.paper-textarea {
-  flex-direction: column;
-  align-items: stretch;
-  white-space: normal;
-}
-
 .animal-record-footer {
   margin: 10px auto 0;
   padding: 6px 20px;
@@ -445,14 +360,12 @@
   font-size: 14px;
 }
 
-.paper-fields label,
-.paper-textarea {
+.paper-fields label {
   font-size: 12px;
 }
 
 .paper-fields input,
-.paper-fields textarea,
-.paper-textarea textarea {
+.paper-fields textarea {
   padding: 3px 4px;
   font-size: 12px;
 }
@@ -461,8 +374,7 @@
   height: 27px;
 }
 
-.paper-fields textarea,
-.paper-textarea textarea {
+.paper-fields textarea {
   min-height: 45px;
 }
 
@@ -474,21 +386,6 @@
 .paper-section td {
   height: 32px;
   padding: 5px 6px;
-}
-
-.check-list {
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.check-list label {
-  gap: 6px;
-  font-size: 11px;
-}
-
-.check-list input {
-  width: 15px;
-  height: 15px;
 }
 
 .animal-record-footer {
@@ -533,18 +430,6 @@
   cursor: pointer;
 }
 
-.paper-section-actions .add-table-row {
-  border-color: #08716a;
-  background: #08716a;
-  color: #fff;
-}
-
-.paper-section-actions .remove-table-row {
-  border-color: #d38b86;
-  background: #fff4f3;
-  color: #b22922;
-}
-
 .paper-section-actions button:hover {
   filter: brightness(0.95);
   transform: translateY(-1px);
@@ -578,15 +463,6 @@
 .paper-section table input:focus {
   background: #eff9f7;
   box-shadow: inset 0 0 0 2px #4b938c;
-}
-
-.paper-section > .paper-textarea {
-  flex: 1;
-}
-
-.paper-section > .paper-textarea textarea {
-  min-height: 90px;
-  flex: 1;
 }
 
 .paper-section.third > .paper-fields.single:not(.compact) {
@@ -647,33 +523,22 @@
 }
 
 @media (max-width: 620px) {
+  .paper-section table {
+    table-layout: fixed;
+  }
+
+  .paper-section th {
+    overflow-wrap: anywhere;
+  }
+
   .dog-grid,
   .patient-record-grid {
     grid-template-columns: 1fr;
   }
-
-  .records-stat {
-    align-self: stretch;
-  }
-
-  .record-header-actions {
-    width: 100%;
-    flex-direction: column-reverse;
-  }
-
-  .record-header-actions button {
-    width: 100%;
-  }
-}
-
-@media (max-width: 520px) {
-  .sheet-history-entry .record-kind-icon {
-    grid-row: 1/3;
-  }
 }
 
 @media print {
-  .record-detail-heading,
+  .record-details-module .page-header,
   .record-notice,
   .paper-section-actions {
     display: none !important;
@@ -1024,10 +889,4 @@
 
 .retification-hint {
   color: #6b7280;
-}
-
-.record-search.record-search--inline {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
 }

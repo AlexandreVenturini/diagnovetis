@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Abas } from '../../components/common/Abas'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
 import type { ReceitaEmitida } from '../../services/ReceitaService'
 import type { Papel } from '../acesso/perfil'
 import { gerarReceita, validarReceita } from './receita'
@@ -215,38 +217,30 @@ export function ModuloReceitas({ pets, aoAbrirProntuario, papel = 'veterinarian'
 
   return (
     <section className="receituario-module">
-      <div className="records-heading">
-        <div>
-          <h2>Receituário</h2>
-          <p>
-            {ehEstudante
-              ? 'Monte receitas para aprovação de um veterinário e acompanhe o histórico de cada animal.'
-              : 'Emita receitas e acompanhe o histórico de cada animal.'}
-          </p>
-        </div>
-      </div>
-      <div className="form-actions" role="group" aria-label="Receituário">
-        <button
-          className={aba === 'historico' ? 'primary-button' : 'secondary-button'}
-          disabled={emissao.salvando}
-          onClick={() => {
+      <CabecalhoTela
+        titulo="Receituário"
+        descricao={
+          ehEstudante
+            ? 'Monte receitas para aprovação de um veterinário e acompanhe o histórico de cada animal.'
+            : 'Emita receitas e acompanhe o histórico de cada animal.'
+        }
+      />
+      <Abas
+        rotulo="Receituário"
+        abas={[
+          { id: 'historico', rotulo: 'Histórico' },
+          { id: 'nova', rotulo: 'Nova Receita' },
+        ]}
+        ativa={aba}
+        desabilitado={emissao.salvando}
+        aoSelecionar={(id) => {
+          if (id === 'historico') {
             setAba('historico')
             setMensagem('')
-          }}
-        >
-          Histórico
-        </button>
-        <button
-          className={aba === 'nova' ? 'primary-button' : 'secondary-button'}
-          disabled={emissao.salvando}
-          onClick={() => {
-            if (selecionado) iniciarNova()
-            else setAba('nova')
-          }}
-        >
-          Nova receita
-        </button>
-      </div>
+          } else if (selecionado) iniciarNova()
+          else setAba('nova')
+        }}
+      />
       {mensagem && (
         <p role="status" className="consultation-message">
           {mensagem}
@@ -262,7 +256,7 @@ export function ModuloReceitas({ pets, aoAbrirProntuario, papel = 'veterinarian'
           }}
         />
       )}
-      {renderizarConteudo()}
+      <div className="rx-content">{renderizarConteudo()}</div>
     </section>
   )
 }

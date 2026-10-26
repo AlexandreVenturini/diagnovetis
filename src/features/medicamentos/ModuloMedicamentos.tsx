@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Abas } from '../../components/common/Abas'
+import { CabecalhoLista } from '../../components/common/CabecalhoLista'
+import { CabecalhoTela } from '../../components/common/CabecalhoTela'
+import { CampoBusca } from '../../components/common/CampoBusca'
 import { MedicamentoService } from '../../services/MedicamentoService'
 import { FORMULARIO_MEDICAMENTO_VAZIO, montarMedicamento, medicamentoParaResumo } from './medicamentoRegras'
 import { DetalhesMedicamento } from './DetalhesMedicamento'
 import { FormularioMedicamento } from './FormularioMedicamento'
-import { IconeComprimido, IconeBusca } from './IconesMedicamento'
+import { IconeComprimido } from './IconesMedicamento'
 import type { MedicamentoResumo, DadosFormularioMedicamento } from './medicamentoTipos'
 
 const medicamentoService = new MedicamentoService()
@@ -106,45 +110,24 @@ export function ModuloMedicamentos() {
 
   return (
     <section className="medications-module">
-      <header className="medications-header content-card">
-        <div>
-          <h2>
-            <IconeComprimido />
-            Guia Terapêutico e Calculadora
-          </h2>
-          <p>Consulte medicamentos por princípio ativo ou indicação clínica e calcule doses precisas para cães.</p>
-        </div>
-        <div className="medication-header-actions">
-          <button
-            className={tela === 'consulta' ? 'primary-button' : 'outline-button'}
-            onClick={() => setTela('consulta')}
-          >
-            <IconeBusca />
-            Consultar
-          </button>
-          <button
-            className={tela === 'cadastro' ? 'primary-button' : 'outline-button'}
-            onClick={() => setTela('cadastro')}
-          >
-            <span>＋</span>Cadastrar Medicamento
-          </button>
-        </div>
-        {tela === 'consulta' && (
-          <label className="medication-search">
-            <IconeBusca />
-            <input
-              value={busca}
-              onChange={(evento) => setBusca(evento.target.value)}
-              placeholder="Buscar por princípio ativo ou indicação..."
-            />
-          </label>
-        )}
-        {erro && (
-          <p className="form-message error" role="alert">
-            {erro}
-          </p>
-        )}
-      </header>
+      <CabecalhoTela
+        titulo="Guia Terapêutico e Calculadora"
+        descricao="Consulte medicamentos por princípio ativo ou indicação clínica e calcule doses precisas para cães."
+      />
+      <Abas
+        rotulo="Medicamentos"
+        abas={[
+          { id: 'consulta', rotulo: 'Consultar' },
+          { id: 'cadastro', rotulo: 'Cadastrar Medicamento' },
+        ]}
+        ativa={tela}
+        aoSelecionar={setTela}
+      />
+      {erro && (
+        <p className="page-error" role="alert">
+          {erro}
+        </p>
+      )}
 
       {tela === 'cadastro' ? (
         <FormularioMedicamento
@@ -155,23 +138,31 @@ export function ModuloMedicamentos() {
           aoCancelar={() => setTela('consulta')}
         />
       ) : (
-        <div className="medication-browser">
-          <div className="medication-list">
-            {filtrados.map((item) => (
-              <CartaoMedicamento
-                key={item.id}
-                item={item}
-                selecionado={idSelecionado === item.id}
-                aoSelecionar={() => setIdSelecionado(item.id)}
-              />
-            ))}
-            {!carregando && filtrados.length === 0 && (
-              <div className="medication-empty-list">Nenhum medicamento encontrado.</div>
-            )}
-            {carregando && <div className="medication-empty-list">Carregando medicamentos...</div>}
+        <>
+          <div className="filter-bar content-card">
+            <div className="filter-fields">
+              <CampoBusca valor={busca} aoAlterar={setBusca} placeholder="Nome, princípio ativo ou indicação" />
+            </div>
           </div>
-          <DetalhesMedicamento medicamento={selecionado} />
-        </div>
+          <CabecalhoLista titulo="Medicamentos" contagem={`${filtrados.length} encontrado(s)`} />
+          <div className="medication-browser">
+            <div className="medication-list">
+              {filtrados.map((item) => (
+                <CartaoMedicamento
+                  key={item.id}
+                  item={item}
+                  selecionado={idSelecionado === item.id}
+                  aoSelecionar={() => setIdSelecionado(item.id)}
+                />
+              ))}
+              {!carregando && filtrados.length === 0 && (
+                <div className="medication-empty-list">Nenhum medicamento encontrado.</div>
+              )}
+              {carregando && <div className="medication-empty-list">Carregando medicamentos...</div>}
+            </div>
+            <DetalhesMedicamento medicamento={selecionado} />
+          </div>
+        </>
       )}
     </section>
   )
