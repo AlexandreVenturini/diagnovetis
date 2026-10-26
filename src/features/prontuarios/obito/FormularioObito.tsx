@@ -1,8 +1,8 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import type { Papel } from '../../acesso/perfil'
 import { TelaLiberacao } from '../../supervisao/liberacao/TelaLiberacao'
 import { SupervisaoService } from '../../../services/SupervisaoService'
-import type { Liberacao, ObitoDados, OpcaoVeterinario } from '../../supervisao/supervisaoTipos'
+import type { Liberacao, ObitoDados } from '../../supervisao/supervisaoTipos'
 import type { RegistroClinico } from '../prontuarioTipos'
 import { ObitoService } from '../../../services/ObitoService'
 import { obitoParaDados, novoObito, validarObito } from './obitoRegras'
@@ -42,21 +42,17 @@ export function FormularioObito({
 }: FormularioObitoProps) {
   const ehEstudante = papel === 'attendant'
   const retificando = Boolean(existente)
-  const [dados, setDados] = useState<ObitoDados>(() => (existente ? obitoParaDados(existente) : novoObito()))
+  const [dadosEditados, setDados] = useState<ObitoDados>(() => (existente ? obitoParaDados(existente) : novoObito()))
   const [motivo, setMotivo] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [aprovando, setAprovando] = useState(false)
   const [mensagem, setMensagem] = useState('')
 
-  const selecionarProprio = useCallback((veterinario: OpcaoVeterinario) => {
-    setDados((atual) =>
-      atual.medico_responsavel_id ? atual : { ...atual, medico_responsavel_id: veterinario.medicoId },
-    )
-  }, [])
-  const veterinarios = useVeterinariosResponsaveis(emailUsuario, {
-    aoEncontrarProprio: selecionarProprio,
-    aoErro: setMensagem,
-  })
+  const { veterinarios, proprio, erro: erroVeterinarios } = useVeterinariosResponsaveis(emailUsuario)
+  const dados =
+    dadosEditados.medico_responsavel_id || !proprio
+      ? dadosEditados
+      : { ...dadosEditados, medico_responsavel_id: proprio.medicoId }
 
   function atualizar<K extends keyof ObitoDados>(key: K, valor: ObitoDados[K]) {
     setDados((atual) => ({ ...atual, [key]: valor }))
@@ -133,9 +129,9 @@ export function FormularioObito({
         )}
       </header>
 
-      {mensagem && (
+      {(mensagem || erroVeterinarios) && (
         <p className="consultation-message" role="status">
-          {mensagem}
+          {mensagem || erroVeterinarios}
         </p>
       )}
 

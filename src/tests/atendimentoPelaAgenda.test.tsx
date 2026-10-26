@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderToStaticMarkup } from 'react-dom/server'
+import { renderizar } from './renderizar'
 import { ListaAgendamentos } from '../features/agenda/ListaAgendamentos'
 import type { Agendamento } from '../features/agenda/agendaTipos'
 import { ModuloAtendimento } from '../features/atendimentos/ModuloAtendimento'
@@ -64,7 +64,7 @@ describe('Atendimento a partir da agenda', () => {
   })
   it('mostra a ação apenas para situações abertas e perfil com acesso ao atendimento', () => {
     for (const status of ['confirmed', 'waiting', 'in-progress', 'completed', 'cancelled', 'no-show'] as const) {
-      const html = renderToStaticMarkup(
+      const html = renderizar(
         <ListaAgendamentos
           agendamentos={[{ ...agendamento, status }]}
           aoCriar={() => {}}
@@ -74,22 +74,20 @@ describe('Atendimento a partir da agenda', () => {
       )
       expect(html.includes('Ir para atendimento')).toBe(['confirmed', 'waiting', 'in-progress'].includes(status))
     }
-    const html = renderToStaticMarkup(
+    const html = renderizar(
       <ListaAgendamentos agendamentos={[agendamento]} aoCriar={() => {}} aoAtualizar={() => {}} />,
     )
     expect(html).not.toContain('Ir para atendimento')
   })
   it('abre a identificação preenchida imediatamente sem esperar outra busca da agenda', () => {
-    const html = renderToStaticMarkup(<ModuloAtendimento pets={pets} agendamentoInicial={agendamento} />)
+    const html = renderizar(<ModuloAtendimento pets={pets} agendamentoInicial={agendamento} />)
     expect(html).toContain('value="Rex"')
     expect(html).toContain('value="Maria"')
     expect(html).toContain('Veterinário que Atendeu *<select')
     expect(html).toContain('value="4 anos"')
   })
   it('exige a liberação do professor antes de abrir o atendimento do estudante', () => {
-    const html = renderToStaticMarkup(
-      <ModuloAtendimento pets={pets} agendamentoInicial={agendamento} papel="attendant" />,
-    )
+    const html = renderizar(<ModuloAtendimento pets={pets} agendamentoInicial={agendamento} papel="attendant" />)
     expect(html).not.toContain('1. Identificação do Paciente')
     expect(html).toContain('Carregando professores e estudantes')
   })

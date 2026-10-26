@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { RetificacaoService } from '../../../services/RetificacaoService'
+import { CHAVES } from '../../shared/consultas'
 import { compararCampos } from '../retificacao/retificacaoRegras'
 import type { AlteracaoCampo, VersaoConsulta } from '../retificacao/retificacaoRegras'
 
@@ -18,31 +19,20 @@ function formatarDataHora(iso: string) {
 }
 
 export function VersoesAtendimento({ consultaId, aoFechar }: { consultaId: number; aoFechar: () => void }) {
-  const [retificacoes, setRetificacoes] = useState<Retificacao[] | null>(null)
-  const [erro, setErro] = useState('')
-
-  useEffect(() => {
-    let ativo = true
-    retificacaoService
-      .listarVersoes(consultaId)
-      .then(({ versoes, atual }) => {
-        if (!ativo) return
-        setRetificacoes(
-          versoes
-            .map((versao, indice) => ({
-              ...versao,
-              alteracoes: compararCampos(versao.dados, versoes[indice + 1]?.dados ?? atual),
-            }))
-            .reverse(),
-        )
-      })
-      .catch((falha: Error) => {
-        if (ativo) setErro(falha.message)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [consultaId])
+  const consulta = useQuery({
+    queryKey: [...CHAVES.versoesConsulta, consultaId],
+    queryFn: async (): Promise<Retificacao[]> => {
+      const { versoes, atual } = await retificacaoService.listarVersoes(consultaId)
+      return versoes
+        .map((versao, indice) => ({
+          ...versao,
+          alteracoes: compararCampos(versao.dados, versoes[indice + 1]?.dados ?? atual),
+        }))
+        .reverse()
+    },
+  })
+  const retificacoes = consulta.data ?? null
+  const erro = consulta.error?.message ?? ''
 
   return (
     <section className="content-card history-card" aria-labelledby="record-versions-title">

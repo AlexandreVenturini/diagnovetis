@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Pet } from '../../models/Pet'
 import { PetService } from '../../services/PetService'
 import { TutorService } from '../../services/TutorService'
+import { CHAVES } from '../shared/consultas'
 import { dataParaCampo } from '../shared/periodo'
 import type { DadosFormularioTutor } from '../tutores/tutorTipos'
 import type { PetResumo, DadosFormularioPet } from './petTipos'
@@ -32,31 +33,19 @@ function petParaResumo(pet: Pet): PetResumo {
 const proximoId = (itens: { id: number }[]) => Math.max(0, ...itens.map((item) => item.id)) + 1
 
 export function usePets() {
-  const [pets, setPets] = useState<PetResumo[]>([])
+  const cliente = useQueryClient()
+  const consulta = useQuery({
+    queryKey: CHAVES.pets,
+    queryFn: async () => (await petService.listarPets()).map(petParaResumo),
+  })
 
-  const recarregar = useCallback(async () => {
-    try {
-      const pets = await petService.listarPets()
-      setPets(pets.map(petParaResumo))
-    } catch {
-      setPets([])
-    }
-  }, [])
-
-  useEffect(() => {
-    let ativo = true
-    petService
-      .listarPets()
-      .then((pets) => {
-        if (ativo) setPets(pets.map(petParaResumo))
-      })
-      .catch(() => {
-        if (ativo) setPets([])
-      })
-    return () => {
-      ativo = false
-    }
-  }, [])
+  async function recarregar() {
+    await Promise.all([
+      cliente.invalidateQueries({ queryKey: CHAVES.pets }),
+      cliente.invalidateQueries({ queryKey: CHAVES.prontuario }),
+      cliente.invalidateQueries({ queryKey: CHAVES.resumosProntuario }),
+    ])
+  }
 
   async function criarPet(formulario: DadosFormularioPet) {
     const tutor = await resolverResponsavel(formulario)
@@ -102,5 +91,5 @@ export function usePets() {
     await recarregar()
   }
 
-  return { pets, criarPet, criarTutor, atualizarPet, removerPet }
+  return { pets: consulta.data ?? [], criarPet, criarTutor, atualizarPet, removerPet }
 }

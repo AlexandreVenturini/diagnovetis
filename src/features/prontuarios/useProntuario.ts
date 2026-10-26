@@ -1,65 +1,62 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Exame } from '../../models/Exame'
+import { CHAVES } from '../shared/consultas'
 import { buscarProntuario } from './carregarProntuarios'
 import type { Prontuario } from './prontuarioTipos'
 
+const chaveProntuario = (petId: number | null) => [...CHAVES.prontuario, petId]
+
+function comExameSubstituido(paciente: Prontuario, exame: Exame): Prontuario {
+  return {
+    ...paciente,
+    atendimentos: paciente.atendimentos.map((atendimento) =>
+      atendimento.id === exame.consultaId
+        ? {
+            ...atendimento,
+            examesComplementares: atendimento.examesComplementares?.map((item) =>
+              item.id === exame.id ? exame : item,
+            ),
+          }
+        : atendimento,
+    ),
+  }
+}
+
 export function useProntuario(petIdInicial?: number) {
-  const [paciente, setPaciente] = useState<Prontuario | null>(null)
-  const [carregando, setCarregando] = useState(Boolean(petIdInicial))
-  const [erro, setErro] = useState('')
+  const cliente = useQueryClient()
+  const [petId, setPetId] = useState<number | null>(petIdInicial ?? null)
+  const consulta = useQuery({
+    queryKey: chaveProntuario(petId),
+    queryFn: () => buscarProntuario(petId as number),
+    enabled: petId !== null,
+  })
 
-  const carregar = useCallback(async (petId: number) => {
-    setCarregando(true)
-    setErro('')
-    try {
-      const encontrado = await buscarProntuario(petId)
-      setPaciente(encontrado)
-      if (!encontrado) setErro('Paciente não encontrado.')
-    } catch {
-      setErro('Não foi possível carregar o prontuário.')
-    } finally {
-      setCarregando(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (petIdInicial === undefined) return
-    let ativo = true
-    buscarProntuario(petIdInicial)
-      .then((encontrado) => {
-        if (!ativo) return
-        setPaciente(encontrado)
-        setErro(encontrado ? '' : 'Paciente não encontrado.')
-      })
-      .catch(() => {
-        if (ativo) setErro('Não foi possível carregar o prontuário.')
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [petIdInicial])
+  const carregar = useCallback(
+    async (id: number) => {
+      setPetId(id)
+      await cliente.invalidateQueries({ queryKey: chaveProntuario(id) })
+    },
+    [cliente],
+  )
 
   function substituirExame(exame: Exame) {
-    setPaciente(
-      (atual) =>
-        atual && {
-          ...atual,
-          atendimentos: atual.atendimentos.map((atendimento) =>
-            atendimento.id === exame.consultaId
-              ? {
-                  ...atendimento,
-                  examesComplementares: atendimento.examesComplementares?.map((item) =>
-                    item.id === exame.id ? exame : item,
-                  ),
-                }
-              : atendimento,
-          ),
-        },
+    cliente.setQueryData<Prontuario | null>(chaveProntuario(petId), (atual) =>
+      atual ? comExameSubstituido(atual, exame) : atual,
     )
   }
 
-  return { paciente, carregando, erro, carregar, limpar: () => setPaciente(null), substituirExame }
+  const naoEncontrado = consulta.isSuccess && consulta.data === null
+  return {
+    paciente: petId === null ? null : (consulta.data ?? null),
+    carregando: petId !== null && consulta.isPending,
+    erro: consulta.isError
+      ? 'Não foi possível carregar o prontuário.'
+      : naoEncontrado
+        ? 'Paciente não encontrado.'
+        : '',
+    carregar,
+    limpar: () => setPetId(null),
+    substituirExame,
+  }
 }

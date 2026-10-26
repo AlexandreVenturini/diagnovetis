@@ -34,7 +34,7 @@ export function TelaLiberacao({ aoLiberar, consultaId, receita, obito, aoCancela
   const [senha, setSenha] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [mensagem, setMensagem] = useState('')
-  const { veterinarios, estudantes, carregando } = useOpcoesSupervisao(setMensagem)
+  const { veterinarios, estudantes, carregando, erro: erroOpcoes } = useOpcoesSupervisao()
   const remoto = useAprovacaoRemota(tipo, { aoLiberar, aoRecusar, aoMensagem: setMensagem })
 
   const supervisor = veterinarios.find((veterinario) => veterinario.idPerfil === supervisorId)
@@ -176,9 +176,9 @@ export function TelaLiberacao({ aoLiberar, consultaId, receita, obito, aoCancela
         </div>
       </div>
 
-      {mensagem && (
+      {(mensagem || erroOpcoes) && (
         <p className="consultation-message" role="status">
-          {mensagem}
+          {mensagem || erroOpcoes}
         </p>
       )}
       {aoCancelar && (

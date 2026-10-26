@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import {
-  somarDias,
-  dataParaCampo,
-  marcarCarregado,
-  intervaloPeriodo,
-  intervalosParaBuscar,
-  type CacheIntervalos,
-} from '../features/shared/periodo'
+import { somarDias, dataParaCampo, intervaloPeriodo, blocosDoPeriodo, chaveDoBloco } from '../features/shared/periodo'
 import { resumirProntuarios, type ItemResumo } from '../features/prontuarios/resumoProntuarios'
 import { ListaAgendamentos } from '../features/agenda/ListaAgendamentos'
 import type { Agendamento } from '../features/agenda/agendaTipos'
@@ -38,18 +31,16 @@ const agendamento = (id: number, data: string): Agendamento => ({
 })
 
 describe('Troca de períodos nas telas', () => {
-  it('depois de carregar Tudo não busca de novo ao voltar para Dia ou Mês', () => {
-    let cache: CacheIntervalos = { todos: false, intervalos: [] }
-    const mes = intervaloPeriodo({ visao: 'mes', data: '2026-09-28' })
-    expect(intervalosParaBuscar(cache, mes)).toEqual([mes])
-    cache = marcarCarregado(cache, mes)
-    expect(intervalosParaBuscar(cache, intervaloPeriodo({ visao: 'dia', data: '2026-09-28' }))).toEqual([])
-    expect(intervalosParaBuscar(cache, intervaloPeriodo({ visao: 'ano', data: '2026-09-28' }))).toEqual([
-      { inicio: '2026-01-01', fim: '2026-08-31' },
-      { inicio: '2026-10-01', fim: '2026-12-31' },
-    ])
-    cache = marcarCarregado(cache, null)
-    expect(intervalosParaBuscar(cache, intervaloPeriodo({ visao: 'dia', data: '2020-01-01' }))).toEqual([])
+  it('busca por mês, reaproveita meses já carregados e usa Tudo quando já carregado', () => {
+    const chaves = (visao: 'dia' | 'semana' | 'mes' | 'ano', tudo = false) =>
+      blocosDoPeriodo(intervaloPeriodo({ visao, data: '2026-09-28' }), tudo).map(chaveDoBloco)
+    expect(chaves('mes')).toEqual(['2026-09'])
+    expect(chaves('dia')).toEqual(['2026-09'])
+    expect(chaves('semana')).toEqual(['2026-09', '2026-10'])
+    expect(chaves('ano')).toHaveLength(12)
+    expect(chaves('ano').filter((chave) => chave !== '2026-09')).toHaveLength(11)
+    expect(blocosDoPeriodo(null, false).map(chaveDoBloco)).toEqual(['tudo'])
+    expect(chaves('dia', true)).toEqual(['tudo'])
   })
 
   it('prontuários mostram só pacientes atendidos no período, mesmo com tudo em memória', () => {

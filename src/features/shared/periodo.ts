@@ -73,43 +73,27 @@ export function fimIntervaloIso(intervalo: Intervalo) {
   return new Date(`${intervalo.fim}T23:59:59.999`).toISOString()
 }
 
-export function mesclarIntervalos(intervalos: Intervalo[]): Intervalo[] {
-  const ordenados = [...intervalos].sort((a, b) => a.inicio.localeCompare(b.inicio))
-  const mesclados: Intervalo[] = []
-  for (const intervalo of ordenados) {
-    const ultimo = mesclados.at(-1)
-    if (ultimo && intervalo.inicio <= somarDias(ultimo.fim, 1)) {
-      if (intervalo.fim > ultimo.fim) ultimo.fim = intervalo.fim
-    } else {
-      mesclados.push({ ...intervalo })
+export function mesesDoIntervalo(intervalo: Intervalo): Intervalo[] {
+  const meses: Intervalo[] = []
+  const [anoFim, mesFim] = intervalo.fim.split('-').map(Number)
+  let [ano, mes] = intervalo.inicio.split('-').map(Number)
+  while (ano < anoFim || (ano === anoFim && mes <= mesFim)) {
+    const ultimoDia = new Date(ano, mes, 0).getDate()
+    const prefixo = `${ano}-${String(mes).padStart(2, '0')}`
+    meses.push({ inicio: `${prefixo}-01`, fim: `${prefixo}-${String(ultimoDia).padStart(2, '0')}` })
+    mes += 1
+    if (mes > 12) {
+      mes = 1
+      ano += 1
     }
   }
-  return mesclados
+  return meses
 }
 
-export function intervalosFaltando(carregado: Intervalo[], intervalo: Intervalo): Intervalo[] {
-  const lacunas: Intervalo[] = []
-  let posicao = intervalo.inicio
-  for (const bloco of mesclarIntervalos(carregado)) {
-    if (bloco.fim < posicao) continue
-    if (bloco.inicio > intervalo.fim) break
-    if (bloco.inicio > posicao) lacunas.push({ inicio: posicao, fim: somarDias(bloco.inicio, -1) })
-    posicao = somarDias(bloco.fim, 1)
-    if (posicao > intervalo.fim) return lacunas
-  }
-  if (posicao <= intervalo.fim) lacunas.push({ inicio: posicao, fim: intervalo.fim })
-  return lacunas
+export function blocosDoPeriodo(intervalo: Intervalo | null, tudoCarregado: boolean): (Intervalo | null)[] {
+  return intervalo === null || tudoCarregado ? [null] : mesesDoIntervalo(intervalo)
 }
 
-export type CacheIntervalos = { todos: boolean; intervalos: Intervalo[] }
-
-export function intervalosParaBuscar(cache: CacheIntervalos, intervalo: Intervalo | null): (Intervalo | null)[] {
-  if (cache.todos) return []
-  return intervalo === null ? [null] : intervalosFaltando(cache.intervalos, intervalo)
-}
-
-export function marcarCarregado(cache: CacheIntervalos, intervalo: Intervalo | null): CacheIntervalos {
-  return intervalo === null
-    ? { todos: true, intervalos: cache.intervalos }
-    : { todos: cache.todos, intervalos: mesclarIntervalos([...cache.intervalos, intervalo]) }
+export function chaveDoBloco(bloco: Intervalo | null) {
+  return bloco ? bloco.inicio.slice(0, 7) : 'tudo'
 }

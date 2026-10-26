@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Papel } from '../acesso/perfil'
 import { usePeriodo } from '../shared/usePeriodo'
-import { useDadosPorIntervalo } from '../shared/useDadosPorIntervalo'
+import { CHAVES } from '../shared/consultas'
+import { useDadosPorPeriodo } from '../shared/useDadosPorPeriodo'
 import { intervaloPeriodo } from '../shared/periodo'
 import type { ResumoProntuario } from './ListaProntuarios'
 import { TelaListaProntuarios } from './TelaListaProntuarios'
@@ -13,6 +15,8 @@ import { buscarResumos } from './carregarProntuarios'
 import { useProntuario } from './useProntuario'
 
 type Tela = 'lista' | 'detalhes' | 'retificacao' | 'obito'
+
+const chaveResumo = (item: ItemResumo) => item.key
 
 type ModuloProntuariosProps = {
   petIdInicial?: number
@@ -28,11 +32,12 @@ export function ModuloProntuarios({ petIdInicial, papel = 'veterinarian', emailU
   const [idRetificacao, setIdRetificacao] = useState<number | null>(null)
   const [avisoDetalhes, setAvisoDetalhes] = useState('')
   const [chaveDetalhes, setChaveDetalhes] = useState(0)
+  const cliente = useQueryClient()
   const prontuario = useProntuario(petIdInicial)
   const selecionado = prontuario.paciente
 
   const intervalo = busca.trim() ? null : intervaloPeriodo(periodo)
-  const resumos = useDadosPorIntervalo(buscarResumos, (item: ItemResumo) => item.key, intervalo)
+  const resumos = useDadosPorPeriodo(CHAVES.resumosProntuario, buscarResumos, chaveResumo, intervalo)
   const pacientes = useMemo(
     () => resumirProntuarios(resumos.itens, busca, intervalo),
     [resumos.itens, busca, intervalo],
@@ -59,6 +64,9 @@ export function ModuloProntuarios({ petIdInicial, papel = 'veterinarian', emailU
   }
 
   async function voltarAosDetalhes(mensagem: string) {
+    void cliente.invalidateQueries({ queryKey: CHAVES.consulta })
+    void cliente.invalidateQueries({ queryKey: CHAVES.versoesConsulta })
+    void cliente.invalidateQueries({ queryKey: CHAVES.pets })
     if (idSelecionado !== null) await prontuario.carregar(idSelecionado)
     void resumos.recarregar().catch(() => {})
     setAvisoDetalhes(mensagem)

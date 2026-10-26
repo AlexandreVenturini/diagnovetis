@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { NivelRisco, Condicao, DadosFormularioCondicao } from './condicaoTipos'
 import { DADOS_CLINICOS_VAZIOS } from './condicaoTipos'
 import { Zoonose } from '../../models/Zoonose'
 import { ZoonoseService } from '../../services/ZoonoseService'
+import { CHAVES } from '../shared/consultas'
 
 const servico = new ZoonoseService()
 const riscos: Record<NivelRisco, string> = { Alto: 'alto', Médio: 'medio', Baixo: 'baixo' }
@@ -32,42 +33,14 @@ export function zoonoseParaCondicao(z: Zoonose): Condicao {
 }
 
 export function useCondicoes() {
-  const [zoonoses, setZoonoses] = useState<Condicao[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
-  const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null)
-  const requisicao = useRef(0)
+  const cliente = useQueryClient()
+  const consulta = useQuery({
+    queryKey: CHAVES.condicoes,
+    queryFn: async () => (await servico.listarZoonoses()).map(zoonoseParaCondicao),
+  })
 
-  const buscarItens = useCallback(() => {
-    const versao = ++requisicao.current
-    return servico
-      .listarZoonoses()
-      .then((listar) => {
-        if (versao === requisicao.current) {
-          setZoonoses(listar.map(zoonoseParaCondicao))
-          setErro('')
-          setAtualizadoEm(new Date())
-        }
-      })
-      .catch(() => {
-        if (versao === requisicao.current)
-          setErro('Não foi possível atualizar o catálogo. Confira sua conexão e tente novamente.')
-      })
-      .finally(() => {
-        if (versao === requisicao.current) setCarregando(false)
-      })
-  }, [])
-
-  useEffect(() => {
-    const controle = requisicao
-    void buscarItens()
-    return () => {
-      controle.current++
-    }
-  }, [buscarItens])
   function recarregar() {
-    setCarregando(true)
-    return buscarItens()
+    return cliente.invalidateQueries({ queryKey: CHAVES.condicoes })
   }
 
   async function criarCondicao(formulario: DadosFormularioCondicao) {
@@ -89,9 +62,16 @@ export function useCondicoes() {
       prevalencia: formulario.prevalencia,
     }
     await servico.adicionarZoonose(item)
-    setZoonoses((atual) => [...atual, zoonoseParaCondicao(item)])
-    setAtualizadoEm(new Date())
+    cliente.setQueryData<Condicao[]>(CHAVES.condicoes, (atual) => [...(atual ?? []), zoonoseParaCondicao(item)])
+    void recarregar()
   }
 
-  return { zoonoses, carregando, erro, atualizadoEm, recarregar, criarCondicao }
+  return {
+    zoonoses: consulta.data ?? [],
+    carregando: consulta.isFetching,
+    erro: consulta.isError ? 'Não foi possível atualizar o catálogo. Confira sua conexão e tente novamente.' : '',
+    atualizadoEm: consulta.dataUpdatedAt ? new Date(consulta.dataUpdatedAt) : null,
+    recarregar,
+    criarCondicao,
+  }
 }

@@ -49,7 +49,7 @@ function CartaoIndicador({
 }
 
 export function InicioVeterinario({ pets, aoAbrirModulo, aoNovoPet, aoNovoAgendamento }: InicioVeterinarioProps) {
-  const { agendamentos, carregando, erro, atualizadoEm, atualizarTudo } = useAgendamentos()
+  const { agendamentos, atualizando, erro, atualizadoEm, atualizarTudo } = useAgendamentos()
   const [status, setStatus] = useState<SituacaoAgendamento | 'todos'>('todos')
   const hoje = chaveHoje()
   const agendamentosHoje = useMemo(
@@ -74,7 +74,7 @@ export function InicioVeterinario({ pets, aoAbrirModulo, aoNovoPet, aoNovoAgenda
         descricao="Veja o que acontece agora, o que exige atenção e qual é o próximo passo."
         acoes={
           <StatusAtualizacao
-            carregando={carregando}
+            carregando={atualizando}
             erro={erro}
             atualizadoEm={atualizadoEm}
             aoAtualizar={atualizarTudo}

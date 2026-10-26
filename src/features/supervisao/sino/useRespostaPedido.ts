@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { SupervisaoService } from '../../../services/SupervisaoService'
 import { LIBERACAO } from '../tiposLiberacao'
 import type { PedidoLiberacao } from '../supervisaoTipos'
+import { CHAVES } from '../../shared/consultas'
 
 const supervisaoService = new SupervisaoService()
 
@@ -13,7 +15,16 @@ function mensagemDeErro(texto: string) {
   return 'Não foi possível responder o pedido.'
 }
 
+const AFETADOS_PELA_APROVACAO = [
+  CHAVES.receitas,
+  CHAVES.receitasDoPet,
+  CHAVES.prontuario,
+  CHAVES.resumosProntuario,
+  CHAVES.pets,
+]
+
 export function useRespostaPedido(aoResponder: () => Promise<void>) {
+  const cliente = useQueryClient()
   const [idOcupado, setIdOcupado] = useState<string | null>(null)
   const [visualizando, setVisualizando] = useState<PedidoLiberacao | null>(null)
   const [recusa, setRecusa] = useState<Recusa | null>(null)
@@ -28,6 +39,7 @@ export function useRespostaPedido(aoResponder: () => Promise<void>) {
     setMensagem('')
     try {
       await supervisaoService.responder(pedido.id, aprovar, motivo)
+      if (aprovar) for (const chave of AFETADOS_PELA_APROVACAO) void cliente.invalidateQueries({ queryKey: chave })
     } catch (erro) {
       setMensagem(mensagemDeErro((erro as Error).message))
     } finally {

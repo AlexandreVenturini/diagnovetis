@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AutenticacaoService } from '../../services/AutenticacaoService'
 import { PerfilService, type AlteracoesPerfil } from '../../services/PerfilService'
 import type { Perfil } from '../acesso/perfil'
+import { CHAVES } from '../shared/consultas'
 
 type DadosAdmin = { idUsuarioAtual: string | null; perfis: Perfil[]; erro: string }
 
@@ -29,33 +31,17 @@ async function tentar(acao: () => Promise<void>): Promise<string> {
 }
 
 export function useUsuariosAdmin() {
-  const [perfis, setPerfis] = useState<Perfil[]>([])
-  const [idUsuarioAtual, setIdUsuarioAtual] = useState<string | null>(null)
-  const [carregando, setCarregando] = useState(true)
-  const [mensagem, setMensagem] = useState('')
-
-  function aplicar(resultado: DadosAdmin) {
-    setIdUsuarioAtual(resultado.idUsuarioAtual)
-    if (resultado.erro) setMensagem('Erro ao carregar usuários: ' + resultado.erro)
-    setPerfis(resultado.perfis)
-    setCarregando(false)
-  }
+  const cliente = useQueryClient()
+  const consulta = useQuery({ queryKey: CHAVES.usuariosAdmin, queryFn: () => buscarDadosAdmin() })
+  const [erroAcao, setMensagem] = useState('')
+  const perfis = consulta.data?.perfis ?? []
+  const erroCarga = consulta.data?.erro ? 'Erro ao carregar usuários: ' + consulta.data.erro : ''
+  const mensagem = erroAcao || erroCarga
 
   async function carregar() {
-    setCarregando(true)
     setMensagem('')
-    aplicar(await buscarDadosAdmin())
+    await cliente.invalidateQueries({ queryKey: CHAVES.usuariosAdmin })
   }
-
-  useEffect(() => {
-    let ativo = true
-    void buscarDadosAdmin().then((resultado) => {
-      if (ativo) aplicar(resultado)
-    })
-    return () => {
-      ativo = false
-    }
-  }, [])
 
   async function atualizar(idUsuario: string, alteracoes: AlteracoesPerfil, rotuloErro: string) {
     const erro = await tentar(() => perfilService.atualizar(idUsuario, alteracoes))
@@ -78,8 +64,8 @@ export function useUsuariosAdmin() {
   return {
     pendentes: perfis.filter((perfil) => perfil.situacao === 'pendente'),
     usuarios: perfis.filter((perfil) => perfil.situacao !== 'pendente'),
-    idUsuarioAtual,
-    carregando,
+    idUsuarioAtual: consulta.data?.idUsuarioAtual ?? null,
+    carregando: consulta.isPending,
     mensagem,
     aprovar: (idUsuario: string) => atualizar(idUsuario, { situacao: 'aprovado' }, 'Erro ao aprovar'),
     rejeitar: (idUsuario: string) => {

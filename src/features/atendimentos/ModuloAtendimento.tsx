@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { CabecalhoTela } from '../../components/common/CabecalhoTela'
 import type { AtendimentoEmAndamento } from '../../services/ConsultaService'
 import { nomesResponsaveis } from '../pets/responsavelPet'
@@ -8,7 +9,9 @@ import type { Agendamento } from '../agenda/agendaTipos'
 import { useAgendamentos } from '../agenda/useAgendamentos'
 import type { PetResumo } from '../pets/petTipos'
 import { TelaLiberacao } from '../supervisao/liberacao/TelaLiberacao'
-import type { Liberacao, OpcaoEstudante, OpcaoVeterinario } from '../supervisao/supervisaoTipos'
+import { useEstudantes, useVeterinarios } from '../supervisao/useEquipe'
+import { CHAVES } from '../shared/consultas'
+import type { Liberacao, OpcaoVeterinario } from '../supervisao/supervisaoTipos'
 import { AtendimentoConcluido, type AtendimentoFinalizado } from './AtendimentoConcluido'
 import { atendimentoDoAgendamento } from './atendimentoDoAgendamento'
 import { aplicarVeterinario, agendamentosAbertos, validarAtendimento } from './atendimentoRegras'
@@ -71,29 +74,25 @@ export function ModuloAtendimento({
   )
   const { agendamentos, atualizarAgendamento } = useAgendamentos()
   const emAndamento = useAtendimentosEmAndamento()
-  const [veterinarios, setVeterinarios] = useState<OpcaoVeterinario[]>([])
-  const [estudantes, setEstudantes] = useState<OpcaoEstudante[]>([])
+  const cliente = useQueryClient()
+  const consultaVeterinarios = useVeterinarios()
+  const consultaEstudantes = useEstudantes()
+  const veterinarios = consultaVeterinarios.data ?? []
+  const estudantes = consultaEstudantes.data ?? []
+  const [veterinariosAplicados, setVeterinariosAplicados] = useState<OpcaoVeterinario[] | null>(null)
   const [liberacao, setLiberacao] = useState<Liberacao | null>(null)
   const [idRascunho, setIdRascunho] = useState<number | null>(null)
   const [inicio, setInicio] = useState<InicioAtendimento | null>(null)
   const [supervisorRascunho, setSupervisorRascunho] = useState('')
 
-  useEffect(() => {
-    let ativo = true
-    Promise.all([supervisaoService.listarVeterinarios(), supervisaoService.listarEstudantes()])
-      .then(([listaVeterinarios, listaEstudantes]) => {
-        if (!ativo) return
-        setVeterinarios(listaVeterinarios)
-        setEstudantes(listaEstudantes)
-        setDados((atual) => aplicarVeterinario(atual, listaVeterinarios, null, emailUsuario))
-      })
-      .catch(() => {
-        if (ativo) setMensagem('Não foi possível carregar a lista de veterinários e estudantes.')
-      })
-    return () => {
-      ativo = false
-    }
-  }, [emailUsuario])
+  if (consultaVeterinarios.data && veterinariosAplicados !== consultaVeterinarios.data) {
+    setVeterinariosAplicados(consultaVeterinarios.data)
+    setDados((atual) => aplicarVeterinario(atual, consultaVeterinarios.data, null, emailUsuario))
+  }
+  const erroEquipe =
+    consultaVeterinarios.isError || consultaEstudantes.isError
+      ? 'Não foi possível carregar a lista de veterinários e estudantes.'
+      : ''
 
   function tratarLiberacao(nova: Liberacao) {
     setLiberacao(nova)
@@ -181,6 +180,8 @@ export function ModuloAtendimento({
       }
       void emAndamento.recarregar()
       if (finalizar) {
+        void cliente.invalidateQueries({ queryKey: CHAVES.resumosProntuario })
+        void cliente.invalidateQueries({ queryKey: CHAVES.prontuario })
         setConcluido({
           dados: { ...dados },
           exames: structuredClone(exames),
@@ -367,9 +368,9 @@ export function ModuloAtendimento({
         )}
         {etapa === 5 && <EtapaDiagnostico dados={dados} atualizar={atualizar} aoVoltar={() => setEtapa(4)} />}
       </fieldset>
-      {mensagem && (
+      {(mensagem || erroEquipe) && (
         <p className="consultation-message" role="status">
-          {mensagem}
+          {mensagem || erroEquipe}
         </p>
       )}
       <div className="consultation-actions">

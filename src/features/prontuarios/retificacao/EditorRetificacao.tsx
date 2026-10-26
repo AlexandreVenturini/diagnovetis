@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ConsultaService } from '../../../services/ConsultaService'
+import { CHAVES } from '../../shared/consultas'
 import type { Papel } from '../../acesso/perfil'
 import { TelaLiberacao } from '../../supervisao/liberacao/TelaLiberacao'
 import { SupervisaoService } from '../../../services/SupervisaoService'
@@ -34,28 +36,19 @@ export function EditorRetificacao({ consultaId, papel, aoConcluir, aoCancelar }:
   const [liberacao, setLiberacao] = useState<Liberacao | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
-  const [erroCarregamento, setErroCarregamento] = useState('')
   const travaSalvar = useRef(false)
 
-  useEffect(() => {
-    let ativo = true
-    consultaService
-      .buscarPorId(consultaId)
-      .then((consulta) => {
-        if (!ativo) return
-        if (!consulta) {
-          setErroCarregamento('Atendimento não encontrado.')
-          return
-        }
-        setDados(consultaParaDados(consulta))
-      })
-      .catch(() => {
-        if (ativo) setErroCarregamento('Não foi possível carregar o atendimento.')
-      })
-    return () => {
-      ativo = false
-    }
-  }, [consultaId])
+  const consulta = useQuery({
+    queryKey: [...CHAVES.consulta, consultaId],
+    queryFn: async () => (await consultaService.buscarPorId(consultaId)) ?? null,
+    refetchOnMount: 'always',
+  })
+  if (dados === null && consulta.data && !consulta.isFetching) setDados(consultaParaDados(consulta.data))
+  const erroCarregamento = consulta.isError
+    ? 'Não foi possível carregar o atendimento.'
+    : consulta.isSuccess && consulta.data === null
+      ? 'Atendimento não encontrado.'
+      : ''
 
   function atualizar(key: keyof DadosAtendimento, valor: string) {
     setDados((atual) => (atual ? { ...atual, [key]: valor } : atual))

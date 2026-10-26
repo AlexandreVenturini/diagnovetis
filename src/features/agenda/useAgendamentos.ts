@@ -1,44 +1,28 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AgendamentoService } from '../../services/AgendamentoService'
+import { CHAVES } from '../shared/consultas'
 import type { Intervalo } from '../shared/periodo'
-import { useDadosPorIntervalo } from '../shared/useDadosPorIntervalo'
+import { useDadosPorPeriodo } from '../shared/useDadosPorPeriodo'
 import type { Agendamento, DadosFormularioAgendamento } from './agendaTipos'
 
 const agendamentoService = new AgendamentoService()
 const buscarAgendamentos = (intervalo: Intervalo | null) => agendamentoService.listar(intervalo)
+const chaveAgendamento = (item: Agendamento) => item.id
+const CHAVE_LEMBRETES = [...CHAVES.agendamentos, 'lembretes']
 
 export function useAgendamentos(intervalo: Intervalo | null = null) {
-  const {
-    itens: agendamentos,
-    carregando,
-    erro,
-    atualizadoEm,
-    recarregar,
-    reiniciar,
-    inserirOuAtualizar,
-  } = useDadosPorIntervalo(buscarAgendamentos, (item: Agendamento) => item.id, intervalo)
-  const [agendamentosComLembrete, setAgendamentosComLembrete] = useState<Agendamento[]>([])
-
-  const recarregarLembretes = useCallback(async () => {
-    setAgendamentosComLembrete(await agendamentoService.listarComLembretes().catch(() => []))
-  }, [])
-
-  useEffect(() => {
-    let ativo = true
-    agendamentoService
-      .listarComLembretes()
-      .then((linhas) => {
-        if (ativo) setAgendamentosComLembrete(linhas)
-      })
-      .catch(() => {})
-    return () => {
-      ativo = false
-    }
-  }, [])
+  const cliente = useQueryClient()
+  const dados = useDadosPorPeriodo(CHAVES.agendamentos, buscarAgendamentos, chaveAgendamento, intervalo)
+  const lembretes = useQuery({
+    queryKey: CHAVE_LEMBRETES,
+    queryFn: () => agendamentoService.listarComLembretes().catch(() => []),
+  })
+  const { inserirOuAtualizar, recarregar } = dados
 
   const temConflito = useCallback(
-    (veterinario: string, dados: string, horario: string, idIgnorado?: number) =>
-      agendamentoService.temConflito(veterinario, dados, horario, idIgnorado),
+    (veterinario: string, dia: string, horario: string, idIgnorado?: number) =>
+      agendamentoService.temConflito(veterinario, dia, horario, idIgnorado),
     [],
   )
 
@@ -56,27 +40,23 @@ export function useAgendamentos(intervalo: Intervalo | null = null) {
   const atualizarAgendamento = useCallback(
     async (id: number, alteracoes: Partial<Agendamento>) => {
       if (!(await agendamentoService.atualizar(id, alteracoes))) return false
-      const atual = agendamentos.find((item) => item.id === id)
-      if (atual) inserirOuAtualizar([{ ...atual, ...alteracoes }])
-      else await recarregar()
-      if (alteracoes.lembretes !== undefined) await recarregarLembretes()
+      cliente.setQueriesData<Agendamento[]>({ queryKey: CHAVES.agendamentos }, (atual) =>
+        atual?.map((item) => (item.id === id ? { ...item, ...alteracoes } : item)),
+      )
+      void recarregar()
       return true
     },
-    [agendamentos, inserirOuAtualizar, recarregar, recarregarLembretes],
+    [cliente, recarregar],
   )
 
-  const atualizarTudo = useCallback(() => {
-    reiniciar()
-    void recarregarLembretes()
-  }, [reiniciar, recarregarLembretes])
-
   return {
-    agendamentos,
-    agendamentosComLembrete,
-    carregando,
-    erro,
-    atualizadoEm,
-    atualizarTudo,
+    agendamentos: dados.itens,
+    agendamentosComLembrete: lembretes.data ?? [],
+    carregando: dados.carregando,
+    atualizando: dados.atualizando || lembretes.isFetching,
+    erro: dados.erro,
+    atualizadoEm: dados.atualizadoEm,
+    atualizarTudo: recarregar,
     temConflito,
     criarAgendamento,
     atualizarAgendamento,

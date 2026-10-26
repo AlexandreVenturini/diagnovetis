@@ -1,27 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ReceitaService, type ReceitaEmitida } from '../../services/ReceitaService'
+import { CHAVES } from '../shared/consultas'
 import { gerarReceita } from './receita'
 
+const receitaService = new ReceitaService()
+
 export function ReceitasDoPet({ petId }: { petId: number }) {
-  const [itens, setItens] = useState<ReceitaEmitida[]>([])
-  const [mensagem, setMensagem] = useState('Carregando receitas…')
-  useEffect(() => {
-    let ativo = true
-    new ReceitaService()
-      .listar(petId)
-      .then((linhas) => {
-        if (ativo) {
-          setItens(linhas.filter((linha) => !linha.id.startsWith('consulta-')))
-          setMensagem('')
-        }
-      })
-      .catch((erro) => {
-        if (ativo) setMensagem(erro.message)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [petId])
+  const consulta = useQuery({
+    queryKey: [...CHAVES.receitasDoPet, petId],
+    queryFn: async () =>
+      (await receitaService.listar(petId)).filter((linha: ReceitaEmitida) => !linha.id.startsWith('consulta-')),
+  })
+  const itens = consulta.data ?? []
+  const [aviso, setMensagem] = useState('')
+  const mensagem = consulta.isPending ? 'Carregando receitas…' : consulta.error?.message || aviso
   return (
     <section className="content-card saved-prescriptions">
       <h3>Receituário do animal</h3>

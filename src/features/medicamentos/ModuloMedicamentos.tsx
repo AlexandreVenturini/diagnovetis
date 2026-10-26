@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { FormEvent } from 'react'
 import { Abas } from '../../components/common/Abas'
 import { CabecalhoLista } from '../../components/common/CabecalhoLista'
 import { CabecalhoTela } from '../../components/common/CabecalhoTela'
 import { CampoBusca } from '../../components/common/CampoBusca'
 import { MedicamentoService } from '../../services/MedicamentoService'
+import { CHAVES } from '../shared/consultas'
 import { FORMULARIO_MEDICAMENTO_VAZIO, montarMedicamento, medicamentoParaResumo } from './medicamentoRegras'
 import { DetalhesMedicamento } from './DetalhesMedicamento'
 import { FormularioMedicamento } from './FormularioMedicamento'
@@ -45,13 +47,19 @@ function CartaoMedicamento({
 }
 
 export function ModuloMedicamentos() {
-  const [itens, setItens] = useState<MedicamentoResumo[]>([])
+  const cliente = useQueryClient()
+  const consulta = useQuery({
+    queryKey: CHAVES.medicamentos,
+    queryFn: () => medicamentoService.listarMedicamentos(),
+  })
+  const itens = useMemo(() => (consulta.data ?? []).map(medicamentoParaResumo), [consulta.data])
+  const carregando = consulta.isPending
   const [tela, setTela] = useState<'consulta' | 'cadastro'>('consulta')
   const [idSelecionado, setIdSelecionado] = useState<number | null>(null)
   const [busca, setBusca] = useState('')
   const [formulario, setFormulario] = useState(FORMULARIO_MEDICAMENTO_VAZIO)
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
+  const [erroFormulario, setErro] = useState('')
+  const erro = erroFormulario || (consulta.isError ? consulta.error.message : '')
   const [salvando, setSalvando] = useState(false)
   const filtrados = useMemo(() => {
     const normalizado = busca.trim().toLocaleLowerCase('pt-BR')
@@ -62,24 +70,6 @@ export function ModuloMedicamentos() {
     )
   }, [itens, busca])
   const selecionado = itens.find((item) => item.id === idSelecionado) ?? null
-
-  useEffect(() => {
-    let ativo = true
-    medicamentoService
-      .listarMedicamentos()
-      .then((medicamentos) => {
-        if (ativo) setItens(medicamentos.map(medicamentoParaResumo))
-      })
-      .catch((causa) => {
-        if (ativo) setErro(causa instanceof Error ? causa.message : 'Não foi possível carregar os medicamentos.')
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [])
 
   function atualizar<K extends keyof DadosFormularioMedicamento>(key: K, valor: DadosFormularioMedicamento[K]) {
     setFormulario((atual) => ({ ...atual, [key]: valor }))
@@ -97,7 +87,7 @@ export function ModuloMedicamentos() {
     setSalvando(true)
     try {
       await medicamentoService.adicionarMedicamento(montado.medicamento)
-      setItens((atual) => [...atual, montado.resumo])
+      await cliente.invalidateQueries({ queryKey: CHAVES.medicamentos })
       setIdSelecionado(id)
       setTela('consulta')
       setFormulario(FORMULARIO_MEDICAMENTO_VAZIO)

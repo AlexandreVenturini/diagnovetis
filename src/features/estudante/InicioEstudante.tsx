@@ -19,7 +19,7 @@ const dataExibida = (valor: string) =>
   new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date(`${valor}T12:00:00`))
 
 export function InicioEstudante({ pets, aoAbrirPets, aoAbrirAgenda, aoNovoPet, aoNovoAgendamento }: Props) {
-  const { agendamentos, carregando, erro, atualizadoEm, atualizarTudo } = useAgendamentos()
+  const { agendamentos, atualizando, erro, atualizadoEm, atualizarTudo } = useAgendamentos()
   const hoje = dataLocal()
   const itensHoje = useMemo(
     () =>
@@ -45,7 +45,7 @@ export function InicioEstudante({ pets, aoAbrirPets, aoAbrirAgenda, aoNovoPet, a
         descricao="Organize os cadastros e mantenha a agenda da clínica sempre em dia."
         acoes={
           <StatusAtualizacao
-            carregando={carregando}
+            carregando={atualizando}
             erro={erro}
             atualizadoEm={atualizadoEm}
             aoAtualizar={atualizarTudo}

@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   noIntervalo,
-  mesclarIntervalos,
-  intervalosFaltando,
+  mesesDoIntervalo,
   limitesPeriodo,
   rotuloPeriodo,
   intervaloPeriodo,
@@ -24,27 +23,19 @@ describe('Filtro de período padrão', () => {
     expect(rotuloPeriodo('2026-09-28', 'tudo')).toBe('Todo o período')
   })
 
-  it('junta intervalos vizinhos e sobrepostos', () => {
-    expect(
-      mesclarIntervalos([
-        { inicio: '2026-09-08', fim: '2026-09-14' },
-        { inicio: '2026-09-01', fim: '2026-09-07' },
-        { inicio: '2026-09-20', fim: '2026-09-30' },
-      ]),
-    ).toEqual([
-      { inicio: '2026-09-01', fim: '2026-09-14' },
-      { inicio: '2026-09-20', fim: '2026-09-30' },
+  it('divide o período em meses inteiros', () => {
+    expect(mesesDoIntervalo({ inicio: '2026-09-28', fim: '2026-10-04' })).toEqual([
+      { inicio: '2026-09-01', fim: '2026-09-30' },
+      { inicio: '2026-10-01', fim: '2026-10-31' },
     ])
-  })
-
-  it('busca só os dias que ainda não foram carregados', () => {
-    const semana = { inicio: '2026-09-28', fim: '2026-10-04' }
-    expect(intervalosFaltando([], semana)).toEqual([semana])
-    expect(intervalosFaltando([semana], { inicio: '2026-09-01', fim: '2026-10-31' })).toEqual([
-      { inicio: '2026-09-01', fim: '2026-09-27' },
-      { inicio: '2026-10-05', fim: '2026-10-31' },
+    expect(mesesDoIntervalo({ inicio: '2024-02-10', fim: '2024-02-10' })).toEqual([
+      { inicio: '2024-02-01', fim: '2024-02-29' },
     ])
-    expect(intervalosFaltando([{ inicio: '2026-01-01', fim: '2026-12-31' }], semana)).toEqual([])
+    expect(mesesDoIntervalo({ inicio: '2025-12-01', fim: '2026-01-31' }).map((mes) => mes.inicio)).toEqual([
+      '2025-12-01',
+      '2026-01-01',
+    ])
+    expect(mesesDoIntervalo({ inicio: '2026-01-01', fim: '2026-12-31' })).toHaveLength(12)
   })
 
   it('confere se uma data está no período', () => {

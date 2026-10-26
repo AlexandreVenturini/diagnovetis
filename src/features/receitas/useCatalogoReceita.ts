@@ -1,40 +1,29 @@
-import { useEffect, useState } from 'react'
-import type { Medico } from '../../models/Medico'
-import type { Medicamento } from '../../models/Medicamento'
+import { useQuery } from '@tanstack/react-query'
 import { MedicoService } from '../../services/MedicoService'
 import { MedicamentoService } from '../../services/MedicamentoService'
+import { CHAVES } from '../shared/consultas'
+
+const medicoService = new MedicoService()
+const medicamentoService = new MedicamentoService()
 
 export function useCatalogoReceita() {
-  const [medicos, setMedicos] = useState<Medico[]>([])
-  const [medicamentos, setMedicamentos] = useState<Medicamento[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
-  const [recarga, setRecarga] = useState(0)
-
-  useEffect(() => {
-    let ativo = true
-    Promise.all([new MedicoService().listarMedicos(), new MedicamentoService().listarMedicamentos()])
-      .then(([listaVeterinarios, listaMedicamentos]) => {
-        if (!ativo) return
-        setMedicos(listaVeterinarios)
-        setMedicamentos(listaMedicamentos)
-        setErro('')
-        setCarregando(false)
-      })
-      .catch((motivo) => {
-        if (!ativo) return
-        setErro(motivo.message)
-        setCarregando(false)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [recarga])
+  const medicos = useQuery({ queryKey: CHAVES.medicos, queryFn: () => medicoService.listarMedicos() })
+  const medicamentos = useQuery({
+    queryKey: CHAVES.medicamentos,
+    queryFn: () => medicamentoService.listarMedicamentos(),
+  })
+  const falha = medicos.error ?? medicamentos.error
 
   function tentarNovamente() {
-    setCarregando(true)
-    setRecarga((valor) => valor + 1)
+    void medicos.refetch()
+    void medicamentos.refetch()
   }
 
-  return { medicos, medicamentos, carregando, erro, tentarNovamente }
+  return {
+    medicos: medicos.data ?? [],
+    medicamentos: medicamentos.data ?? [],
+    carregando: medicos.isPending || medicamentos.isPending,
+    erro: falha ? falha.message : '',
+    tentarNovamente,
+  }
 }
