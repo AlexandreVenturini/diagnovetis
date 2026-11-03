@@ -3,6 +3,8 @@ import { AnexoLaudo } from '../../atendimentos/CamposLaudo'
 import { Exame, ROTULOS_STATUS_EXAME } from '../../../models/Exame'
 import { ExameService } from '../../../services/ExameService'
 import { CamposExame } from '../../atendimentos/CamposExame'
+import { GRUPOS_EXAME, modeloDoExame } from '../../atendimentos/catalogoExames'
+import { ResultadoEspecifico } from '../../atendimentos/ResultadoEspecifico'
 import { exameParaRascunho, type RascunhoExame } from '../../atendimentos/exameTipos'
 import type { RegistroClinico } from '../prontuarioTipos'
 
@@ -47,87 +49,95 @@ export function ExamesProntuario({
           <h4>
             Consulta nº {atendimento.id} · {new Date(`${atendimento.data}T12:00:00`).toLocaleDateString('pt-BR')}
           </h4>
-          {atendimento.examesComplementares!.map((exame) => (
-            <article className="record-exam" key={exame.id}>
-              <header>
-                <strong>{exame.nomeExame}</strong>
-                <span className={`exam-status exam-status-${exame.status}`}>{ROTULOS_STATUS_EXAME[exame.status]}</span>
-              </header>
-              <dl>
-                <div>
-                  <dt>Categoria</dt>
-                  <dd>
-                    {exame.categoria === 'imagem'
-                      ? 'Imagem'
-                      : exame.categoria === 'laboratorial'
-                        ? 'Laboratorial'
-                        : 'Outro'}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Solicitação</dt>
-                  <dd>{formatarData(exame.dataSolicitacao)}</dd>
-                </div>
-                <div>
-                  <dt>Realização</dt>
-                  <dd>{formatarData(exame.dataRealizacao)}</dd>
-                </div>
-              </dl>
-              <p>
-                <b>Resultado:</b>{' '}
-                {exame.resultado || (exame.status === 'cancelado' ? 'Exame cancelado' : 'Aguardando resultado')}
-              </p>
-              <p>
-                <b>Interpretação clínica:</b> {exame.interpretacao || 'Não informada'}
-              </p>
-              <p>
-                <b>Laudo do exame:</b> {exame.laudo || 'Não informado'}
-              </p>
-              {exame.laudoAnexo && <AnexoLaudo anexo={exame.laudoAnexo} />}
-              {editando?.exame.id === exame.id ? (
-                <fieldset
-                  className="exam-result-editor exam-no-print"
-                  disabled={salvando || editando.rascunho.laudoCarregando}
-                >
-                  <legend>Atualizar acompanhamento / resultado</legend>
-                  <CamposExame
-                    apenasResultado
-                    valor={editando.rascunho}
-                    aoAlterar={(rascunho) => setEditando({ ...editando, rascunho })}
-                  />
-                  <div className="form-actions">
-                    <button type="button" className="primary-button" onClick={() => void salvar()}>
-                      {salvando ? 'Salvando…' : 'Salvar exame'}
-                    </button>
+          {atendimento.examesComplementares!.map((exame) => {
+            const modelo = modeloDoExame(exame.modelo, exame.nomeExame)
+            return (
+              <article className="record-exam" key={exame.id}>
+                <header>
+                  <strong>{exame.nomeExame}</strong>
+                  <span className={`exam-status exam-status-${exame.status}`}>
+                    {ROTULOS_STATUS_EXAME[exame.status]}
+                  </span>
+                </header>
+                <dl>
+                  <div>
+                    <dt>Categoria</dt>
+                    <dd>
+                      {modelo
+                        ? GRUPOS_EXAME[modelo.grupo]
+                        : exame.categoria === 'imagem'
+                          ? 'Imagem'
+                          : exame.categoria === 'laboratorial'
+                            ? 'Laboratorial'
+                            : 'Outro'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Solicitação</dt>
+                    <dd>{formatarData(exame.dataSolicitacao)}</dd>
+                  </div>
+                  <div>
+                    <dt>Realização</dt>
+                    <dd>{formatarData(exame.dataRealizacao)}</dd>
+                  </div>
+                </dl>
+                <p>
+                  <b>Resumo do resultado:</b>{' '}
+                  {exame.resultado || (exame.status === 'cancelado' ? 'Exame cancelado' : 'Aguardando resultado')}
+                </p>
+                {modelo && <ResultadoEspecifico modelo={modelo} dados={exame.dados} />}
+                <p>
+                  <b>Interpretação clínica:</b> {exame.interpretacao || 'Não informada'}
+                </p>
+                <p>
+                  <b>Laudo do exame:</b> {exame.laudo || 'Não informado'}
+                </p>
+                {exame.laudoAnexo && <AnexoLaudo anexo={exame.laudoAnexo} />}
+                {editando?.exame.id === exame.id ? (
+                  <fieldset
+                    className="exam-result-editor exam-no-print"
+                    disabled={salvando || editando.rascunho.laudoCarregando}
+                  >
+                    <legend>Atualizar acompanhamento / resultado</legend>
+                    <CamposExame
+                      apenasResultado
+                      valor={editando.rascunho}
+                      aoAlterar={(rascunho) => setEditando({ ...editando, rascunho })}
+                    />
+                    <div className="form-actions">
+                      <button type="button" className="primary-button" onClick={() => void salvar()}>
+                        {salvando ? 'Salvando…' : 'Salvar exame'}
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => {
+                          setEditando(null)
+                          setMensagem('')
+                        }}
+                      >
+                        Cancelar edição
+                      </button>
+                    </div>
+                  </fieldset>
+                ) : (
+                  podeEditar && (
                     <button
                       type="button"
-                      className="secondary-button"
+                      className="secondary-button exam-no-print"
+                      disabled={salvando}
                       onClick={() => {
-                        setEditando(null)
+                        setEditando({ exame, rascunho: exameParaRascunho(exame) })
                         setMensagem('')
                       }}
                     >
-                      Cancelar edição
+                      Atualizar status / resultado
                     </button>
-                  </div>
-                </fieldset>
-              ) : (
-                podeEditar && (
-                  <button
-                    type="button"
-                    className="secondary-button exam-no-print"
-                    disabled={salvando}
-                    onClick={() => {
-                      setEditando({ exame, rascunho: exameParaRascunho(exame) })
-                      setMensagem('')
-                    }}
-                  >
-                    Atualizar status / resultado
-                  </button>
-                )
-              )}
-            </article>
-          ))}
+                  )
+                )}
+              </article>
+            )
+          })}
         </section>
       ))}
       {mensagem && (

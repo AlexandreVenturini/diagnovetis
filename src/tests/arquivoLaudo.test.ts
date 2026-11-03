@@ -9,13 +9,16 @@ describe('Anexos de laudos', () => {
     expect(atob(resultado.dados.split(',')[1])).toBe('%PDF-1.7\nlaudo')
     expect(validarAnexoLaudo(resultado)).toBe('')
   })
-  it('aceita as assinaturas de JPG e PNG', async () => {
+  it('recusa JPG e PNG para não ocupar espaço no banco', async () => {
     for (const [tipo, bytes] of [
       ['image/jpeg', [255, 216, 255]],
       ['image/png', [137, 80, 78, 71, 13, 10, 26, 10]],
     ] as const) {
-      expect((await lerArquivoLaudo(new File([new Uint8Array(bytes)], 'imagem', { type: tipo }))).tipo).toBe(tipo)
+      await expect(lerArquivoLaudo(new File([new Uint8Array(bytes)], 'imagem', { type: tipo }))).rejects.toThrow('PDF')
     }
+    expect(
+      validarAnexoLaudo({ nome: 'foto.png', tipo: 'image/png', dados: 'data:image/png;base64,iVBORw0KGgo=' }),
+    ).toContain('PDF')
   })
   it('rejeita conteúdo incompatível, arquivo vazio, tipo não permitido e arquivo grande', async () => {
     for (const arquivo of [

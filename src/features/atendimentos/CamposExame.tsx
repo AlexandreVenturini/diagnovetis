@@ -1,6 +1,8 @@
+import { CamposEspecificos } from './CamposEspecificos'
 import { CamposLaudo } from './CamposLaudo'
+import { resumirResultado } from './catalogoExames'
 import { EXAME_STATUS, ROTULOS_STATUS_EXAME } from '../../models/Exame'
-import { dataLocal, type RascunhoExame } from './exameTipos'
+import { dataLocal, modeloDoRascunho, type RascunhoExame } from './exameTipos'
 
 export function CamposExame({
   valor,
@@ -11,9 +13,11 @@ export function CamposExame({
   aoAlterar: (valor: RascunhoExame) => void
   apenasResultado?: boolean
 }) {
+  const modelo = modeloDoRascunho(valor)
+  const resumoSugerido = resumirResultado(modelo, valor.dados)
   return (
     <div className="consultation-form-grid exam-fields">
-      {!apenasResultado && (
+      {!apenasResultado && !modelo && (
         <>
           <label>
             Nome do exame
@@ -30,17 +34,19 @@ export function CamposExame({
               <option value="outro">Outro</option>
             </select>
           </label>
-          <label>
-            Data da solicitação
-            <input
-              type="date"
-              max={dataLocal()}
-              value={valor.dataSolicitacao}
-              onChange={(e) => aoAlterar({ ...valor, dataSolicitacao: e.target.value })}
-              required
-            />
-          </label>
         </>
+      )}
+      {!apenasResultado && (
+        <label>
+          Data da solicitação
+          <input
+            type="date"
+            max={dataLocal()}
+            value={valor.dataSolicitacao}
+            onChange={(e) => aoAlterar({ ...valor, dataSolicitacao: e.target.value })}
+            required
+          />
+        </label>
       )}
       <label>
         Status
@@ -66,15 +72,34 @@ export function CamposExame({
           required={valor.status === 'concluido'}
         />
       </label>
-      <label className="full-field">
-        Resultado
-        <textarea
-          value={valor.resultado}
-          onChange={(e) => aoAlterar({ ...valor, resultado: e.target.value })}
-          placeholder="Aguardando resultado"
-          required={valor.status === 'concluido'}
+      {modelo && (
+        <CamposEspecificos
+          modelo={modelo}
+          dados={valor.dados ?? {}}
+          aoAlterar={(dados) => aoAlterar({ ...valor, dados })}
         />
-      </label>
+      )}
+      <div className="full-field exam-summary">
+        <label>
+          Resumo do resultado
+          <textarea
+            rows={2}
+            value={valor.resultado}
+            onChange={(e) => aoAlterar({ ...valor, resultado: e.target.value })}
+            placeholder="Ex.: anemia leve e creatinina aumentada. Aparece na ficha do prontuário."
+            required={valor.status === 'concluido'}
+          />
+        </label>
+        {resumoSugerido && resumoSugerido !== valor.resultado && (
+          <button
+            type="button"
+            className="outline-button"
+            onClick={() => aoAlterar({ ...valor, resultado: resumoSugerido })}
+          >
+            Preencher com os valores informados
+          </button>
+        )}
+      </div>
       <CamposLaudo valor={valor} aoAlterar={aoAlterar} />
       <label className="full-field">
         Interpretação clínica

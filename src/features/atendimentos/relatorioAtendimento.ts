@@ -1,4 +1,5 @@
-import type { RascunhoExame } from './exameTipos'
+import { modeloDoRascunho, type RascunhoExame } from './exameTipos'
+import { situacaoValor, textoReferencia, valorFormatado, valorPreenchido } from './catalogoExames'
 import { ROTULOS_STATUS_EXAME } from '../../models/Exame'
 import type { DadosAtendimento } from './atendimentoTipos'
 import cssImpressaoAtendimento from './impressao/atendimento-impressao.css?raw'
@@ -29,12 +30,27 @@ export function gerarRelatorioAtendimento(dados: DadosAtendimento, exames: Rascu
     timeStyle: 'short',
   }).format(new Date())
 
+  const valoresEspecificos = (exame: RascunhoExame) => {
+    const modelo = modeloDoRascunho(exame)
+    if (!modelo) return ''
+    const linhas = modelo.secoes
+      .flatMap((secao) => secao.campos)
+      .filter((campo) => valorPreenchido(exame.dados?.[campo.chave]))
+      .map((campo) => {
+        const situacao = situacaoValor(campo, exame.dados[campo.chave])
+        const referencia = textoReferencia(campo)
+        return `<li>${escaparHtml(campo.rotulo)}: ${escaparHtml(valorFormatado(campo, exame.dados[campo.chave]))}${situacao ? ` (${situacao} da referência)` : ''}${referencia ? ` · Ref.: ${escaparHtml(referencia)}` : ''}</li>`
+      })
+    return linhas.length ? `<ul>${linhas.join('')}</ul>` : ''
+  }
+
   const blocoExame = (exame: RascunhoExame) => `
         <div class="long-text">
           <b>${valorOuPadrao(exame.nome)}</b>
           <p>${valorOuPadrao(exame.categoria)} · Solicitação: ${valorOuPadrao(exame.dataSolicitacao)} · ${ROTULOS_STATUS_EXAME[exame.status]}</p>
           <p>Realização: ${valorOuPadrao(exame.dataRealizacao)}</p>
           <p>Resultado: ${valorOuPadrao(exame.resultado, 'Aguardando resultado')}</p>
+          ${valoresEspecificos(exame)}
           <p>Laudo: ${valorOuPadrao(exame.laudo ?? '')}</p>
           ${exame.laudoAnexo ? `<p>Anexo do laudo: ${valorOuPadrao(exame.laudoAnexo.nome)} (disponível no prontuário)</p>` : ''}
           <p>Interpretação: ${valorOuPadrao(exame.interpretacao)}</p>

@@ -28,6 +28,7 @@ export class ExameService {
       ...rascunho,
       nome: exame.nomeExame,
       categoria: exame.categoria,
+      modelo: exame.modelo,
       dataSolicitacao: `${exame.dataSolicitacao.getFullYear()}-${String(exame.dataSolicitacao.getMonth() + 1).padStart(2, '0')}-${String(exame.dataSolicitacao.getDate()).padStart(2, '0')}`,
     })
     const { data: dados, error: erro } = await supabase
@@ -37,6 +38,8 @@ export class ExameService {
         status: atualizado.status,
         laudo: atualizado.laudo,
         laudo_anexo: atualizado.laudoAnexo,
+        modelo: atualizado.modelo,
+        dados_especificos: atualizado.dados,
         resultado: atualizado.resultado,
         interpretacao_clinica: atualizado.interpretacao,
       })

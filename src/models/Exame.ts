@@ -18,10 +18,13 @@ export const ROTULOS_STATUS_EXAME: Record<ExameStatus, string> = {
 }
 
 export type LaudoAnexo = { nome: string; tipo: string; dados: string }
+export type DadosExame = Record<string, string | string[]>
 
 export class Exame {
   laudo = ''
   laudoAnexo: LaudoAnexo | null = null
+  modelo: string | null = null
+  dados: DadosExame = {}
   categoria: ExameCategoria = 'outro'
   dataSolicitacao: Date
   dataRealizacao: Date | null

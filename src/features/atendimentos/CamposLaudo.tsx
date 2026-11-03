@@ -35,7 +35,7 @@ export function CamposLaudo({ valor, aoAlterar }: { valor: RascunhoExame; aoAlte
     <fieldset className="full-field exam-report-fields">
       <legend>Laudo do exame</legend>
       <label>
-        Texto do laudo
+        Texto do laudo (opcional)
         <textarea
           rows={5}
           value={valor.laudo ?? ''}
@@ -44,10 +44,10 @@ export function CamposLaudo({ valor, aoAlterar }: { valor: RascunhoExame; aoAlte
         />
       </label>
       <label>
-        Anexar laudo (PDF, JPG ou PNG — até 5 MB)
+        Anexar laudo (somente PDF, até 2 MB)
         <input
           type="file"
-          accept="application/pdf,image/jpeg,image/png"
+          accept="application/pdf"
           disabled={valor.laudoCarregando}
           onChange={(evento) => {
             const arquivo = evento.target.files?.[0]
@@ -73,7 +73,10 @@ export function CamposLaudo({ valor, aoAlterar }: { valor: RascunhoExame; aoAlte
           </button>
         </div>
       )}
-      <small>O texto e o arquivo serão armazenados ao salvar o exame ou finalizar o atendimento.</small>
+      <small>
+        Envie o PDF emitido pelo laboratório ou pelo setor de imagem. Fotos de exames não são aceitas para não ocupar
+        espaço no banco. O texto e o arquivo são salvos ao salvar o exame ou o atendimento.
+      </small>
       {erro && <p role="alert">{erro}</p>}
     </fieldset>
   )

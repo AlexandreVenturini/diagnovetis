@@ -133,6 +133,11 @@ h2 {
 .long-text p {
   margin: 0;
 }
+.long-text ul {
+  margin: 4px 0;
+  padding-left: 18px;
+  white-space: normal;
+}
 .signatures {
   display: grid;
   grid-template-columns: 1fr 1fr;

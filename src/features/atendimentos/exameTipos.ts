@@ -1,11 +1,21 @@
 import { validarAnexoLaudo } from './arquivoLaudo'
-import { Exame, EXAME_STATUS, type ExameCategoria, type ExameStatus, type LaudoAnexo } from '../../models/Exame'
+import { limparDados, modeloDoExame, validarDados, type ModeloExame } from './catalogoExames'
+import {
+  Exame,
+  EXAME_STATUS,
+  type DadosExame,
+  type ExameCategoria,
+  type ExameStatus,
+  type LaudoAnexo,
+} from '../../models/Exame'
 
 export type RascunhoExame = {
   laudoCarregando?: boolean
   laudo?: string
   laudoAnexo?: LaudoAnexo | null
   key: string
+  modelo: string | null
+  dados: DadosExame
   nome: string
   categoria: ExameCategoria
   dataSolicitacao: string
@@ -16,8 +26,10 @@ export type RascunhoExame = {
 }
 export const dataLocal = (data = new Date()) =>
   `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`
-export const novoExame = (nome: string, categoria: ExameCategoria): RascunhoExame => ({
+export const novoExame = (nome: string, categoria: ExameCategoria, modelo: string | null = null): RascunhoExame => ({
   key: crypto.randomUUID(),
+  modelo,
+  dados: {},
   nome,
   categoria,
   dataSolicitacao: dataLocal(),
@@ -28,6 +40,9 @@ export const novoExame = (nome: string, categoria: ExameCategoria): RascunhoExam
   resultado: '',
   interpretacao: '',
 })
+export const exameDoModelo = (modelo: ModeloExame) => novoExame(modelo.nome, modelo.categoria, modelo.id)
+export const modeloDoRascunho = (rascunho: Pick<RascunhoExame, 'modelo' | 'nome'>) =>
+  modeloDoExame(rascunho.modelo, rascunho.nome)
 export function validarExame(rascunho: RascunhoExame): string {
   if (rascunho.laudoCarregando) return 'Aguarde o carregamento do anexo do laudo.'
   if (rascunho.laudoAnexo) {
@@ -37,6 +52,8 @@ export function validarExame(rascunho: RascunhoExame): string {
   if (!rascunho.nome.trim()) return 'Informe o nome de cada exame.'
   if (!['laboratorial', 'imagem', 'outro'].includes(rascunho.categoria) || !EXAME_STATUS.includes(rascunho.status))
     return 'Categoria ou status de exame inválido.'
+  const erroDados = validarDados(modeloDoRascunho(rascunho), rascunho.dados)
+  if (erroDados) return `${rascunho.nome.trim()}: ${erroDados}`
   const dataValida = (valor: string) =>
     /^\d{4}-\d{2}-\d{2}$/.test(valor) &&
     !Number.isNaN(Date.parse(valor)) &&
@@ -51,7 +68,7 @@ export function validarExame(rascunho: RascunhoExame): string {
   )
     return 'A realização deve ocorrer entre a solicitação e hoje.'
   if (rascunho.status === 'concluido' && (!rascunho.resultado.trim() || !rascunho.dataRealizacao))
-    return 'Para concluir o exame, informe a data de realização e o resultado.'
+    return `${rascunho.nome.trim()}: para concluir, informe a data de realização e o resumo do resultado.`
   return ''
 }
 export function rascunhoParaExame(rascunho: RascunhoExame): Exame {
@@ -70,6 +87,9 @@ export function rascunhoParaExame(rascunho: RascunhoExame): Exame {
   exame.interpretacao = rascunho.interpretacao.trim()
   exame.laudo = rascunho.laudo?.trim() ?? ''
   exame.laudoAnexo = rascunho.laudoAnexo ?? null
+  const modelo = modeloDoRascunho(rascunho)
+  exame.modelo = modelo?.id ?? null
+  exame.dados = limparDados(modelo, rascunho.dados)
   return exame
 }
 export function exameParaRascunho(exame: Exame): RascunhoExame {
@@ -77,6 +97,8 @@ export function exameParaRascunho(exame: Exame): RascunhoExame {
     laudo: exame.laudo,
     laudoAnexo: exame.laudoAnexo,
     key: String(exame.id),
+    modelo: exame.modelo,
+    dados: structuredClone(exame.dados),
     nome: exame.nomeExame,
     categoria: exame.categoria,
     dataSolicitacao: dataLocal(exame.dataSolicitacao),

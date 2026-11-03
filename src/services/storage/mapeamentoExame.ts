@@ -1,8 +1,10 @@
-import { Exame, type ExameCategoria, type ExameStatus, type LaudoAnexo } from '../../models/Exame'
+import { Exame, type DadosExame, type ExameCategoria, type ExameStatus, type LaudoAnexo } from '../../models/Exame'
 
 export interface ExameRow {
   laudo?: string
   laudo_anexo?: LaudoAnexo | null
+  modelo?: string | null
+  dados_especificos?: DadosExame | null
   id: number
   consulta_id?: number
   nome_exame: string
@@ -32,6 +34,8 @@ export function linhaParaExame(linha: ExameRow): Exame {
   exame.interpretacao = linha.interpretacao_clinica ?? ''
   exame.laudo = linha.laudo ?? ''
   exame.laudoAnexo = linha.laudo_anexo ?? null
+  exame.modelo = linha.modelo ?? null
+  exame.dados = linha.dados_especificos ?? {}
   return exame
 }
 export function exameParaLinha(exame: Exame) {
@@ -44,6 +48,8 @@ export function exameParaLinha(exame: Exame) {
     data_realizacao: exame.dataRealizacao ? apenasData(exame.dataRealizacao) : null,
     laudo: exame.laudo,
     laudo_anexo: exame.laudoAnexo,
+    modelo: exame.modelo,
+    dados_especificos: exame.dados,
     status: exame.status,
     resultado: exame.resultado,
     interpretacao_clinica: exame.interpretacao,

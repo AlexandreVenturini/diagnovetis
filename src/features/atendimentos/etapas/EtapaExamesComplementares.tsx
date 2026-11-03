@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { novoExame, type RascunhoExame } from '../exameTipos'
+import { ROTULOS_STATUS_EXAME } from '../../../models/Exame'
 import { CamposExame } from '../CamposExame'
+import { GRUPOS_EXAME } from '../catalogoExames'
+import { modeloDoRascunho, type RascunhoExame } from '../exameTipos'
+import { SeletorExames } from '../SeletorExames'
 
-const laboratorio = ['Hemograma', 'Bioquímica sérica', 'Urinálise', 'Exame de fezes', 'Citologia', 'Sorologia', 'PCR']
-const imagem = ['Radiografia', 'Ultrassonografia']
+const ROTULOS_CATEGORIA = { laboratorial: 'Laboratorial', imagem: 'Imagem', outro: 'Outro exame' } as const
+
 export function EtapaExamesComplementares({
   exames,
   aoAlterar,
@@ -15,8 +18,9 @@ export function EtapaExamesComplementares({
   aoVoltar: () => void
   aoAvancar: () => void
 }) {
-  const [personalizado, setPersonalizado] = useState('')
-  const [categoria, setCategoria] = useState<RascunhoExame['categoria']>('outro')
+  const [abertos, setAbertos] = useState<string[]>([])
+  const alternar = (key: string) =>
+    setAbertos((atuais) => (atuais.includes(key) ? atuais.filter((atual) => atual !== key) : [...atuais, key]))
   return (
     <section
       inert={exames.some((exame) => exame.laudoCarregando)}
@@ -24,75 +28,54 @@ export function EtapaExamesComplementares({
     >
       <h2>4. Exames complementares</h2>
       <p>
-        Selecione os exames solicitados neste atendimento. Registre o laudo em texto ou anexe um PDF ou imagem em cada
-        exame selecionado. Os laudos serão salvos ao finalizar o atendimento e poderão ser atualizados no prontuário.
+        Busque ou escolha os exames solicitados neste atendimento. Cada exame tem os próprios campos de resultado; o
+        laudo pode ser digitado ou anexado em PDF. Os resultados também podem ser preenchidos depois, no prontuário.
       </p>
-      {(
-        [
-          { titulo: 'Laboratoriais', nomes: laboratorio, categoria: 'laboratorial' },
-          { titulo: 'Imagem', nomes: imagem, categoria: 'imagem' },
-        ] as const
-      ).map((grupo) => (
-        <fieldset className="exam-catalog" key={grupo.titulo}>
-          <legend>{grupo.titulo}</legend>
-          {grupo.nomes.map((nome) => (
-            <button
-              type="button"
-              className="exam-choice"
-              key={nome}
-              disabled={exames.some((exame) => exame.nome === nome)}
-              onClick={() => aoAlterar([...exames, novoExame(nome, grupo.categoria)])}
-            >
-              ＋ {nome}
-            </button>
-          ))}
-        </fieldset>
-      ))}
-      <div className="consultation-form-grid exam-custom">
-        <label>
-          Outro exame
-          <input value={personalizado} onChange={(e) => setPersonalizado(e.target.value)} placeholder="Nome do exame" />
-        </label>
-        <label>
-          Categoria
-          <select value={categoria} onChange={(e) => setCategoria(e.target.value as RascunhoExame['categoria'])}>
-            <option value="laboratorial">Laboratorial</option>
-            <option value="imagem">Imagem</option>
-            <option value="outro">Outro</option>
-          </select>
-        </label>
-        <button
-          type="button"
-          className="secondary-button"
-          disabled={!personalizado.trim()}
-          onClick={() => {
-            aoAlterar([...exames, novoExame(personalizado.trim(), categoria)])
-            setPersonalizado('')
-          }}
-        >
-          Adicionar exame
-        </button>
-      </div>
+      <SeletorExames
+        selecionados={exames}
+        aoAdicionar={(exame) => {
+          aoAlterar([...exames, exame])
+          setAbertos((atuais) => [...atuais, exame.key])
+        }}
+      />
       <h3>Exames selecionados ({exames.length})</h3>
       {!exames.length && <p>Nenhum exame solicitado. Você pode continuar sem adicionar exames.</p>}
-      {exames.map((exame, indice) => (
-        <fieldset className="exam-request" key={exame.key}>
-          <legend>
-            {indice + 1}. {exame.nome || 'Novo exame'}
-          </legend>
-          <CamposExame
-            valor={exame}
-            aoAlterar={(valor) => aoAlterar(exames.map((atual) => (atual.key === exame.key ? valor : atual)))}
-          />
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => aoAlterar(exames.filter((atual) => atual.key !== exame.key))}
-          >
-            Remover solicitação
-          </button>
-        </fieldset>
-      ))}
+      {exames.map((exame, indice) => {
+        const aberto = abertos.includes(exame.key)
+        const modelo = modeloDoRascunho(exame)
+        return (
+          <article className={aberto ? 'exam-request open' : 'exam-request'} key={exame.key}>
+            <header>
+              <button
+                type="button"
+                className="exam-request-toggle"
+                aria-expanded={aberto}
+                onClick={() => alternar(exame.key)}
+              >
+                <span aria-hidden="true">{aberto ? '▾' : '▸'}</span>
+                <strong>
+                  {indice + 1}. {exame.nome || 'Novo exame'}
+                </strong>
+                <small>{modelo ? GRUPOS_EXAME[modelo.grupo] : ROTULOS_CATEGORIA[exame.categoria]}</small>
+              </button>
+              <span className={`exam-status exam-status-${exame.status}`}>{ROTULOS_STATUS_EXAME[exame.status]}</span>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => aoAlterar(exames.filter((atual) => atual.key !== exame.key))}
+              >
+                Remover
+              </button>
+            </header>
+            {aberto && (
+              <CamposExame
+                valor={exame}
+                aoAlterar={(valor) => aoAlterar(exames.map((atual) => (atual.key === exame.key ? valor : atual)))}
+              />
+            )}
+          </article>
+        )
+      })}
       <div className="step-navigation">
         <button type="button" className="secondary-button" onClick={aoVoltar}>
           ← Exame físico
