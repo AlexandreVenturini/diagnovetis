@@ -122,6 +122,7 @@ export function ModuloReceitas({ pets, aoAbrirProntuario, papel = 'veterinarian'
           aoImprimir={() => setMensagem(mensagemImpressao(selecionado))}
           aoAbrirProntuario={() => aoAbrirProntuario(selecionado.petId)}
           aoNovo={iniciarNova}
+          podeAssinar={!ehEstudante}
         />
       )
     return (

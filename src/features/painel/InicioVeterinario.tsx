@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { CabecalhoTela } from '../../components/common/CabecalhoTela'
-import { StatusAtualizacao } from '../../components/common/StatusAtualizacao'
 import { useAgendamentos } from '../agenda/useAgendamentos'
 import type { Agendamento, SituacaoAgendamento } from '../agenda/agendaTipos'
 import type { PetResumo } from '../pets/petTipos'
@@ -49,7 +48,7 @@ function CartaoIndicador({
 }
 
 export function InicioVeterinario({ pets, aoAbrirModulo, aoNovoPet, aoNovoAgendamento }: InicioVeterinarioProps) {
-  const { agendamentos, atualizando, erro, atualizadoEm, atualizarTudo } = useAgendamentos()
+  const { agendamentos, erro, atualizadoEm } = useAgendamentos()
   const [status, setStatus] = useState<SituacaoAgendamento | 'todos'>('todos')
   const hoje = chaveHoje()
   const agendamentosHoje = useMemo(
@@ -72,15 +71,12 @@ export function InicioVeterinario({ pets, aoAbrirModulo, aoNovoPet, aoNovoAgenda
       <CabecalhoTela
         titulo="Dashboard"
         descricao="Veja o que acontece agora, o que exige atenção e qual é o próximo passo."
-        acoes={
-          <StatusAtualizacao
-            carregando={atualizando}
-            erro={erro}
-            atualizadoEm={atualizadoEm}
-            aoAtualizar={atualizarTudo}
-          />
-        }
       />
+      {erro && (
+        <p className="page-error" role="alert">
+          {erro}
+        </p>
+      )}
 
       <div className="dashboard-stats">
         <CartaoIndicador

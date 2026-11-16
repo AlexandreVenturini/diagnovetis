@@ -37,7 +37,7 @@ export function AtendimentoConcluido({
             {aoAbrirProntuario && petId !== undefined && (
               <>
                 {' '}
-                <button type="button" className="text-back-button" onClick={() => aoAbrirProntuario(petId)}>
+                <button type="button" className="text-link-button" onClick={() => aoAbrirProntuario(petId)}>
                   Abrir prontuário para registrar o óbito →
                 </button>
               </>

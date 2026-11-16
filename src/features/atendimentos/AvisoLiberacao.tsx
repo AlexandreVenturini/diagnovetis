@@ -15,7 +15,7 @@ export function AvisoLiberacao({ liberacao, aoAlterar, desabilitado }: AvisoLibe
         {liberacao.participantes.length > 0 && (
           <> · Participantes: {liberacao.participantes.map((participante) => participante.nome).join(', ')}</>
         )}{' '}
-        <button type="button" className="text-back-button" onClick={aoAlterar} disabled={desabilitado}>
+        <button type="button" className="text-link-button" onClick={aoAlterar} disabled={desabilitado}>
           Trocar liberação
         </button>
       </p>

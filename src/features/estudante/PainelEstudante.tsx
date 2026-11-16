@@ -32,7 +32,12 @@ export function PainelEstudante({ aoSair, usuario }: PainelEstudanteProps) {
   const { pets } = petsApi
 
   return (
-    <EstruturaPainel usuario={usuario} rotuloPerfil="Estudante" aoSair={aoSair}>
+    <EstruturaPainel
+      usuario={usuario}
+      rotuloPerfil="Estudante"
+      aoSair={aoSair}
+      aoVoltarInicio={() => navegacao.selecionarModulo('inicio')}
+    >
       <MenuPrincipal
         moduloAtivo={navegacao.moduloAtivo}
         aoSelecionar={navegacao.selecionarModulo}

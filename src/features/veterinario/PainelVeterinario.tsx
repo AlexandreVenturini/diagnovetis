@@ -36,6 +36,7 @@ export function PainelVeterinario({ aoSair, usuario }: PainelVeterinarioProps) {
       usuario={usuario}
       rotuloPerfil="Médico Veterinário"
       aoSair={aoSair}
+      aoVoltarInicio={() => navegacao.selecionarModulo('inicio')}
       acoesCabecalho={<SinoPedidos />}
     >
       <MenuPrincipal moduloAtivo={navegacao.moduloAtivo} aoSelecionar={navegacao.selecionarModulo} />

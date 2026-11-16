@@ -101,7 +101,7 @@ export function ModuloProntuarios({ petIdInicial, papel = 'veterinarian', emailU
       <section className="records-module">
         <div className="empty-appointments">{prontuario.erro || 'Paciente não encontrado.'}</div>
         <button className="text-back-button" onClick={() => setTela('lista')}>
-          ‹ Prontuários
+          ← Prontuários
         </button>
       </section>
     )
@@ -144,6 +144,7 @@ export function ModuloProntuarios({ petIdInicial, papel = 'veterinarian', emailU
       aoRetificarObito={abrirFormularioObito}
       podeEditarExames={papel === 'veterinarian'}
       podeRetificarObito={papel === 'veterinarian'}
+      podeAssinarReceitas={papel === 'veterinarian'}
       atendimentoInicialId={idRetificacao ?? undefined}
       avisoInicial={avisoDetalhes}
     />

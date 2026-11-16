@@ -30,6 +30,7 @@ type DetalhesProntuarioProps = {
   aoRetificarObito: () => void
   podeEditarExames: boolean
   podeRetificarObito: boolean
+  podeAssinarReceitas: boolean
   atendimentoInicialId?: number
   avisoInicial?: string
 }
@@ -43,6 +44,7 @@ export function DetalhesProntuario({
   aoRetificarObito,
   podeEditarExames,
   podeRetificarObito,
+  podeAssinarReceitas,
   atendimentoInicialId,
   avisoInicial = '',
 }: DetalhesProntuarioProps) {
@@ -120,7 +122,7 @@ export function DetalhesProntuario({
         <SecaoObito obito={selecionado.obito} podeRetificar={podeRetificarObito} aoRetificar={aoRetificarObito} />
       )}
 
-      <ReceitasDoPet petId={selecionado.id} />
+      <ReceitasDoPet petId={selecionado.id} podeAssinar={podeAssinarReceitas} />
 
       <FichaProntuario
         ref={formularioRef}

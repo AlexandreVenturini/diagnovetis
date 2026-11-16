@@ -4,10 +4,11 @@ import { Marca } from '../common/Marca'
 type CabecalhoProps = {
   ehAdmin?: boolean
   aoClicarAdmin?: () => void
+  aoClicarGuia?: () => void
   acoes?: ReactNode
 }
 
-export function Cabecalho({ ehAdmin, aoClicarAdmin, acoes }: CabecalhoProps) {
+export function Cabecalho({ ehAdmin, aoClicarAdmin, aoClicarGuia, acoes }: CabecalhoProps) {
   return (
     <header className="topbar topbar--app">
       <div className="topbar-inner">
@@ -19,6 +20,26 @@ export function Cabecalho({ ehAdmin, aoClicarAdmin, acoes }: CabecalhoProps) {
           </div>
         </div>
         <div className="topbar-actions">
+          {aoClicarGuia && (
+            <button className="header-action" onClick={aoClicarGuia} title="Guia do site" aria-label="Guia do site">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
+                <path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" />
+                <path d="M9 8h7" />
+                <path d="M9 12h5" />
+              </svg>
+              <span className="header-action-label">GUIA</span>
+            </button>
+          )}
           {acoes}
           {ehAdmin && (
             <button className="header-action" onClick={aoClicarAdmin} title="Painel Admin" aria-label="Painel Admin">

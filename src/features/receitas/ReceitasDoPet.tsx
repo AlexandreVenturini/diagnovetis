@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ReceitaService, type ReceitaEmitida } from '../../services/ReceitaService'
 import { CHAVES } from '../shared/consultas'
+import { BotaoAssinarGovBr } from './AssinaturaGovBr'
 import { gerarReceita } from './receita'
 
 const receitaService = new ReceitaService()
 
-export function ReceitasDoPet({ petId }: { petId: number }) {
+export function ReceitasDoPet({ petId, podeAssinar }: { petId: number; podeAssinar: boolean }) {
   const consulta = useQuery({
     queryKey: [...CHAVES.receitasDoPet, petId],
     queryFn: async () =>
@@ -20,6 +21,9 @@ export function ReceitasDoPet({ petId }: { petId: number }) {
       <h3>Receituário do animal</h3>
       {mensagem && <p role="status">{mensagem}</p>}
       {!mensagem && !itens.length && <p>Nenhuma receita emitida pela nova aba.</p>}
+      {podeAssinar && Boolean(itens.length) && (
+        <p>Para assinar, salve a receita em PDF e envie o arquivo no assinador do gov.br.</p>
+      )}
       {itens.map(({ id, snapshot }) => (
         <article key={id}>
           <div>
@@ -29,22 +33,25 @@ export function ReceitasDoPet({ petId }: { petId: number }) {
             </p>
             <p>{snapshot.receita.itens.map((item) => `${item.medicamento} — ${item.dose}`).join('; ')}</p>
           </div>
-          <button
-            className="outline-button"
-            onClick={() => {
-              try {
-                setMensagem(
-                  gerarReceita(snapshot.paciente, snapshot.receita, new Date(snapshot.emitidaEm))
-                    ? 'Receita aberta para impressão / PDF.'
-                    : 'Permita novas janelas no navegador para imprimir.',
-                )
-              } catch {
-                setMensagem('Não foi possível abrir esta receita.')
-              }
-            }}
-          >
-            Ver receita / PDF
-          </button>
+          <div className="rx-pet-actions">
+            <button
+              className="outline-button"
+              onClick={() => {
+                try {
+                  setMensagem(
+                    gerarReceita(snapshot.paciente, snapshot.receita, new Date(snapshot.emitidaEm))
+                      ? 'Receita aberta para impressão / PDF.'
+                      : 'Permita novas janelas no navegador para imprimir.',
+                  )
+                } catch {
+                  setMensagem('Não foi possível abrir esta receita.')
+                }
+              }}
+            >
+              Ver receita / PDF
+            </button>
+            {podeAssinar && <BotaoAssinarGovBr />}
+          </div>
         </article>
       ))}
     </section>

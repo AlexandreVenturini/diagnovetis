@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Abas } from '../../components/common/Abas'
 import { CabecalhoTela } from '../../components/common/CabecalhoTela'
-import { StatusAtualizacao } from '../../components/common/StatusAtualizacao'
 import { useCondicoes } from './useCondicoes'
 import { CatalogoCondicoes } from './CatalogoCondicoes'
 import { FiltrosCondicoes } from './FiltrosCondicoes'
@@ -35,7 +34,7 @@ function indicadoresCondicoes(itens: Condicao[]) {
 }
 
 export function ModuloCondicoes() {
-  const { zoonoses: itens, carregando, erro, atualizadoEm, recarregar, criarCondicao } = useCondicoes()
+  const { zoonoses: itens, carregando, erro, atualizadoEm, criarCondicao } = useCondicoes()
   const [filtros, setFiltros] = useState<FiltrosClinicos>(FILTROS_VAZIOS)
   const [idSelecionado, setIdSelecionado] = useState<number | null>(null)
   const [tela, setTela] = useState<'consulta' | 'cadastro'>('consulta')
@@ -53,14 +52,6 @@ export function ModuloCondicoes() {
       <CabecalhoTela
         titulo="Condições Clínicas"
         descricao="Consulte doenças, síndromes, zoonoses e protocolos voltados à clínica de cães."
-        acoes={
-          <StatusAtualizacao
-            carregando={carregando}
-            erro={erro}
-            atualizadoEm={atualizadoEm}
-            aoAtualizar={() => void recarregar()}
-          />
-        }
       />
       <Abas
         rotulo="Condições clínicas"

@@ -13,7 +13,7 @@ export function CabecalhoTela({ titulo, descricao, acoes, voltar }: CabecalhoTel
       <div className="page-header-text">
         {voltar && (
           <button type="button" className="text-back-button" onClick={voltar.aoClicar}>
-            ‹ {voltar.rotulo}
+            ← {voltar.rotulo}
           </button>
         )}
         <h2>{titulo}</h2>
