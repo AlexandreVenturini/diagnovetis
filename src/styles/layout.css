@@ -9,50 +9,20 @@
 }
 
 .brand-mark {
-  position: relative;
+  display: grid;
+  place-items: center;
   width: 81px;
   height: 81px;
   margin: 0 auto 19px;
   border-radius: 50%;
   background: var(--green);
+  color: #fff;
   flex: 0 0 auto;
 }
 
-.dot {
-  position: absolute;
-  display: block;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.dot-top {
-  width: 12px;
-  height: 12px;
-  top: 18px;
-  left: 32px;
-}
-
-.dot-left {
-  width: 22px;
-  height: 17px;
-  top: 35px;
-  left: 18px;
-  transform: rotate(18deg);
-}
-
-.dot-center {
-  width: 19px;
-  height: 24px;
-  top: 40px;
-  left: 29px;
-  transform: rotate(-23deg);
-}
-
-.dot-right {
-  width: 13px;
-  height: 13px;
-  top: 41px;
-  right: 17px;
+.brand-mark svg {
+  width: 62%;
+  height: 62%;
 }
 
 .auth-loading {
@@ -78,38 +48,16 @@
 }
 
 .header-brand .brand-mark {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   margin: 0;
-  background: transparent;
+  background: rgb(255 255 255 / 16%);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 35%);
 }
 
-.header-brand .dot-top {
-  width: 8px;
-  height: 8px;
-  top: 0;
-  left: 12px;
-}
-
-.header-brand .dot-left {
-  width: 11px;
-  height: 9px;
-  top: 11px;
-  left: 1px;
-}
-
-.header-brand .dot-center {
-  width: 12px;
-  height: 15px;
-  top: 14px;
-  left: 9px;
-}
-
-.header-brand .dot-right {
-  width: 8px;
-  height: 8px;
-  top: 11px;
-  right: 1px;
+.header-brand .brand-mark svg {
+  width: 66%;
+  height: 66%;
 }
 
 .header-brand strong {
